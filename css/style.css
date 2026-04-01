@@ -525,9 +525,15 @@ nav {
 
 /* ── HOME MID BANNER ── */
 .home-mid-banner {
-  background: #eef6f2;
-  border-top: 1px solid #c0d9ce;
-  border-bottom: 1px solid #c0d9ce;
+  background:
+    linear-gradient(160deg,
+      rgba(218, 237, 251, 0.79) 0%,
+      rgba(225, 241, 252, 0.76) 40%,
+      rgba(232, 244, 253, 0.75) 70%,
+      rgba(240, 248, 254, 0.79) 100%
+    );
+  border-top: 1px solid #b0d4f0;
+  border-bottom: 1px solid #b0d4f0;
   overflow: hidden;
 }
 .home-mid-banner-inner {
@@ -535,13 +541,13 @@ nav {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 300px;
+  min-height: 220px;
   align-items: stretch;
-  border-left: 1px solid #c0d9ce;
-  border-right: 1px solid #c0d9ce;
+  border-left: 1px solid #b0d4f0;
+  border-right: 1px solid #b0d4f0;
 }
 .home-mid-banner-text {
-  padding: 64px 56px 64px 44px;
+  padding: 44px 56px 44px 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -564,7 +570,7 @@ nav {
 .home-mid-banner-image {
   display: flex;
   align-items: stretch;
-  border-left: 1px solid #c0d9ce;
+  border-left: 1px solid #b0d4f0;
   overflow: hidden;
 }
 .home-mid-banner-image img {
