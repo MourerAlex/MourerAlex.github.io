@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>From ACNU to Sequential Nested Trials | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=28">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+
+    <div class="post-meta">
+      <span class="post-date">2025-04-01</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>From ACNU to Sequential Nested Trials</h1>
+    <p class="subtitle">What we want, what we have, and what we do about it</p>
+
+    <hr>
+
+    <p>Pharmacoepidemiologists and real-world evidence researchers increasingly want to estimate causal treatment effects from observational data — ideally, to emulate the trial that would answer the clinical question but was never run. The causal question is typically straightforward: <em>what is the effect of initiating treatment A versus treatment B (or versus no treatment)?</em> This is a question about a static treatment strategy — a point-in-time decision to start or not start a drug. This also applies to sustained treatment strategies (always treated versus never treated). We are not addressing dynamic strategies where treatment is adapted over time in response to evolving patient characteristics (Thomas et al. 2020).</p>
+<p>What we have is longitudinal data — claims databases, electronic health records, disease registries — where patients enter at different times, initiate treatments at different points during follow-up, switch between drugs, and accumulate time-varying covariate histories. The gap between the simple causal question and the complex data structure is where study design becomes critical.</p>
+<p>This post reviews the study designs that have been developed to bridge that gap. We start with the active comparator new user design (ACNU), which remains the gold standard when applicable. We then show where ACNU fails and trace the methodological response — from propensity-score-based matching for time-varying treatments, through sequential stratification, to the sequential nested trials framework. A single clinical example — GLP-1 receptor agonists versus sulfonylureas for type 2 diabetes — runs throughout.</p>
+<hr />
+<h2 id="part-1-the-active-comparator-new-user-design">Part 1 — The Active Comparator New User Design</h2>
+<h3 id="acnu-as-the-gold-standard">1.1 ACNU as the gold standard</h3>
+<p>The ACNU design (Ray 2003; Lund et al. 2015) identifies two groups of patients, each initiating a different drug for the same indication, at the moment of their first prescription. That moment serves as time zero. Covariates are measured in a baseline period before time zero, and follow-up runs forward from there.</p>
+<p>This structure eliminates the major biases that have plagued pharmacoepi studies:</p>
+<ul>
+<li><strong>Confounding by indication:</strong> both groups have an indication for pharmacotherapy, so the comparison is between two treated populations rather than treated versus untreated, which substantially reduces confounding by disease severity</li>
+<li><strong>Immortal time bias:</strong> both groups share a well-defined time zero — there is no gap between becoming eligible and entering the study</li>
+<li><strong>Prevalent user bias:</strong> patients are observed from treatment start, so baseline covariates are not shaped by years of prior drug exposure</li>
+</ul>
+<p><strong>Causal question:</strong> <em>What is the effect of initiating drug A versus drug B, among treatment-naïve patients<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> at first prescription?</em> This targets an ATE in the new-user population — the same estimand a head-to-head RCT would produce.</p>
+<p>It is worth noting that ACNU already embodies most of what the target trial emulation (TTE) framework (Hernán &amp; Robins 2016) achieves:</p>
+<ul>
+<li>A clean time zero, an explicit comparator, and new users free of prior treatment influence</li>
+<li>TTE goes further by requiring explicit specification of eligibility, treatment strategies, follow-up, and the causal contrast as a formal trial protocol</li>
+<li>But the core causal logic is shared — if ACNU is feasible, you already have a strong foundation for causal inference</li>
+</ul>
+<h3 id="when-acnu-fails-the-non-user-problem">1.2 When ACNU fails — the non-user problem</h3>
+<p>ACNU works well when most study drug users are genuinely treatment-naïve. But when the newer drug is typically used as second- or third-line therapy, most users will have prior experience with the comparator, and restricting to incident new users discards the majority of the study population.</p>
+<p>This structure generalises well beyond drug switching. Whenever eligibility is defined as being on standard of care and the intervention is offered to some but not all — bariatric surgery among patients with BMI ≥ 35, salvage androgen deprivation therapy among post-radiation patients with rising PSA — the treated group has a natural time zero (the intervention date) and the comparator group does not. It is this asymmetry in how time zero maps to disease trajectory, not any particular “wrong” choice, that creates bias.</p>
+<p><strong>The GLP-1 RA example (Suissa 2016, CPRD):</strong> Of 6,196 GLP-1 analog users in the CPRD, 75% had previously used sulfonylureas. An ACNU restriction would retain only about a quarter of the study drug population, with a massive loss of both power and generalisability. The resulting estimate would describe only the minority who started GLP-1 without prior sulfonylurea experience — a group that may not represent the typical clinical pathway.</p>
+<p>The problem is best understood as a <em>non-user problem</em>. When eligibility means “currently on the comparator” (i.e., the standard of care), patients who never switch are prevalent comparator users going about their treatment. They have no natural time zero for comparison. The switchers, on the other hand, have a clear time zero (the switch date) but are prevalent users of the comparator at that point, so ACNU would exclude them.</p>
+<p>Two naive approaches to this problem fail in important ways:</p>
+<ul>
+<li><strong>Ever-treated vs. never-treated:</strong> defining treatment status at time zero based on future experience creates immortal time bias, since the “ever treated” must, by definition, have survived long enough to receive treatment</li>
+<li><strong>Time-varying Cox model:</strong> including treatment as a time-dependent covariate seems appealing, but is not valid when time-dependent confounders that influence treatment initiation are themselves subsequently affected by treatment — adjusting for such variables either blocks causal pathways or introduces collider bias (Robins)</li>
+</ul>
+<p>In the language of target trial emulation, this is <strong>emulation failure (iv)</strong> (Hernán et al. 2016): too few individuals initiate the treatment strategy of interest at any single time point. The sequential approach described in Part 2 addresses this directly — by creating multiple pseudo-experiments, each contributing a small number of initiators, and pooling across them.</p>
+<div class="figure-block">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
+  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } .f1-takeaway-box { background: #2a2a2a; } .f1-legend { color: #999; } .f1-takeaway-label { color: #999; } .f1-takeaway-val { color: #e8e8e8; } }
+  .f1-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #000; color: #fff; margin-bottom: 12px; }
+  .f1-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1rem; font-size: 11px; color: #666; }
+  .f1-legend-item { display: flex; align-items: center; gap: 4px; }
+  .f1-legend-swatch { width: 12px; height: 5px; border-radius: 2px; }
+  .f1-takeaway-row { display: flex; gap: 10px; margin-top: 1rem; }
+  .f1-takeaway-box { flex: 1; padding: 10px 12px; border-radius: 8px; background: #f5f5f5; }
+  .f1-takeaway-label { font-size: 11px; color: #666; margin-bottom: 2px; font-weight: 500; }
+  .f1-takeaway-val { font-size: 11px; color: #1a1a1a; line-height: 1.4; }
+</style>
+<span class="f1-fig-design">ACNU design</span>
+
+<div class="f1-legend">
+  <div class="f1-legend-item"><div class="f1-legend-swatch" style="background:#009E73"></div>SU arm</div>
+  <div class="f1-legend-item"><div class="f1-legend-swatch" style="background:#56B4E9"></div>GLP-1 arm</div>
+  <div class="f1-legend-item"><div class="f1-legend-swatch" style="background:#56B4E9; opacity:0.3"></div>Switch to GLP-1 during follow-up</div>
+  <div class="f1-legend-item"><svg width="12" height="8"><line x1="0" y1="4" x2="12" y2="4" stroke="#CC3311" stroke-width="1.5" stroke-dasharray="3,2"/></svg>Time zero (1st Rx)</div>
+</div>
+
+<svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+  <defs><marker id="arr1" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#999"/></marker></defs>
+  <line x1="145" y1="10" x2="650" y2="10" stroke="#999" stroke-width="0.5" marker-end="url(#arr1)"/>
+  <text x="650" y="8" font-size="9" fill="#999" font-family="inherit" text-anchor="end">follow-up</text>
+  <line x1="140" y1="18" x2="140" y2="320" stroke="#CC3311" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="140" y="335" font-size="9" fill="#CC3311" font-family="inherit" text-anchor="middle">time zero (1st Rx)</text>
+  <text x="12" y="42" font-size="10" fill="#0072B2" font-family="inherit" font-weight="500">GLP-1 arm — treatment-naïve initiators</text>
+  <text x="70" y="68" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">A</text>
+  <circle cx="140" cy="64" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="60" width="380" height="8" rx="2" fill="#56B4E9"/>
+  <path d="M 665 55 L 670 55 L 670 73 L 665 73" fill="none" stroke="#999" stroke-width="1"/>
+  <text x="676" y="68" font-size="9" fill="#999" font-family="inherit">few</text>
+  <line x1="12" y1="90" x2="660" y2="90" stroke="#ddd" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <text x="12" y="113" font-size="10" fill="#085041" font-family="inherit" font-weight="500">SU arm — all SU initiators (including future switchers)</text>
+  <text x="70" y="139" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">B</text>
+  <circle cx="140" cy="135" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="131" width="430" height="8" rx="2" fill="#009E73"/>
+  <text x="70" y="164" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">C</text>
+  <circle cx="140" cy="160" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="156" width="460" height="8" rx="2" fill="#009E73"/>
+  <text x="70" y="189" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">D</text>
+  <circle cx="140" cy="185" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="181" width="120" height="8" rx="2" fill="#009E73"/>
+  <rect x="270" y="181" width="280" height="8" rx="2" fill="#56B4E9" opacity="0.3"/>
+  <circle cx="270" cy="185" r="2.5" fill="#56B4E9" stroke="#fff" stroke-width="0.5"/>
+  <text x="278" y="178" font-size="8" fill="#999" font-family="inherit">switch</text>
+  <text x="70" y="214" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">E</text>
+  <circle cx="140" cy="210" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="206" width="220" height="8" rx="2" fill="#009E73"/>
+  <rect x="370" y="206" width="200" height="8" rx="2" fill="#56B4E9" opacity="0.3"/>
+  <circle cx="370" cy="210" r="2.5" fill="#56B4E9" stroke="#fff" stroke-width="0.5"/>
+  <text x="70" y="239" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">F</text>
+  <circle cx="140" cy="235" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="231" width="310" height="8" rx="2" fill="#009E73"/>
+  <rect x="460" y="231" width="150" height="8" rx="2" fill="#56B4E9" opacity="0.3"/>
+  <circle cx="460" cy="235" r="2.5" fill="#56B4E9" stroke="#fff" stroke-width="0.5"/>
+  <text x="70" y="264" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">G</text>
+  <circle cx="140" cy="260" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="256" width="480" height="8" rx="2" fill="#009E73"/>
+  <text x="70" y="289" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">H</text>
+  <circle cx="140" cy="285" r="4" fill="#000" stroke="#fff" stroke-width="1"/>
+  <rect x="150" y="281" width="170" height="8" rx="2" fill="#009E73"/>
+  <rect x="320" y="281" width="260" height="8" rx="2" fill="#56B4E9" opacity="0.3"/>
+  <circle cx="320" cy="285" r="2.5" fill="#56B4E9" stroke="#fff" stroke-width="0.5"/>
+  <path d="M 665 126 L 670 126 L 670 293 L 665 293" fill="none" stroke="#999" stroke-width="1"/>
+  <text x="676" y="213" font-size="9" fill="#999" font-family="inherit">most</text>
+</svg>
+
+<div class="f1-takeaway-row">
+  <div class="f1-takeaway-box">
+    <div class="f1-takeaway-label">GLP-1 arm</div>
+    <div class="f1-takeaway-val">Very few patients start GLP-1 as their first antidiabetic</div>
+  </div>
+  <div class="f1-takeaway-box">
+    <div class="f1-takeaway-label">SU arm</div>
+    <div class="f1-takeaway-val">Most start SU first — some later switch but stay in SU arm under ITT</div>
+  </div>
+  <div class="f1-takeaway-box">
+    <div class="f1-takeaway-label">The problem</div>
+    <div class="f1-takeaway-val">Massively imbalanced arms, GLP-1 effect buried in SU follow-up</div>
+  </div>
+</div>
+<p class="fig-caption"><strong>Figure 1.</strong> The ACNU design applied to GLP-1 RA vs. sulfonylureas. Only patient A starts GLP-1 as their first antidiabetic (the GLP-1 arm). All others start SU and enter the SU arm — including those who later switch to GLP-1, whose treatment effect is buried in the SU arm under ITT.</p>
+</div>
+
+<hr />
+<h2 id="part-2-the-conceptual-shift-from-one-trial-to-many">Part 2 — The Conceptual Shift: From One Trial to Many</h2>
+<h3 id="the-problem-with-a-single-time-zero">2.1 The problem with a single time zero</h3>
+<p>In the settings described above, eligibility is satisfied at multiple time points per patient. Every sulfonylurea user is eligible at every refill until they initiate GLP-1. Every patient above the BMI threshold is eligible at every clinic visit. The question is not <em>whether</em> these patients are eligible, but <em>when</em> to compare them.</p>
+<p>Choosing a single time zero — the first eligible moment, a random eligible moment, or some other rule — either discards most of the available information or introduces the time-zero asymmetry described above. The fundamental tension is that the data contain a sequence of treatment decisions, not a single one.</p>
+<h3 id="the-sequential-pseudo-experiment-framework">2.2 The sequential pseudo-experiment framework</h3>
+<p>The solution, arrived at independently in multiple disciplines during the 2000s, is to create a <em>sequence</em> of pseudo-experiments — one at each time point where a treatment decision could occur. At each such moment, there is a pool of eligible patients, some of whom initiate treatment and some of whom do not. Covariates are measured at that time point, treatment status is assigned based on what actually happened, and follow-up begins. The overall analysis then pools information across all pseudo-experiments.</p>
+<p>This idea was developed under different names in different fields:</p>
+<ul>
+<li><strong>Statistics:</strong> Schaubel et al. (2006) formalised “sequential stratification”</li>
+<li><strong>Epidemiology:</strong> Hernán et al. (2008) introduced “sequential nested trials”</li>
+<li><strong>Economics:</strong> Sianesi (2004) and Fredriksson &amp; Johansson (2008) framed it as “dynamic treatment matching”</li>
+<li>Kennedy et al. (2010) and Arterburn et al. (2015) describe it as a “sequence of randomised experiments”</li>
+</ul>
+<p>Thomas et al. (2020, <em>Stat Med</em>) conducted the definitive review, identifying 14 distinct named methods across disciplines — all implementing the same core idea with different terminology. Their paper serves as the Rosetta Stone for the field, connecting what had been parallel and often mutually unaware literatures.</p>
+<p>One critical point: the framework does not prescribe how confounding is handled within each experiment. You could match treated patients to controls, weight the entire eligible population, use regression, or combine approaches. The framework provides the scaffold; the methods differ in the finishing. Parts 3 and 4 trace the two major families of implementations.</p>
+<div class="figure-block">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
+  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } .f2-exp-box { background: #2a2a2a; } .f2-legend { color: #999; } .f2-exp-label { color: #999; } .f2-exp-val { color: #e8e8e8; } }
+  .f2-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #f5f5f5; color: #1a1a1a; border: 0.5px solid #ddd; margin-bottom: 12px; }
+  .f2-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1rem; font-size: 11px; color: #666; }
+  .f2-legend-item { display: flex; align-items: center; gap: 4px; }
+  .f2-legend-swatch { width: 12px; height: 5px; border-radius: 2px; }
+  .f2-exp-row { display: flex; gap: 10px; margin-top: 1rem; }
+  .f2-exp-box { flex: 1; padding: 10px 12px; border-radius: 8px; background: #f5f5f5; }
+  .f2-exp-label { font-size: 11px; color: #666; margin-bottom: 2px; font-weight: 500; }
+  .f2-exp-val { font-size: 11px; color: #1a1a1a; line-height: 1.4; }
+</style>
+<span class="f2-fig-design">Sequential pseudo-experiments — general concept</span>
+
+<div class="f2-legend">
+  <div class="f2-legend-item"><div class="f2-legend-swatch" style="background:#009E73"></div>On SU (eligible, at risk)</div>
+  <div class="f2-legend-item"><div class="f2-legend-swatch" style="background:#56B4E9"></div>Switched to GLP-1</div>
+  <div class="f2-legend-item"><svg width="14" height="10"><circle cx="7" cy="5" r="4.5" fill="#E69F00" stroke="#fff" stroke-width="1"/></svg>Initiator (treated)</div>
+  <div class="f2-legend-item"><svg width="14" height="10"><circle cx="7" cy="5" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/></svg>At risk (possible control)</div>
+</div>
+
+<svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+  <defs><marker id="arr2" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#999"/></marker></defs>
+  <text x="80" y="14" font-size="9" fill="#999" font-family="inherit">Time since first SU prescription</text>
+  <line x1="105" y1="22" x2="660" y2="22" stroke="#999" stroke-width="0.5" marker-end="url(#arr2)"/>
+  <text x="55" y="28" font-size="10" fill="#999" font-family="inherit" text-anchor="end">Patient</text>
+  <text x="230" y="38" font-size="9" fill="#E69F00" font-family="inherit" text-anchor="middle" font-weight="500">t₁</text>
+  <text x="370" y="38" font-size="9" fill="#E69F00" font-family="inherit" text-anchor="middle" font-weight="500">t₂</text>
+  <text x="500" y="38" font-size="9" fill="#E69F00" font-family="inherit" text-anchor="middle" font-weight="500">t₃</text>
+  <rect x="222" y="42" width="16" height="210" rx="2" fill="#E69F00" opacity="0.08"/>
+  <rect x="362" y="42" width="16" height="210" rx="2" fill="#E69F00" opacity="0.08"/>
+  <rect x="492" y="42" width="16" height="210" rx="2" fill="#E69F00" opacity="0.08"/>
+  <text x="55" y="68" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">A</text>
+  <rect x="105" y="60" width="125" height="7" rx="2" fill="#009E73"/>
+  <rect x="238" y="60" width="300" height="7" rx="2" fill="#56B4E9"/>
+  <circle cx="230" cy="63" r="5" fill="#E69F00" stroke="#fff" stroke-width="1.5"/>
+  <text x="230" y="66" font-size="7" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <text x="55" y="93" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">B</text>
+  <rect x="105" y="85" width="545" height="7" rx="2" fill="#009E73"/>
+  <circle cx="230" cy="88" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="88" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="500" cy="88" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <text x="55" y="118" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">C</text>
+  <rect x="130" y="110" width="240" height="7" rx="2" fill="#009E73"/>
+  <rect x="378" y="110" width="250" height="7" rx="2" fill="#56B4E9"/>
+  <circle cx="230" cy="113" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="113" r="5" fill="#E69F00" stroke="#fff" stroke-width="1.5"/>
+  <text x="370" y="116" font-size="7" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <text x="55" y="143" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">D</text>
+  <rect x="115" y="135" width="535" height="7" rx="2" fill="#009E73"/>
+  <circle cx="230" cy="138" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="138" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="500" cy="138" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <text x="55" y="168" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">E</text>
+  <rect x="140" y="160" width="360" height="7" rx="2" fill="#009E73"/>
+  <rect x="508" y="160" width="140" height="7" rx="2" fill="#56B4E9"/>
+  <circle cx="230" cy="163" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="163" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="500" cy="163" r="5" fill="#E69F00" stroke="#fff" stroke-width="1.5"/>
+  <text x="500" y="166" font-size="7" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <text x="55" y="193" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">F</text>
+  <rect x="120" y="185" width="320" height="7" rx="2" fill="#009E73"/>
+  <circle cx="230" cy="188" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="188" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <text x="448" y="193" font-size="8" fill="#999" font-family="inherit">censored</text>
+  <text x="55" y="218" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">G</text>
+  <rect x="110" y="210" width="540" height="7" rx="2" fill="#009E73"/>
+  <circle cx="230" cy="213" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="213" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="500" cy="213" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <text x="55" y="243" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">H</text>
+  <rect x="150" y="235" width="500" height="7" rx="2" fill="#009E73"/>
+  <circle cx="230" cy="238" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="370" cy="238" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <circle cx="500" cy="238" r="3.5" fill="none" stroke="#E69F00" stroke-width="1"/>
+  <rect x="163" y="268" width="134" height="55" rx="4" fill="none" stroke="#E69F00" stroke-width="1.2"/>
+  <text x="230" y="283" font-size="10" fill="#E69F00" font-family="inherit" text-anchor="middle" font-weight="500">Experiment t₁</text>
+  <text x="230" y="296" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Treated: A</text>
+  <text x="230" y="310" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Possible controls: B,C,D,E,F,G,H</text>
+  <rect x="303" y="268" width="134" height="55" rx="4" fill="none" stroke="#E69F00" stroke-width="1.2"/>
+  <text x="370" y="283" font-size="10" fill="#E69F00" font-family="inherit" text-anchor="middle" font-weight="500">Experiment t₂</text>
+  <text x="370" y="296" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Treated: C</text>
+  <text x="370" y="310" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Possible controls: B,D,E,F,G,H</text>
+  <rect x="443" y="268" width="134" height="55" rx="4" fill="none" stroke="#E69F00" stroke-width="1.2"/>
+  <text x="510" y="283" font-size="10" fill="#E69F00" font-family="inherit" text-anchor="middle" font-weight="500">Experiment t₃</text>
+  <text x="510" y="296" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Treated: E</text>
+  <text x="510" y="310" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Possible controls: B,D,G,H</text>
+  <line x1="230" y1="252" x2="230" y2="268" stroke="#E69F00" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="370" y1="252" x2="370" y2="268" stroke="#E69F00" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <line x1="500" y1="252" x2="510" y2="268" stroke="#E69F00" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <text x="370" y="345" font-size="10" fill="#999" font-family="inherit" text-anchor="middle">Analysis pools across all experiments</text>
+  <text x="370" y="360" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Possible controls determined within each by: matching, PS weighting, stratification, or including all</text>
+  <line x1="230" y1="323" x2="300" y2="338" stroke="#999" stroke-width="0.4" stroke-dasharray="2,2"/>
+  <line x1="370" y1="323" x2="370" y2="338" stroke="#999" stroke-width="0.4" stroke-dasharray="2,2"/>
+  <line x1="510" y1="323" x2="440" y2="338" stroke="#999" stroke-width="0.4" stroke-dasharray="2,2"/>
+</svg>
+
+<div class="f2-exp-row">
+  <div class="f2-exp-box">
+    <div class="f2-exp-label">At each switch</div>
+    <div class="f2-exp-val">A pseudo-experiment begins with its own time zero and risk set</div>
+  </div>
+  <div class="f2-exp-box">
+    <div class="f2-exp-label">Risk set shrinks</div>
+    <div class="f2-exp-val">Previously treated and censored patients leave the pool</div>
+  </div>
+  <div class="f2-exp-box">
+    <div class="f2-exp-label">Pool across experiments</div>
+    <div class="f2-exp-val">Overall effect estimated by combining all pseudo-experiments</div>
+  </div>
+</div>
+<p class="fig-caption"><strong>Figure 2.</strong> Sequential pseudo-experiments. At each switch time, a new experiment is triggered. The treated patient is matched against possible controls drawn from the risk set. How controls are selected — by matching, weighting, stratification, or including all — distinguishes the methods in Part 3.</p>
+</div>
+
+<h3 id="the-first-design-choice-the-target-estimand">2.3 The first design choice: the target estimand</h3>
+<p>Before choosing a specific method, the most consequential decision is which causal question you want to answer. Everything else follows from this choice.</p>
+<p>The <strong>average treatment effect (ATE)</strong> asks: <em>what would happen if all eligible patients were treated versus not?</em> This is what a randomised trial estimates. It requires that every eligible patient has a non-zero probability, conditional on measured confounders, of receiving either treatment — the positivity assumption. ACNU and SNT target the ATE.</p>
+<p>The <strong>average treatment effect in the treated (ATT)</strong> asks: <em>among those who received treatment, what would have happened had they not?</em> This is what matching naturally produces, since the analysis conditions on who got treated and finds comparable controls. Lu’s tvPS, Schaubel’s SS, and Suissa’s PNUD all target the ATT.</p>
+<p>The ATT is the narrower question: it describes the effect in patients selected for treatment by real-world practice, which depends on who the treaters and the treated happen to be — something that varies across settings and time periods. The ATE is broader, more transportable, and more directly informative for clinical guidelines. If you want an ATE, you need everyone eligible in the analysis, which points toward SNT. If you are willing to accept an ATT, matching is an option, but the scope of the resulting evidence is narrower.</p>
+<p>A secondary design choice is the time scale that organises the pseudo-experiments. Thomas et al. (2020, Section 4.2) recommend that it be “clinically relevant or create strata in which subjects would be similar with respect to prognosis” — consequently, the ideal scale is often the one most highly related to the outcome, since it receives nonparametric treatment in the analysis (Schaubel et al. 2006). Whichever scale is chosen is handled nonparametrically; other relevant scales (age, calendar year, time on treatment) can enter as covariates. We discuss specific time-scale choices as they arise in Part 3.</p>
+<hr />
+<h2 id="part-3-matching-based-implementations-from-most-to-least-matching">Part 3 — Matching-Based Implementations: From Most to Least Matching</h2>
+<p>Thomas et al. (2020, Section 5) distinguish three approaches to handling confounding within pseudo-experiments, ranging from the most aggressive matching to the least. We present them in that order — from methods that give everything to matching, through to methods that give everything to regression — because this progression leads naturally to SNT, which removes matching entirely.</p>
+<p>All three approaches target the ATT and produce matched cohorts rather than full trial emulations.</p>
+<h3 id="lu-2005-propensity-score-matching-on-all-covariates-option-3">3.1 Lu (2005) — Propensity score matching on all covariates (Option 3)</h3>
+<p><strong>Causal question:</strong> <em>What is the effect of receiving treatment at time t, compared to not (yet) receiving it, among those treated at t?</em> (ATT)</p>
+<p>Bo Lu’s 2005 paper in <em>Biometrics</em> was the first to formalise propensity score matching for settings where both treatment and covariates vary over time. A Cox proportional hazards model with time-varying covariates estimates the hazard of treatment initiation, and the resulting linear predictor serves as the time-dependent propensity score. At each treatment time, a risk set of not-yet-treated patients is formed, and the treated patient is matched to controls with the closest scores.</p>
+<p>The key theoretical contribution (Proposition 1) is that matching on this score balances the covariate distribution between treated and control groups at every time point — the time-dependent analogue of Rosenbaum &amp; Rubin (1983). This means that if the propensity score model is correctly specified, confounding is removed at each pseudo-experiment.</p>
+<p>The method is agnostic to the time scale. Lu’s original application — a study of cystoscopy for interstitial cystitis in a prospective cohort — used study time. But in claims databases with staggered entry, calendar time is the natural choice. The risk set at each treatment date automatically restricts matching to contemporaneous patients: a 2008 initiator can only be matched within the 2008 risk set. Calendar time can additionally appear as a covariate in the PS model to capture secular trends, but the temporal restriction comes from the risk set construction itself.</p>
+<p>In Thomas et al.’s classification, this is <strong>Option 3</strong>: match on all relevant confounders via a score. The regression model for the outcome does relatively little work — most of the confounding is handled at the design stage through matching. The limitation is that treatment history — duration on prior drugs, number of prescriptions, cumulative dose — is not structurally enforced. It enters the propensity score as one covariate among many, and whether it is adequately balanced depends on model specification.</p>
+<h3 id="schaubel-2006-exact-matching-on-key-strata-plus-regression-option-2">3.2 Schaubel (2006) — Exact matching on key strata plus regression (Option 2)</h3>
+<p><strong>Causal question:</strong> same as Lu — ATT.</p>
+<p>Schaubel, Wolfe and Port (2006, <em>Biometrics</em>) developed sequential stratification for the kidney transplant wait-list problem. The key difference from Lu is in how confounding is handled: rather than compressing all covariates into a propensity score, sequential stratification exact-matches on a small number of critical variables and adjusts for the rest parametrically via stratified Cox regression.</p>
+<p>In Thomas et al.’s classification, this is <strong>Option 2</strong>: a hybrid of design-level matching and model-based adjustment. The variables that are hardest to model, or most strongly related to the outcome, are handled nonparametrically through exact matching. The rest are handled by regression. This makes fewer parametric assumptions than Lu’s approach, at the cost of potentially losing patients who don’t match on the strata variables.</p>
+<p>At each treatment time, a stratum is formed containing the treated patient and all patients who meet the exact matching criteria at that moment. A stratified Cox model pools information across all strata. Schaubel’s framework explicitly conceptualises each stratum as a mini-experiment in which treatment is “conditionally randomised” given the matching variables — language that directly anticipates Hernán’s target trial concept, though the two approaches developed independently.</p>
+<p>The same patient can appear in multiple strata (as a control in earlier experiments and potentially as treated in a later one). This is the same issue that arises with matching-with-replacement in Lu’s tvPS and with patients entering multiple trials in SNT. The solution in all cases is robust sandwich variance estimation or bootstrapping to account for within-patient correlation.</p>
+<p>Several applications demonstrate the method’s range. Kennedy et al. (2010) applied it to salvage androgen deprivation therapy for prostate cancer. Arterburn et al. (2015) used it for bariatric surgery in the VA system. Richey et al. (2024) conducted a simulation comparison: tvPS (Option 3) and SS (Option 2) performed comparably on bias, coverage, and precision, but tvPS achieved better match completeness (100% vs. 74–92%) because exact matching is subject to the curse of dimensionality.</p>
+<h3 id="sequential-cox-models-match-on-time-and-eligibility-only-regression-does-everything-option-1">3.3 Sequential Cox models — Match on time and eligibility only, regression does everything (Option 1)</h3>
+<p><strong>Causal question:</strong> same as above — ATT (or closer to ATE depending on implementation).</p>
+<p>Gran et al. (2010) described an approach where confounding is handled entirely through regression. All eligible, at-risk patients enter each pseudo-experiment — there is no covariate matching at all. A stratified Cox model is fitted within each experiment, adjusting for Z(sⱼ) parametrically. The overall effect is estimated by pooling across experiments.</p>
+<p>In Thomas et al.’s classification, this is <strong>Option 1</strong>: match on time and eligibility only, parametric regression addresses confounding. The baseline hazard is experiment-specific (nonparametric in the time dimension), but all covariates enter the model parametrically. This places the heaviest reliance on the regression model being correctly specified, but includes the most patients — no one is excluded for failing to match.</p>
+<h3 id="pnud-suissa-20162017-a-special-case-combining-options-2-and-3">3.4 PNUD (Suissa 2016/2017) — A special case combining Options 2 and 3</h3>
+<p><strong>Causal question:</strong> <em>What if, at the time of initiation, initiators of the study drug had instead continued with the comparator?</em> (Young et al. 2024) — ATT among switchers.</p>
+<p>The prevalent new-user design (Suissa 2016; Suissa et al. 2017) was developed specifically for the pharmacoepi scenario where most study drug users are prevalent users of a comparator who switch or augment. It combines elements of both Options 2 and 3.</p>
+<p>First, the time scale is treatment history duration — the axis most related to the outcome in the diabetes context, consistent with the principle that the primary scale should receive nonparametric treatment (Thomas et al. 2020). Exposure sets are organised by time since first comparator prescription (in time-based sets) or by number of prior comparator prescriptions (in prescription-based sets). This is Schaubel’s stratum (Option 2) indexed on a treatment-history axis rather than calendar time.</p>
+<p>Second, within each exposure set, a time-conditional propensity score is computed via conditional logistic regression (equivalently, a time-varying Cox model) to match each switcher to a comparable comparator user. This is Lu’s tvPS (Option 3) applied within each stratum.</p>
+<p>The exposure sets enforce exact matching on time since initiation — a deliberate design-level decision to structurally ensure comparability on what the investigator judges to be the single most important confounder. This can be extended to continuous use, prescription count, or other criteria. Prescription-based exposure sets often produce tighter covariate balance than time-based sets (Suissa 2016; Wang et al. 2024). Positivity regarding treatment history is verified within each exposure set.</p>
+<div class="figure-block">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
+  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } }
+  .f3-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #D55E00; color: #fff; margin-bottom: 10px; }
+  .f3-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 0.75rem; font-size: 11px; color: #666; }
+  .f3-legend-item { display: flex; align-items: center; gap: 4px; }
+  .f3-legend-swatch { width: 12px; height: 5px; border-radius: 2px; }
+  .f3-note { font-size: 11px; color: #666; margin-top: 0.5rem; line-height: 1.4; }
+</style>
+<span class="f3-fig-design">PNUD design</span>
+
+<div class="f3-legend">
+  <div class="f3-legend-item"><div class="f3-legend-swatch" style="background:#009E73"></div>On SU</div>
+  <div class="f3-legend-item"><div class="f3-legend-swatch" style="background:#56B4E9"></div>On GLP-1</div>
+  <div class="f3-legend-item"><svg width="14" height="10"><rect x="1" y="1" width="12" height="8" rx="1" fill="#D55E00" opacity="0.12" stroke="#D55E00" stroke-width="0.8"/></svg>Exposure set (± window)</div>
+  <div class="f3-legend-item"><svg width="14" height="10"><circle cx="7" cy="5" r="4" fill="#D55E00" stroke="#fff" stroke-width="1"/></svg>Switcher</div>
+  <div class="f3-legend-item"><svg width="14" height="10"><circle cx="7" cy="5" r="3" fill="none" stroke="#D55E00" stroke-width="1"/></svg>Matched control</div>
+</div>
+
+<svg viewBox="0 0 700 370" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+  <defs><marker id="arr3" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#999"/></marker></defs>
+  <text x="90" y="12" font-size="9" fill="#999" font-family="inherit">Time since first SU prescription</text>
+  <line x1="90" y1="20" x2="650" y2="20" stroke="#999" stroke-width="0.5" marker-end="url(#arr3)"/>
+  <text x="90" y="32" font-size="8" fill="#999" font-family="inherit">0</text>
+  <rect x="225" y="36" width="30" height="188" rx="2" fill="#D55E00" opacity="0.08" stroke="#D55E00" stroke-width="0.6" stroke-dasharray="3,2"/>
+  <rect x="365" y="36" width="30" height="188" rx="2" fill="#D55E00" opacity="0.08" stroke="#D55E00" stroke-width="0.6" stroke-dasharray="3,2"/>
+  <rect x="490" y="36" width="30" height="188" rx="2" fill="#D55E00" opacity="0.08" stroke="#D55E00" stroke-width="0.6" stroke-dasharray="3,2"/>
+  <text x="45" y="56" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">A</text>
+  <rect x="90" y="49" width="150" height="6" rx="2" fill="#009E73"/>
+  <rect x="248" y="49" width="250" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="240" cy="52" r="4" fill="#D55E00" stroke="#fff" stroke-width="1"/>
+  <text x="45" y="78" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">B</text>
+  <rect x="90" y="71" width="540" height="6" rx="2" fill="#009E73"/>
+  <circle cx="240" cy="74" r="3" fill="none" stroke="#D55E00" stroke-width="1"/>
+  <line x1="244" y1="52" x2="244" y2="74" stroke="#D55E00" stroke-width="1.2"/>
+  <text x="45" y="100" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">C</text>
+  <rect x="90" y="93" width="290" height="6" rx="2" fill="#009E73"/>
+  <rect x="388" y="93" width="200" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="380" cy="96" r="4" fill="#D55E00" stroke="#fff" stroke-width="1"/>
+  <text x="45" y="122" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">D</text>
+  <rect x="90" y="115" width="540" height="6" rx="2" fill="#009E73"/>
+  <circle cx="380" cy="118" r="3" fill="none" stroke="#D55E00" stroke-width="1"/>
+  <line x1="384" y1="96" x2="384" y2="118" stroke="#D55E00" stroke-width="1.2"/>
+  <text x="45" y="144" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">E</text>
+  <rect x="90" y="137" width="415" height="6" rx="2" fill="#009E73"/>
+  <rect x="513" y="137" width="120" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="505" cy="140" r="4" fill="#D55E00" stroke="#fff" stroke-width="1"/>
+  <text x="45" y="166" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">G</text>
+  <rect x="90" y="159" width="540" height="6" rx="2" fill="#009E73"/>
+  <circle cx="505" cy="162" r="3" fill="none" stroke="#D55E00" stroke-width="1"/>
+  <line x1="509" y1="140" x2="509" y2="162" stroke="#D55E00" stroke-width="1.2"/>
+  <text x="45" y="188" font-size="11" fill="#999" font-family="inherit" text-anchor="end">F</text>
+  <rect x="90" y="181" width="320" height="6" rx="2" fill="#009E73" opacity="0.35"/>
+  <text x="418" y="188" font-size="8" fill="#999" font-family="inherit">censored</text>
+  <text x="45" y="210" font-size="11" fill="#999" font-family="inherit" text-anchor="end">H</text>
+  <rect x="90" y="203" width="170" height="6" rx="2" fill="#009E73" opacity="0.35"/>
+  <rect x="268" y="203" width="200" height="6" rx="2" fill="#56B4E9" opacity="0.15"/>
+  <text x="476" y="210" font-size="8" fill="#999" font-family="inherit">no match — excluded</text>
+  <rect x="170" y="240" width="140" height="42" rx="4" fill="none" stroke="#D55E00" stroke-width="1"/>
+  <text x="240" y="254" font-size="9" fill="#D55E00" font-family="inherit" text-anchor="middle" font-weight="500">Exposure set 1</text>
+  <text x="240" y="268" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: A — Control: B</text>
+  <rect x="320" y="240" width="140" height="42" rx="4" fill="none" stroke="#D55E00" stroke-width="1"/>
+  <text x="390" y="254" font-size="9" fill="#D55E00" font-family="inherit" text-anchor="middle" font-weight="500">Exposure set 2</text>
+  <text x="390" y="268" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: C — Control: D</text>
+  <rect x="470" y="240" width="140" height="42" rx="4" fill="none" stroke="#D55E00" stroke-width="1"/>
+  <text x="540" y="254" font-size="9" fill="#D55E00" font-family="inherit" text-anchor="middle" font-weight="500">Exposure set 3</text>
+  <text x="540" y="268" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: E — Control: G</text>
+  <line x1="240" y1="224" x2="240" y2="240" stroke="#D55E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="380" y1="224" x2="390" y2="240" stroke="#D55E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="505" y1="224" x2="540" y2="240" stroke="#D55E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <text x="390" y="300" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">3 matched pairs → pool across exposure sets → ATT among switchers</text>
+  <text x="390" y="314" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Patients F and H excluded (censored / no match)</text>
+  <line x1="240" y1="282" x2="310" y2="294" stroke="#999" stroke-width="0.4" stroke-dasharray="2,2"/>
+  <line x1="390" y1="282" x2="390" y2="294" stroke="#999" stroke-width="0.4" stroke-dasharray="2,2"/>
+  <line x1="540" y1="282" x2="470" y2="294" stroke="#999" stroke-width="0.4" stroke-dasharray="2,2"/>
+</svg>
+
+<div class="f3-note">Time scale: time since first SU prescription. Exposure sets group patients with similar SU duration at the switch point. Within each set, matching on time-conditional propensity score selects the best comparator.</div>
+<p class="fig-caption"><strong>Figure 3.</strong> PNUD design. Exposure sets group patients with similar SU duration at the switch point. Within each set, the switcher is matched to the best comparator via time-conditional propensity scores. Patients F (censored) and H (no match) are excluded.</p>
+</div>
+
+<h3 id="common-limitations-and-the-path-forward">3.5 Common limitations and the path forward</h3>
+<p>Despite their contributions, all matching-based methods share structural limitations.</p>
+<ul>
+<li><strong>ATT not ATE:</strong> all matching methods condition on the treated population. The resulting estimate describes the effect among those who got treated — not what would happen if everyone eligible were treated</li>
+<li><strong>Patient loss:</strong> Richey et al. (2024) showed that sequential stratification can lose 8–26% of treated patients depending on covariate specification and comparator pool depth</li>
+<li><strong>Treatment history confounding:</strong> PNUD’s exposure sets enforce comparability on duration, but other dimensions (cumulative dose, gaps, adherence, reasons for switching) are balanced only if the PS model captures them. Webster-Clark et al. (2021) showed that time-since-initiation alone can be insufficient. SNT handles history analytically as covariates — a different strategy (analytic flexibility rather than design enforcement), and neither is strictly superior</li>
+<li><strong>No explicit trial protocol:</strong> matching creates a cohort rather than a trial emulation with inspectable design choices</li>
+</ul>
+<p>Notice the progression across Options 3, 2, and 1: as matching becomes lighter, the control group grows, fewer patients are excluded, and the method moves closer to including everyone eligible. Thomas et al. (2020) observe that in the “simplest form” of the sequential pseudo-experiment, “treated patients are ‘matched’ to all available controls only according to eligibility and risk status” — which is, in essence, a single nested trial. The one remaining constraint of matching-based methods is that controls, once consumed by an earlier experiment, cannot be reused in later ones. Sequential nested trials remove this constraint entirely.</p>
+<hr />
+<h2 id="part-4-sequential-nested-trials">Part 4 — Sequential Nested Trials</h2>
+<h3 id="from-multiple-eligible-times-to-snt">4.1 From multiple eligible times to SNT</h3>
+<p>The bridge from matching to sequential nested trials comes from a simple but consequential observation: in the settings we have been discussing, eligibility criteria are satisfied at multiple time points for every patient in the comparator population.</p>
+<p>Every sulfonylurea user is eligible at every prescription refill until the moment they initiate GLP-1 (at which point prevalent GLP-1 use makes them ineligible). There are two unbiased options for handling these multiple eligible times (Hernán &amp; Robins 2016; Hernán &amp; Robins 2024, §22.4):</p>
+<ol type="1">
+<li><strong>Select a single eligible time</strong> — the first (as ACNU does) or a random one. Using a random eligible time emulates a mixed population of prevalent and new users, which better reflects the real-world clinical mix. But this relies on a random step that may yield very few initiators of the study drug, and the process may need to be repeated many times to account for the randomness</li>
+<li><strong>Use all eligible times</strong> — each generates a pseudo-trial. Repeating the random selection from option 1 enough times would converge to exactly this. SNT does it directly</li>
+</ol>
+<p>The move from option 1 to option 2 is the natural, efficient endpoint of the logic.</p>
+<h3 id="the-snt-design-hernán-et-al.-2008-2016">4.2 The SNT design (Hernán et al. 2008, 2016)</h3>
+<p><strong>Causal question:</strong> <em>What is the effect of initiating treatment versus not initiating, among all patients eligible at each time point?</em> This is an ATE in the eligible population — the same question as ACNU, but asked repeatedly across follow-up rather than once at first prescription.</p>
+<p>At each time point on a chosen schedule, a new trial begins among all currently eligible patients. Those who initiate the study drug are assigned to the treatment arm; those who do not are assigned to the control arm. Follow-up begins from that trial-specific time zero. The same patient can enter multiple nested trials — as a control in earlier trials and potentially as treated in a later one.</p>
+<p>Under an intention-to-treat framework, analysis is straightforward: once assigned to an arm, a patient stays in that arm regardless of subsequent behaviour. There is no censoring at treatment switch and no need for inverse probability of censoring weights. Confounding is addressed through any appropriate causal method — pooled logistic regression, IPTW, g-methods, or doubly robust approaches — with trial-specific baseline covariates. Robust variance estimation or bootstrapping accounts for within-patient correlation across trials.</p>
+<p>Because every eligible patient enters every trial they qualify for, there is no matching, no exclusion of patients who cannot find a match, and no curse of dimensionality. The explicit trial protocol — eligibility, treatment strategies, assignment, follow-up, outcome, causal contrast, analysis plan (Hernán &amp; Robins 2016) — forces every design choice into the open, where it can be scrutinised.</p>
+<p><strong>GLP-1 vs. SU under SNT (ITT sketch):</strong></p>
+<ul>
+<li>Eligibility: currently on SU, no prior GLP-1, enrolled ≥ 1 year</li>
+<li>A new trial is initiated each month (or at each SU refill)</li>
+<li>GLP-1 initiators → treatment arm; SU continuers → control arm</li>
+<li>Follow-up from the trial-specific time zero under ITT — no censoring at subsequent treatment changes</li>
+<li>Analysis pools across all trials, adjusted for baseline covariates at each trial’s time zero, using any causal method (e.g., IPTW, pooled logistic regression, doubly robust), with robust variance or bootstrap</li>
+</ul>
+<div class="figure-block">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
+  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } }
+  .f4-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #F0E442; color: #000; margin-bottom: 10px; }
+  .f4-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 0.75rem; font-size: 11px; color: #666; }
+  .f4-legend-item { display: flex; align-items: center; gap: 4px; }
+  .f4-legend-swatch { width: 12px; height: 5px; border-radius: 2px; }
+  .f4-note { font-size: 11px; color: #666; margin-top: 0.5rem; line-height: 1.4; }
+</style>
+<span class="f4-fig-design">SNT design (ITT)</span>
+
+<div class="f4-legend">
+  <div class="f4-legend-item"><div class="f4-legend-swatch" style="background:#009E73"></div>On SU</div>
+  <div class="f4-legend-item"><div class="f4-legend-swatch" style="background:#56B4E9"></div>On GLP-1</div>
+  <div class="f4-legend-item"><svg width="14" height="10"><rect x="1" y="1" width="12" height="8" rx="1" fill="#F0E442" opacity="0.25" stroke="#8A7E00" stroke-width="0.8"/></svg>Nested trial</div>
+  <div class="f4-legend-item"><svg width="14" height="10"><circle cx="7" cy="5" r="4" fill="#E69F00" stroke="#fff" stroke-width="1"/></svg>Treated</div>
+  <div class="f4-legend-item"><svg width="14" height="10"><circle cx="7" cy="5" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/></svg>Control</div>
+</div>
+
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+  <defs><marker id="arr5" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#999"/></marker></defs>
+  <text x="90" y="12" font-size="9" fill="#999" font-family="inherit">Time since first SU prescription</text>
+  <line x1="90" y1="20" x2="650" y2="20" stroke="#999" stroke-width="0.5" marker-end="url(#arr5)"/>
+  <text x="90" y="32" font-size="8" fill="#999" font-family="inherit">0</text>
+  <rect x="174" y="36" width="12" height="195" rx="1" fill="#F0E442" opacity="0.20"/>
+  <rect x="254" y="36" width="12" height="195" rx="1" fill="#F0E442" opacity="0.20"/>
+  <rect x="334" y="36" width="12" height="195" rx="1" fill="#F0E442" opacity="0.20"/>
+  <rect x="414" y="36" width="12" height="195" rx="1" fill="#F0E442" opacity="0.20"/>
+  <rect x="494" y="36" width="12" height="195" rx="1" fill="#F0E442" opacity="0.20"/>
+  <text x="45" y="55" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">A</text>
+  <rect x="90" y="48" width="90" height="6" rx="2" fill="#009E73"/>
+  <rect x="188" y="48" width="350" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="180" cy="51" r="4" fill="#E69F00" stroke="#fff" stroke-width="1"/>
+  <text x="180" y="54" font-size="5" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <text x="45" y="77" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">B</text>
+  <rect x="90" y="70" width="540" height="6" rx="2" fill="#009E73"/>
+  <circle cx="180" cy="73" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="73" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="340" cy="73" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="420" cy="73" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="500" cy="73" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <text x="45" y="99" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">C</text>
+  <rect x="90" y="92" width="250" height="6" rx="2" fill="#009E73"/>
+  <rect x="348" y="92" width="230" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="180" cy="95" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="95" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="340" cy="95" r="4" fill="#E69F00" stroke="#fff" stroke-width="1"/>
+  <text x="340" y="98" font-size="5" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <text x="45" y="121" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">D</text>
+  <rect x="90" y="114" width="540" height="6" rx="2" fill="#009E73"/>
+  <circle cx="180" cy="117" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="117" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="340" cy="117" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="420" cy="117" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="500" cy="117" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <text x="45" y="143" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">E</text>
+  <rect x="90" y="136" width="410" height="6" rx="2" fill="#009E73"/>
+  <rect x="508" y="136" width="120" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="180" cy="139" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="139" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="340" cy="139" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="420" cy="139" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="500" cy="139" r="4" fill="#E69F00" stroke="#fff" stroke-width="1"/>
+  <text x="500" y="142" font-size="5" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <text x="45" y="165" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">F</text>
+  <rect x="90" y="158" width="310" height="6" rx="2" fill="#009E73"/>
+  <circle cx="180" cy="161" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="161" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="340" cy="161" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <text x="408" y="165" font-size="8" fill="#999" font-family="inherit">censored</text>
+  <text x="45" y="187" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">G</text>
+  <rect x="90" y="180" width="540" height="6" rx="2" fill="#009E73"/>
+  <circle cx="180" cy="183" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="183" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="340" cy="183" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="420" cy="183" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="500" cy="183" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <text x="45" y="209" font-size="11" fill="currentColor" font-family="inherit" text-anchor="end">H</text>
+  <rect x="90" y="202" width="170" height="6" rx="2" fill="#009E73"/>
+  <rect x="268" y="202" width="300" height="6" rx="2" fill="#56B4E9"/>
+  <circle cx="180" cy="205" r="2.5" fill="none" stroke="#8A7E00" stroke-width="0.8"/>
+  <circle cx="260" cy="205" r="4" fill="#E69F00" stroke="#fff" stroke-width="1"/>
+  <text x="260" y="208" font-size="5" fill="#fff" font-family="inherit" text-anchor="middle" font-weight="500">T</text>
+  <!-- Trial boxes - row 1 -->
+  <rect x="120" y="250" width="120" height="50" rx="4" fill="none" stroke="#8A7E00" stroke-width="1"/>
+  <text x="180" y="264" font-size="9" fill="#8A7E00" font-family="inherit" text-anchor="middle" font-weight="500">Trial 1</text>
+  <text x="180" y="277" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: A</text>
+  <text x="180" y="289" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Controls: B,C,D,E,F,G,H</text>
+  <line x1="180" y1="231" x2="180" y2="250" stroke="#8A7E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <rect x="280" y="250" width="120" height="50" rx="4" fill="none" stroke="#8A7E00" stroke-width="1"/>
+  <text x="340" y="264" font-size="9" fill="#8A7E00" font-family="inherit" text-anchor="middle" font-weight="500">Trial 3</text>
+  <text x="340" y="277" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: C</text>
+  <text x="340" y="289" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Controls: B,D,E,F,G</text>
+  <line x1="340" y1="231" x2="340" y2="250" stroke="#8A7E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <rect x="440" y="250" width="120" height="50" rx="4" fill="none" stroke="#8A7E00" stroke-width="1"/>
+  <text x="500" y="264" font-size="9" fill="#8A7E00" font-family="inherit" text-anchor="middle" font-weight="500">Trial 5</text>
+  <text x="500" y="277" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: E</text>
+  <text x="500" y="289" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Controls: B,D,G</text>
+  <line x1="500" y1="231" x2="500" y2="250" stroke="#8A7E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <!-- Trial boxes - row 2 -->
+  <rect x="200" y="310" width="120" height="50" rx="4" fill="none" stroke="#8A7E00" stroke-width="1"/>
+  <text x="260" y="324" font-size="9" fill="#8A7E00" font-family="inherit" text-anchor="middle" font-weight="500">Trial 2</text>
+  <text x="260" y="337" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: H</text>
+  <text x="260" y="349" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Controls: B,C,D,E,F,G</text>
+  <line x1="260" y1="231" x2="260" y2="310" stroke="#8A7E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <rect x="360" y="310" width="120" height="50" rx="4" fill="none" stroke="#8A7E00" stroke-width="1"/>
+  <text x="420" y="324" font-size="9" fill="#8A7E00" font-family="inherit" text-anchor="middle" font-weight="500">Trial 4</text>
+  <text x="420" y="337" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Treated: none</text>
+  <text x="420" y="349" font-size="8" fill="#999" font-family="inherit" text-anchor="middle">Controls: B,D,E,G</text>
+  <line x1="420" y1="231" x2="420" y2="310" stroke="#8A7E00" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <!-- Summary -->
+  <text x="350" y="385" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">All 8 patients contribute — pool across all trials → ATE in the eligible population</text>
+  <text x="350" y="399" font-size="9" fill="#999" font-family="inherit" text-anchor="middle">Trial 4: no treated → controls-only trial (positivity subtlety — see text)</text>
+</svg>
+
+<div class="f4-note">Time scale shown as time since first SU for consistency across figures. SNT can also be organised on calendar time. Under ITT: once assigned, patients stay in their arm regardless of subsequent changes. Confounding addressed by any causal method (IPTW, pooled logistic regression, doubly robust).</div>
+<p class="fig-caption"><strong>Figure 4.</strong> SNT design under ITT. Nested trials are initiated at regular intervals. All eligible patients enter every trial — as treated (if they initiate GLP-1 at that time) or as controls. Trial 4 has no treated patients (a positivity subtlety). All 8 patients contribute.</p>
+</div>
+<p>
+</ul>
+<h3 id="pseudo-trials-with-no-initiators">4.3 Pseudo-trials with no initiators</h3>
+<p>In matching-based methods, pseudo-experiments only occur when someone initiates treatment — no initiator, no experiment. In SNT with a calendar-time or fixed-schedule design, trials can be initiated at every time point — including periods when nobody starts the study drug. These create trials with an empty treatment arm, which is essentially a time-specific positivity violation.</p>
+<p>In practice, this is handled by adjusting for calendar time in the analysis (under the assumption that calendar period does not independently affect outcomes beyond measured covariates) or by restricting the trial schedule to periods when there is at least some probability of treatment initiation. This is a genuine subtlety: matching automatically avoids the problem by only creating experiments when an initiator exists, but at the cost of ignoring the comparator population during quiet periods.</p>
+<h3 id="when-the-ate-is-not-estimable-positivity">4.4 When the ATE is not estimable: positivity</h3>
+<p>SNT is preferred whenever the ATE is a scientifically meaningful question. The one scenario where matching — and hence ATT — might be considered is when positivity is violated. But the reason for the violation matters enormously.</p>
+<p><strong>Structural positivity violations</strong> occur when certain patients genuinely <em>cannot</em> receive one of the treatments — a hard contraindication, a procedure that is anatomically impossible. The ATE asks about a counterfactual that cannot exist for these patients, so the causal question does not make scientific sense for the full eligible population. In this case, targeting the ATT via matching may be the only solution to generate useful evidence — not necessarily the “right” estimand, but a pragmatic path to producing something of value. Even so, it is worth first considering whether redefining eligibility to exclude these patients restores positivity — if it does, SNT with narrower eligibility is still preferable.</p>
+<p><strong>Data-driven positivity violations</strong> are different. Here, any eligible patient could in principle receive either treatment, but the dataset happens not to include treated patients in some covariate stratum — because of chance, small samples, or a particular prescribing pattern. The ATE question still makes scientific sense; the data simply cannot support it well. Retreating to ATT is a pragmatic compromise: you accept a less interpretable estimand because the data cannot sustain the one you want. Better solutions, where possible, include collecting more data, broadening the data source, or redefining eligibility. If none of those work, matching with ATT is still worth pursuing — but it should be acknowledged openly as a trade-off between estimand clarity and feasibility, not presented as if ATT were the intended question all along.</p>
+<hr />
+<h2 id="part-5-synthesis-and-practical-guidance">Part 5 — Synthesis and Practical Guidance</h2>
+<h3 id="summary">5.1 Summary</h3>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 15%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Design</th>
+<th>Causal question</th>
+<th>Who is included</th>
+<th>Estimand</th>
+<th>Key limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>ACNU</strong></td>
+<td>Effect of initiating A vs. B among treatment-naïve</td>
+<td>New users only</td>
+<td>ATE (naïve)</td>
+<td>Excludes prevalent users</td>
+</tr>
+<tr class="even">
+<td><strong>Lu tvPS</strong> (Opt. 3)</td>
+<td>Effect of treatment at <em>t</em> among those treated at <em>t</em></td>
+<td>Matched treated + controls</td>
+<td>ATT</td>
+<td>PS must capture history</td>
+</tr>
+<tr class="odd">
+<td><strong>Schaubel SS</strong> (Opt. 2)</td>
+<td>Effect of treatment at <em>t</em> among those treated at <em>t</em></td>
+<td>Matched strata</td>
+<td>ATT</td>
+<td>Curse of dimensionality</td>
+</tr>
+<tr class="even">
+<td><strong>Gran</strong> (Opt. 1)</td>
+<td>Effect of treatment at <em>t</em> among eligible at <em>t</em></td>
+<td>All eligible, regression adjusts</td>
+<td>ATT/ATE</td>
+<td>Model must be correct</td>
+</tr>
+<tr class="odd">
+<td><strong>PNUD</strong> (Opt. 2+3)</td>
+<td>“What if switchers had continued comparator?”</td>
+<td>Matched within exposure sets</td>
+<td>ATT (switchers)</td>
+<td>History beyond duration</td>
+</tr>
+<tr class="even">
+<td><strong>SNT</strong></td>
+<td>Effect of initiating treatment among all eligible at each <em>t</em></td>
+<td>All eligible patients</td>
+<td>ATE (eligible)</td>
+<td>Requires positivity</td>
+</tr>
+</tbody>
+</table>
+<h3 id="decision-guidance">5.2 Decision guidance</h3>
+<p>The primary decision is the target estimand.</p>
+<p><strong>ATE feasible via ACNU</strong> — most users are treatment-naïve and an active comparator exists → use ACNU. You’re done.</p>
+<p><strong>ATE target but ACNU fails</strong> — most users are switchers, or there is no active comparator → use SNT. Keep all eligible patients, specify the trial protocol explicitly, analyse under ITT.</p>
+<p><strong>ATE not estimable due to structural positivity violation</strong> — certain patients truly cannot receive the treatment → the ATE question does not make scientific sense. Redefine eligibility if possible; otherwise target ATT via matching (PNUD for switchers, tvPS/SS for user vs. non-user) as the best available path to useful evidence.</p>
+<p><strong>ATE is the right question but data can’t support it</strong> — sparse data, small sample → first try to redefine eligibility or enrich the data. If that is not feasible, matching and ATT is a pragmatic compromise — the evidence may still be valuable, but it answers a narrower question, and this should be stated openly.</p>
+<h3 id="conclusion">5.3 Conclusion</h3>
+<p>The field has converged on the sequential pseudo-experiment as the organising principle for studies of time-varying treatments in observational data. Thomas et al. (2020) unified 14 named methods under a single framework, showing that the differences lie in implementation choices — how much work is given to matching versus regression, which time scale organises the experiments, and which estimand is targeted.</p>
+<p>Within this framework, sequential nested trials represent current best practice when the ATE is a meaningful and estimable question. They keep all eligible patients, require an explicit trial protocol, and produce an estimate that maps directly onto what a randomised trial would yield. Matching-based methods remain a useful path to evidence when positivity violations make the ATE unanswerable, but the trade-off in estimand interpretability should be acknowledged.</p>
+<p><strong>Forward look:</strong> per-protocol estimation and IPCW (future post), cloning-censoring-weighting (Hernán 2018, future post), and the estimand framework of Deschênes et al. (2025) for sequential trial designs.</p>
+<hr />
+<h2 id="references">References</h2>
+<p>Arterburn DE, et al. Association between bariatric surgery and long-term survival. <em>JAMA</em>. 2015;313(1):62–70.</p>
+<p>Danaei G, et al. Observational data for comparative effectiveness research: an emulation of randomised trials of statins. <em>Stat Methods Med Res</em>. 2013;22:70–96.</p>
+<p>Filion KB, Yu YH. Invited commentary: The prevalent new-user design in pharmacoepidemiology. <em>Am J Epidemiol</em>. 2021;190(7):1349–1352.</p>
+<p>Gran JM, et al. Causal inference in survival analysis using longitudinal observational data: Sequential trials and marginal structural models. <em>Stat Med</em>. 2010.</p>
+<p>Hernán MA. How to estimate the effect of treatment duration on survival outcomes using observational data. <em>BMJ</em>. 2018;360.</p>
+<p>Hernán MA, et al. Observational studies analyzed like randomized experiments. <em>Epidemiology</em>. 2008;19(6):766–779.</p>
+<p>Hernán MA, Robins JM. Using big data to emulate a target trial when a randomized trial is not available. <em>Am J Epidemiol</em>. 2016;183(8):758–764.</p>
+<p>Hernán MA, et al. Specifying a target trial prevents immortal time bias and other self-inflicted injuries. <em>J Clin Epidemiol</em>. 2016;79:70–75.</p>
+<p>Kennedy EH, et al. The effect of salvage therapy on survival in a longitudinal study with treatment by indication. <em>Stat Med</em>. 2010;29(25):2569–2580.</p>
+<p>Li YP, Propert KJ, Rosenbaum PR. Balanced risk set matching. <em>J Am Stat Assoc</em>. 2001;96(455):870–882.</p>
+<p>Lu B. Propensity score matching with time-dependent covariates. <em>Biometrics</em>. 2005;61(3):721–728.</p>
+<p>Lund JL, Richardson DB, Stürmer T. The active comparator, new user study design in pharmacoepidemiology. <em>Curr Epidemiol Rep</em>. 2015;2:221–228.</p>
+<p>Ray WA. Evaluating medication effects outside of clinical trials: new-user designs. <em>Am J Epidemiol</em>. 2003;158(9):915–920.</p>
+<p>Richey M, et al. A comparison of time-varying propensity score vs sequential stratification approaches to longitudinal matching. <em>BMC Med Res Methodol</em>. 2024;24:280.</p>
+<p>Schaubel DE, et al. A sequential stratification method for estimating the effect of a time-dependent experimental treatment. <em>Biometrics</em>. 2006;62(3):910–917.</p>
+<p>Schaubel DE, et al. Estimating the effect of a time-dependent treatment by levels of an internal time-dependent covariate. <em>J Am Stat Assoc</em>. 2009;104(485):49–59.</p>
+<p>Suissa S. Prevalent new-user cohort designs for comparative drug effect studies. <em>Pharmacoepidemiol Drug Saf</em>. 2016. DOI: 10.1002/pds.</p>
+<p>Suissa S, Moodie EEM, Dell’Aniello S. Prevalent new-user cohort designs by time-conditional propensity scores. <em>Pharmacoepidemiol Drug Saf</em>. 2017;26(4):459–468.</p>
+<p>Thomas LE, Yang S, Wojdyla D, Schaubel DE. Matching with time-dependent treatments: a review and look forward. <em>Stat Med</em>. 2020;39(17):2350–2370.</p>
+<p>Wang et al. The prevalent new-user design to study drug-drug interactions. <em>Pharmacoepidemiol Drug Saf</em>. 2024.</p>
+<p>Webster-Clark M, et al. [Treatment history in the prevalent new-user design]. <em>Am J Epidemiol</em>. 2021;190(7):1341–1348.</p>
+<p>Young JC, et al. Clarifying the causal contrast: an empirical example applying the prevalent new user study design. <em>Pharmacoepidemiol Drug Saf</em>. 2024;33:e5790.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>“Treatment-naïve” can be defined as first-ever use or via a washout period, depending on the clinical context and data availability.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>
