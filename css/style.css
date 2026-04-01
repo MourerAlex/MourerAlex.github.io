@@ -541,7 +541,7 @@ nav {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  height: 240px;
+  height: 340px;
   align-items: stretch;
   border-left: 1px solid #b0d4f0;
   border-right: 1px solid #b0d4f0;
