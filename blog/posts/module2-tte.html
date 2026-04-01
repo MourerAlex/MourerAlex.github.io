@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2: Target Trial Emulation | Causal Inference Methods</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                macros: {
+                    E: '\\mathbb{E}',
+                    P: '\\mathbb{P}',
+                    R: '\\mathbb{R}',
+                    ind: '\\perp\\!\\!\\!\\perp'
+                }
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --accent-light: #fdf0ed;
+            --blue: #2980b9;
+            --blue-light: #eaf2f8;
+            --green: #27ae60;
+            --green-light: #eafaf1;
+            --gray: #7f8c8d;
+            --gray-light: #f8f9fa;
+            --text: #2c3e50;
+            --border: #dee2e6;
+            --max-width: 780px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 18px;
+            line-height: 1.75;
+            color: var(--text);
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            background: #fff;
+        }
+
+        /* ── Header ── */
+        .series-label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        h1 {
+            font-size: 2.4rem;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── Sections ── */
+        h2 {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid var(--accent);
+        }
+        h3 {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.15rem;
+            color: var(--primary);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p { margin-bottom: 1.2rem; }
+
+        /* ── Special boxes ── */
+        .scenario-box {
+            background: var(--blue-light);
+            border-left: 4px solid var(--blue);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .scenario-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .key-insight {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .key-insight .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .definition-box {
+            background: var(--green-light);
+            border-left: 4px solid var(--green);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .definition-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--green);
+            margin-bottom: 0.5rem;
+        }
+
+        .assumption-box {
+            background: var(--gray-light);
+            border-left: 4px solid var(--gray);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .assumption-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── Warning box ── */
+        .warning-box {
+            background: #fff8e1;
+            border-left: 4px solid #f0a500;
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #f0a500;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+        th {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--primary);
+            color: #fff;
+            padding: 0.6rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:nth-child(even) { background: var(--gray-light); }
+
+        /* ── Math display ── */
+        .math-block {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            background: var(--gray-light);
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        /* ── Figure / diagram ── */
+        .dag-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .dag-container svg {
+            max-width: 520px;
+        }
+        .dag-caption {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        /* ── Flowchart ── */
+        .flow-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .flow-container svg {
+            max-width: 600px;
+        }
+        .flow-caption {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        /* ── Navigation ── */
+        .module-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 0.9rem;
+        }
+        .module-nav a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+        .module-nav a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            body { font-size: 16px; padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- HEADER                                              -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<div class="series-label">Causal Inference Methods &mdash; Module 2 of 6</div>
+<h1>Target Trial Emulation</h1>
+<p class="subtitle">Designing observational studies as if they were trials.</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 1. WHY TARGET TRIAL EMULATION                       -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>1. Why Target Trial Emulation?</h2>
+
+<p>
+    Randomized Clinical Trials (RCTs) are the gold standard for estimating the causal
+    effect of a treatment on an outcome. Their primary advantage lies in randomization
+    itself: by design, the groups being compared are exchangeable at baseline, and any
+    difference in outcomes can be attributed to the treatment strategy.
+</p>
+
+<p>
+    Yet RCTs are not always feasible. Ethical constraints, prohibitive costs, the need
+    for timely evidence (as was the case with COVID-19 vaccines), or the rarity of the
+    condition under study may make a randomized trial impractical or impossible.
+    In these situations, observational data&mdash;electronic health records, claims
+    databases, registries&mdash;become essential.
+</p>
+
+<p>
+    The problem is that observational analyses are vulnerable to a class of biases
+    that do not arise in well-conducted trials. Some of these biases, such as
+    confounding and measurement error, are widely recognized. Others are more
+    insidious&mdash;<em>design-related biases</em>&mdash;that result not from the
+    data itself but from how the analyst sets up the study: when follow-up starts,
+    how treatment groups are defined, who is included, and when.
+</p>
+
+<div class="key-insight">
+    <div class="label">Key insight</div>
+    <p style="margin-bottom:0">
+        Many flawed observational analyses are not wrong because the data was bad.
+        They are wrong because the analyst did not think carefully enough about what
+        trial they were trying to emulate. Immortal time bias, selection bias, and
+        misclassification of treatment strategies are all consequences of a
+        misalignment between the study design and the causal question
+        <span style="font-size:0.85rem; color: var(--gray);">(Hern&aacute;n et al., 2016; Hern&aacute;n et al., 2025)</span>.
+    </p>
+</div>
+
+<p>
+    Target Trial Emulation (TTE) was developed as a framework to prevent these
+    fundamental design errors (Hern&aacute;n et al., 2022). The idea is simple but
+    powerful: before analyzing any observational data, explicitly specify the
+    hypothetical randomized trial&mdash;the <em>target trial</em>&mdash;that would
+    answer your causal question, and then design the observational analysis to
+    emulate it as closely as possible.
+</p>
+
+<p>
+    The framework forces the analyst to make all design choices transparent and
+    linked to the components of a trial protocol: eligibility criteria, treatment
+    strategies, treatment assignment, follow-up, outcomes, causal contrast, and
+    statistical analysis plan. By doing so, it turns implicit assumptions into
+    explicit ones that can be scrutinized, debated, and improved.
+</p>
+
+<div class="assumption-box">
+    <div class="label">What TTE does not solve</div>
+    <p style="margin-bottom:0">
+        TTE is a design framework, not a statistical method. It prevents
+        <em>design-related</em> biases (immortal time, selection at time zero,
+        misclassification of strategies), but it does not eliminate confounding,
+        measurement error, or missing data. These require additional statistical
+        methods&mdash;many of which are covered in other modules of this series
+        (IPW, G-formula, AIPW, TMLE).
+    </p>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 2. THE MOTIVATING EXAMPLE                           -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>2. A Motivating Example</h2>
+
+<p>
+    To make the discussion concrete, consider a large randomized phase 3 trial
+    designed to evaluate the impact of a new drug (Drug&nbsp;A) versus an active
+    comparator (Drug&nbsp;B) on kidney outcomes in patients with type 2 diabetes
+    (T2D) and chronic kidney disease (CKD). Suppose this multi-center,
+    parallel-group trial found that Drug&nbsp;A reduced the risk of kidney outcomes
+    and cardiovascular-related death compared to Drug&nbsp;B.
+</p>
+
+<div class="scenario-box">
+    <div class="label">Running example (used across this module)</div>
+    <p style="margin-bottom:0">
+        A clinical team wants to evaluate whether Drug&nbsp;A also benefits a
+        <strong>specific subgroup</strong> of patients&mdash;those with moderate
+        kidney function (eGFR between 60 and 75 mL/min/1.73&nbsp;m&sup2;)&mdash;using
+        real-world data from a large healthcare database.
+        The original trial was not powered for this subgroup analysis, and random
+        variation is the most probable explanation for any apparent subgroup
+        differences, limiting actionable clinical insights
+        <span style="font-size:0.85rem; color: var(--gray);">(ISIS-2 Collaborative Group, 1988)</span>.
+    </p>
+</div>
+
+<p>
+    The research question can then be defined as: <em>"What is the effect of
+    Drug&nbsp;A versus Drug&nbsp;B on kidney outcomes in patients with T2D, CKD,
+    and eGFR in [60;&thinsp;75] mL/min/1.73&nbsp;m&sup2;?"</em>
+</p>
+
+<p>
+    This is a causal question. Answering it from observational data means we need
+    to think carefully about what trial we <em>would</em> run, and then design our
+    analysis to emulate it. The rest of this module shows how to do exactly that.
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 3. THE TARGET TRIAL PROTOCOL                        -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>3. The Target Trial Protocol</h2>
+
+<p>
+    An advantage of TTE is that it produces an explicitly specified
+    <em>target trial protocol</em>&mdash;analogous to a real trial protocol&mdash;that
+    forces all design decisions to be made upfront. The protocol has the following
+    components (Hern&aacute;n et al., 2022):
+</p>
+
+<table>
+    <tr>
+        <th style="width:35%;">Protocol component</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><strong>Eligibility criteria</strong></td>
+        <td>Who can enter the study? What baseline characteristics are required?</td>
+    </tr>
+    <tr>
+        <td><strong>Treatment strategies</strong></td>
+        <td>What are the treatment strategies being compared?</td>
+    </tr>
+    <tr>
+        <td><strong>Treatment assignment</strong></td>
+        <td>How are individuals assigned to strategies?</td>
+    </tr>
+    <tr>
+        <td><strong>Start &amp; end of follow-up</strong></td>
+        <td>When does follow-up begin and end for each individual?</td>
+    </tr>
+    <tr>
+        <td><strong>Outcomes</strong></td>
+        <td>What events are we measuring?</td>
+    </tr>
+    <tr>
+        <td><strong>Causal contrast</strong></td>
+        <td>What effect are we estimating? (e.g., intention-to-treat, per-protocol)</td>
+    </tr>
+    <tr>
+        <td><strong>Statistical analysis plan</strong></td>
+        <td>What statistical methods will be used to estimate the contrast?</td>
+    </tr>
+</table>
+
+<p>
+    While eligibility criteria, outcomes, and the causal contrast may closely
+    resemble those of the target trial, other components&mdash;like treatment
+    assignment and the start of follow-up&mdash;must be <em>emulated</em> using
+    study design and statistical methods (see Sections 5 and 6).
+</p>
+
+<h3>3.1 Causal effects and counterfactual outcomes</h3>
+
+<p>
+    Causal effects are fundamentally rooted in the concept of
+    <em>counterfactual outcomes</em>: the outcome that <em>would</em> have been
+    observed under each treatment strategy. Among these, only the one corresponding
+    to the strategy actually received is factual; the rest are counterfactual
+    (Hern&aacute;n, 2004).
+</p>
+
+<p>
+    For a binary treatment setting, each individual has two potential outcomes:
+    $Y^{a=1}$ (outcome under Drug&nbsp;A) and $Y^{a=0}$ (outcome under Drug&nbsp;B).
+    Causal effects are defined as contrasts of these counterfactual outcomes.
+    While only one outcome is observed per individual, <em>average</em> causal
+    effects can, under certain conditions, be identified from data.
+</p>
+
+<div class="definition-box">
+    <div class="label">Identifiability conditions</div>
+    <p style="margin-bottom:0">
+        Estimating average causal effects from observational data requires three
+        core assumptions (see also Module 0): <strong>exchangeability</strong>
+        (same risk in both arms at time zero, conditional on measured confounders),
+        <strong>positivity</strong> (a non-zero probability of being assigned to
+        each treatment level for every combination of confounders), and
+        <strong>consistency</strong> (well-defined treatment strategies).
+        For details, refer to Chapters 1&ndash;3 of Hern&aacute;n and Robins (2024).
+    </p>
+</div>
+
+<p>
+    In our motivating example, the causal question becomes a <em>what if</em>
+    question: "What would be the $X$-week risk if everybody had always been treated
+    with Drug&nbsp;B?" versus "What would be the $X$-week risk if everybody had
+    always been treated with Drug&nbsp;A?" This framing makes explicit that we are
+    comparing two counterfactual worlds.
+</p>
+
+<!-- Counterfactual strategies figure -->
+<div class="flow-container">
+    <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg" style="font-family: Helvetica Neue, Arial, sans-serif;">
+        <!-- Title -->
+        <text x="260" y="18" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c3e50">Counterfactual treatment strategies for the same patients</text>
+
+        <!-- Patient #1 -->
+        <text x="15" y="62" font-size="12" fill="#2c3e50" font-weight="600">Patient #1</text>
+        <text x="120" y="50" font-size="10" fill="#7f8c8d">Strategy 1</text>
+        <text x="120" y="78" font-size="10" fill="#7f8c8d">Strategy 2</text>
+
+        <!-- Drug B bar -->
+        <rect x="195" y="38" width="290" height="16" rx="3" fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="340" y="50" text-anchor="middle" font-size="10" fill="#2980b9" font-weight="600">Drug B</text>
+        <!-- Drug A bar -->
+        <rect x="195" y="66" width="290" height="16" rx="3" fill="#2980b9" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="340" y="78" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">Drug A</text>
+
+        <!-- Patient #2 -->
+        <text x="15" y="142" font-size="12" fill="#2c3e50" font-weight="600">Patient #2</text>
+        <text x="120" y="130" font-size="10" fill="#7f8c8d">Strategy 1</text>
+        <text x="120" y="158" font-size="10" fill="#7f8c8d">Strategy 2</text>
+
+        <!-- Drug B bar -->
+        <rect x="195" y="118" width="290" height="16" rx="3" fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="340" y="130" text-anchor="middle" font-size="10" fill="#2980b9" font-weight="600">Drug B</text>
+        <!-- Drug A bar -->
+        <rect x="195" y="146" width="290" height="16" rx="3" fill="#2980b9" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="340" y="158" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">Drug A</text>
+
+        <!-- Time axis -->
+        <line x1="195" y1="185" x2="485" y2="185" stroke="#7f8c8d" stroke-width="1"/>
+        <text x="195" y="200" font-size="10" fill="#7f8c8d">Time 0</text>
+        <text x="340" y="200" text-anchor="middle" font-size="10" fill="#7f8c8d">Follow-up</text>
+        <text x="485" y="200" text-anchor="end" font-size="10" fill="#7f8c8d">End of FU</text>
+
+        <!-- Bracket lines -->
+        <line x1="107" y1="40" x2="107" y2="80" stroke="#7f8c8d" stroke-width="1"/>
+        <line x1="107" y1="60" x2="115" y2="60" stroke="#7f8c8d" stroke-width="1"/>
+        <line x1="107" y1="120" x2="107" y2="160" stroke="#7f8c8d" stroke-width="1"/>
+        <line x1="107" y1="140" x2="115" y2="140" stroke="#7f8c8d" stroke-width="1"/>
+    </svg>
+    <p class="flow-caption">
+        Figure 2.1 &mdash; The two treatment strategies of interest applied to the same patients.
+        The counterfactual outcome of Patient&nbsp;#1 under Strategy&nbsp;2 represents what
+        <em>would</em> have happened had Patient&nbsp;#1 been treated with Drug&nbsp;A instead of Drug&nbsp;B.
+    </p>
+</div>
+
+
+<h3>3.2 Treatment strategies and effect measures</h3>
+
+<p>
+    A common misconception is that trials compare <em>treatments</em>. In fact,
+    they compare <em>treatment strategies</em> (Hern&aacute;n et al., 2017).
+    In a clinical trial, individuals assigned to a particular treatment arm must
+    be allowed to discontinue, modify, or switch treatment when clinically
+    indicated. This distinction matters because it determines which causal
+    contrast we estimate.
+</p>
+
+<p>
+    The effect of assignment to a treatment strategy&mdash;the
+    <strong>intention-to-treat (ITT)</strong> effect&mdash;is generally favored in
+    RCTs for its simplicity and its conservative nature (it biases towards
+    the null when there is non-adherence). Conversely, for safety studies,
+    this conservatism is undesirable (Murray et al., 2019).
+</p>
+
+<p>
+    On the other hand, <strong>per-protocol</strong> analysis considers
+    <em>static</em> treatment strategies such as "always treated." It is
+    preferred in observational studies when there is substantial non-adherence
+    or loss to follow-up, because an intention-to-treat approach could result
+    in significant exposure misclassification (Hern&aacute;n et al., 2016;
+    Hern&aacute;n and Robins, 2024, Sections 22.1&ndash;22.2).
+</p>
+
+<div class="warning-box">
+    <div class="label">A note on hazard ratios</div>
+    <p style="margin-bottom:0">
+        For effect measures, absolute risks, their differences, and their ratios
+        are usually preferred for causal interpretation (Murray et al., 2019).
+        Hazard ratios have a built-in selection bias, first described in
+        Hern&aacute;n (2010) and further developed in Martinussen et al. (2018),
+        Stensrud et al. (2019), and Martinussen (2022). This does not mean hazard
+        ratios should never be used, but their interpretation as causal parameters
+        requires care.
+    </p>
+</div>
+
+<h3>3.3 A note on non-interventional exposures</h3>
+
+<p>
+    The target trial should align plausibly with a trial that could technically be
+    conducted. When studying the impact of a non-interventional factor like a
+    comorbidity (e.g., dyslipidemia, obesity) or a biomarker (e.g., weight),
+    defining a treatment strategy based on the <em>presence</em> of the comorbidity
+    or on biomarker values is not feasible. In such cases, the TTE framework may
+    not facilitate effective communication, and additional frameworks&mdash;such as
+    mediation analysis&mdash;may be needed (Aris et al., 2021; VanderWeele, 2011).
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 4. FROM IDEAL TRIAL TO PRAGMATIC TRIAL              -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>4. From Ideal Trial to Pragmatic Trial</h2>
+
+<p>
+    In TTE, the <em>ideal clinical trial</em>&mdash;the hypothetical trial one would
+    conduct if there were no constraints&mdash;is rarely the trial one aims to
+    emulate. Differences in objectives, feasibility, and the limitations of
+    available data mean that the analyst must work through an intermediate step:
+    defining a <em>pragmatic clinical trial</em>.
+</p>
+
+<div class="definition-box">
+    <div class="label">Pragmatic clinical trial</div>
+    <p style="margin-bottom:0">
+        A trial that examines interventions under circumstances that approach
+        real-world practice, with more heterogeneous patient populations, possibly
+        less-standardised treatment protocols, and delivery in routine clinical
+        settings as opposed to a research environment
+        <span style="font-size:0.85rem; color: var(--gray);">(Anes et al., 2024)</span>.
+    </p>
+</div>
+
+<p>
+    The pragmatic trial is a realistic trial that one could envisage running,
+    and it is exactly the trial one will target when applying TTE. Guidelines on
+    implementing pragmatic trials have been reviewed by Murray et al. (2019).
+</p>
+
+<!-- Three-step flowchart -->
+<div class="flow-container">
+    <svg viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" style="font-family: Helvetica Neue, Arial, sans-serif;">
+        <!-- Design differences bracket -->
+        <text x="185" y="14" text-anchor="middle" font-size="11" font-weight="bold" fill="#2c3e50">Design differences</text>
+        <line x1="65" y1="18" x2="305" y2="18" stroke="#dee2e6" stroke-width="1.5"/>
+
+        <!-- Emulation differences bracket -->
+        <text x="415" y="14" text-anchor="middle" font-size="11" font-weight="bold" fill="#2c3e50">Emulation differences</text>
+        <line x1="305" y1="18" x2="525" y2="18" stroke="#dee2e6" stroke-width="1.5"/>
+
+        <!-- Box 1: Ideal trial -->
+        <rect x="20" y="30" width="150" height="55" rx="6" fill="#eaf2f8" stroke="#2980b9" stroke-width="2"/>
+        <text x="95" y="52" text-anchor="middle" font-size="12" fill="#2c3e50" font-style="italic">ideal</text>
+        <text x="95" y="52" text-anchor="middle" font-size="12" fill="#2c3e50" font-style="italic"> trial</text>
+        <text x="95" y="50" text-anchor="middle" font-size="12" fill="#2c3e50" font-style="italic">ideal trial</text>
+        <text x="95" y="70" text-anchor="middle" font-size="10" fill="#7f8c8d">Subgroup of the</text>
+        <text x="95" y="80" text-anchor="middle" font-size="10" fill="#7f8c8d">original trial</text>
+
+        <!-- Arrow 1 -->
+        <line x1="170" y1="57" x2="195" y2="57" stroke="#7f8c8d" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+        <!-- Box 2: Pragmatic trial -->
+        <rect x="195" y="30" width="160" height="55" rx="6" fill="#eafaf1" stroke="#27ae60" stroke-width="2"/>
+        <text x="275" y="50" text-anchor="middle" font-size="12" fill="#2c3e50" font-style="italic">pragmatic trial</text>
+        <text x="275" y="70" text-anchor="middle" font-size="10" fill="#7f8c8d">Modified version of</text>
+        <text x="275" y="80" text-anchor="middle" font-size="10" fill="#7f8c8d">the original trial</text>
+
+        <!-- Arrow 2 -->
+        <line x1="355" y1="57" x2="380" y2="57" stroke="#7f8c8d" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+        <!-- Box 3: Emulation -->
+        <rect x="380" y="30" width="150" height="55" rx="6" fill="#fdf0ed" stroke="#e74c3c" stroke-width="2"/>
+        <text x="455" y="50" text-anchor="middle" font-size="12" fill="#2c3e50" font-weight="600">emulation</text>
+        <text x="455" y="70" text-anchor="middle" font-size="10" fill="#7f8c8d">Implementation using</text>
+        <text x="455" y="80" text-anchor="middle" font-size="10" fill="#7f8c8d">observational data</text>
+
+        <defs>
+            <marker id="arr-gray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#7f8c8d"/>
+            </marker>
+        </defs>
+    </svg>
+    <p class="flow-caption">
+        Figure 2.2 &mdash; The three-step process. The ideal trial is the best version of the trial
+        we could envisage. The pragmatic trial is what is feasible given real-world data constraints.
+        The emulation maps the pragmatic trial to the observational data.
+    </p>
+</div>
+
+<p>
+    In our motivating example, the three steps might involve: (1) the ideal trial
+    is the original RCT restricted to the eGFR subgroup, (2) the pragmatic trial
+    relaxes placebo control (using an active comparator instead, since a placebo arm
+    is unlikely to be feasible in the data), may modify endpoints due to data
+    availability (e.g., replacing cause-specific death with all-cause mortality),
+    and may exclude certain eligibility criteria that cannot be measured in the
+    database, and (3) the emulation addresses further operational differences
+    (e.g., defining follow-up end as the end of insurance enrollment, handling
+    operational definitions of outcomes).
+</p>
+
+<h3>Communication to decision makers</h3>
+
+<p>
+    The pragmatic trial design can be characterized as the trial design currently
+    being targeted, yet emulated with observational data. Focusing on the pragmatic
+    trial design when engaging with decision makers may enhance understanding and
+    facilitate discussions, without confusing them with operational implementation
+    details that are specific to the emulation step.
+</p>
+
+<h3>A note on the estimand framework</h3>
+
+<p>
+    The estimand framework (EuropeanMedicalAgency, 2020) has been introduced for
+    RCTs, providing clear delineation of treatment strategies and intercurrent
+    events (e.g., treatment discontinuation), and the methods for managing them
+    (Kahan et al., 2024). Combining the estimand framework with TTE has the
+    potential to enhance internal communication and transparency. For an example
+    of real-world data application of the estimand framework together with the
+    <em>Causal Roadmap</em> framework, refer to Dang et al. (2023).
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 5. EMULATING RANDOMIZATION                          -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>5. Emulating Randomization</h2>
+
+<p>
+    In a randomized trial, the time of randomization marks the attainment of three
+    <strong>key components</strong>:
+</p>
+
+<table>
+    <tr>
+        <th style="width:5%;">#</th>
+        <th style="width:30%;">Component</th>
+        <th>What it achieves</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><strong>Form comparable groups</strong></td>
+        <td>Ensures that any prognostic differences between groups are due solely to the treatment.</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td><strong>Assign treatment</strong></td>
+        <td>Marks the initiation of the treatment strategy.</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td><strong>Start follow-up</strong></td>
+        <td>Establishes the starting point (time zero) for the trial.</td>
+    </tr>
+</table>
+
+<p>
+    Achieving component 1 relies on statistical methods (covered in Modules 0&ndash;1 and
+    later modules). Components 2 and 3 are more closely tied to the study
+    <em>design</em>&mdash;specifically the definition of time zero relative to
+    treatment initiation. When these components are not properly synchronized,
+    <em>design-related biases</em> emerge.
+</p>
+
+<h3>5.1 Emulation failures</h3>
+
+<p>
+    The main challenges when emulating a trial were outlined in Hern&aacute;n et al. (2016)
+    and can be summarized as four emulation failures:
+</p>
+
+<table>
+    <tr>
+        <th style="width:10%;">Failure</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td>(i)</td>
+        <td>Establishing time zero</td>
+    </tr>
+    <tr>
+        <td>(ii)</td>
+        <td>Adjusting for adherence when treatment strategies are sustained over time</td>
+    </tr>
+    <tr>
+        <td>(iii)</td>
+        <td>Assigning individuals to a unique treatment strategy at time zero</td>
+    </tr>
+    <tr>
+        <td>(iv)</td>
+        <td>Salvaging the analysis when too few individuals initiate a treatment strategy of interest</td>
+    </tr>
+</table>
+
+<p>
+    Addressing these challenges requires careful selection of both design and
+    statistical methods, since aligning treatment assignment and the start of
+    follow-up is inherently connected to forming comparable groups over time
+    and emulating sustained treatment strategies.
+</p>
+
+<h3>5.2 Immortal time: a structural description of the biases</h3>
+
+<p>
+    A particularly insidious consequence of failing to properly synchronize
+    eligibility, treatment assignment, and the start of follow-up is the
+    generation of <em>immortal time</em>&mdash;a period included in the analysis
+    during which a person, by definition, cannot develop the event of interest
+    (Hern&aacute;n et al., 2025). Survival analyses with immortal time yield
+    biased effect estimates, as has been widely documented.
+</p>
+
+<div class="key-insight">
+    <div class="label">Key insight</div>
+    <p style="margin-bottom:0">
+        Individuals are not truly immortal. Rather, the existence of immortal time
+        in analyses of observational data results from a failure to correctly emulate
+        the target trial. Specifically, it arises when the eligibility criteria and
+        treatment assignment are not synchronized at the start of follow-up
+        <span style="font-size:0.85rem; color: var(--gray);">(Hern&aacute;n et al., 2025)</span>.
+    </p>
+</div>
+
+<p>
+    Hern&aacute;n et al. (2025) identify two distinct structural mechanisms that
+    generate immortal time:
+</p>
+
+<h3 style="margin-top:1.5rem;">5.2.1 Immortal time due to selection</h3>
+
+<p>
+    Immortal time due to selection appears when an eligibility criterion is
+    (incorrectly) applied <em>after</em> the start of follow-up. Consider a trial
+    where individuals are randomly assigned to treatment at time zero. If the
+    investigators accidentally deleted the first 3 months of follow-up data for
+    every individual, anyone who died during those 3 months would disappear from
+    the dataset. The resulting survival curves would be flat during this period
+    &mdash;all individuals appear to have "survived" because those who didn't are
+    missing from the data. This creates a 3-month immortal period.
+</p>
+
+<p>
+    In observational studies, this situation arises when investigators restrict
+    the analysis to individuals who have completed a certain duration of
+    follow-up. This selection induces differential exclusion of the most
+    susceptible individuals in each treatment group, biasing the comparison.
+    The resulting selection bias with differential depletion of susceptibles is
+    sometimes called "prevalent user bias."
+</p>
+
+<!-- DAG for selection bias -->
+<div class="dag-container">
+    <svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg" style="font-family: Helvetica Neue, Arial, sans-serif;">
+        <text x="230" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#2c3e50">Immortal time due to selection (post-assignment eligibility)</text>
+
+        <!-- Nodes -->
+        <rect x="20" y="60" width="80" height="36" rx="6" fill="#eafaf1" stroke="#27ae60" stroke-width="2"/>
+        <text x="60" y="83" text-anchor="middle" font-size="13" fill="#2c3e50" font-weight="600">$A_0$</text>
+
+        <rect x="160" y="60" width="80" height="36" rx="6" fill="#fdf0ed" stroke="#e74c3c" stroke-width="2"/>
+        <text x="200" y="83" text-anchor="middle" font-size="13" fill="#2c3e50" font-weight="600">$Y_3$</text>
+
+        <rect x="310" y="60" width="80" height="36" rx="6" fill="#fdf0ed" stroke="#e74c3c" stroke-width="2"/>
+        <text x="350" y="83" text-anchor="middle" font-size="13" fill="#2c3e50" font-weight="600">$Y_{12}$</text>
+
+        <ellipse cx="280" cy="160" rx="30" ry="18" fill="#eaf2f8" stroke="#2980b9" stroke-width="2"/>
+        <text x="280" y="165" text-anchor="middle" font-size="13" fill="#2c3e50" font-weight="600">$U$</text>
+
+        <!-- Arrows -->
+        <line x1="100" y1="78" x2="160" y2="78" stroke="#7f8c8d" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="240" y1="78" x2="310" y2="78" stroke="#7f8c8d" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="268" y1="145" x2="220" y2="96" stroke="#7f8c8d" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="292" y1="145" x2="335" y2="96" stroke="#7f8c8d" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- Selection box around Y3 -->
+        <rect x="155" y="55" width="90" height="46" rx="8" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="200" y="115" text-anchor="middle" font-size="10" fill="#e74c3c" font-style="italic">selection on $Y_3$</text>
+
+        <defs>
+            <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#7f8c8d"/>
+            </marker>
+        </defs>
+    </svg>
+    <p class="dag-caption">
+        Figure 2.3 &mdash; Causal diagram for immortal time due to selection.
+        Treatment $A_0$ is assigned at time zero. An eligibility criterion $Y_3$ is
+        applied after assignment. $U$ (e.g., susceptibility) is a common cause of
+        $Y_3$ and the outcome $Y_{12}$. Selecting on $Y_3$ opens a biasing path.
+    </p>
+</div>
+
+<p>
+    <strong>What to do:</strong> Ensure that all eligibility criteria are defined at
+    time zero, so that no selection occurs after treatment assignment. This rule
+    is naturally followed by explicitly emulating a target trial based on data for
+    all eligible individuals from the time of treatment assignment.
+</p>
+
+<h3>5.2.2 Immortal time due to misclassification</h3>
+
+<p>
+    Immortal time also appears when misclassifying individuals into a treatment
+    group that differs from the one they were assigned to (in randomized trials)
+    or should have been assigned to (in observational studies). This type of
+    immortal time may arise when some treatment strategies under study cannot be
+    distinguished at time zero.
+</p>
+
+<p>
+    Consider a target trial comparing three strategies: (1)&nbsp;never receive
+    treatment, (2)&nbsp;start treatment immediately and stop after 1 month,
+    (3)&nbsp;start treatment immediately and stop after 2 months. Strategies 2
+    and 3 are indistinguishable at time zero. If an investigator constructs
+    treatment groups by looking at what actually happened during follow-up
+    (e.g., assigning $Z^*=2$ to individuals who completed 2 months of treatment),
+    anyone who died before completing 2 months would be misclassified into $Z^*=0$
+    or $Z^*=1$. Individuals in the $Z^*=2$ group are thus "immortal" until they
+    complete 2 months of treatment, making that group look artificially better.
+</p>
+
+<p>
+    The classic example of this bias is the original heart transplant studies,
+    where time zero was set at the time patients became eligible (accepted as
+    candidates), but patients who died while <em>waiting</em> for a transplant
+    were assigned to the "no transplant" group.
+</p>
+
+<p>
+    <strong>What to do:</strong> Several approaches prevent this type of immortal time:
+</p>
+
+<div class="assumption-box">
+    <div class="label">Approaches to avoid misclassification-induced immortal time</div>
+    <p><strong>1. Change the causal question</strong> to compare strategies that
+    are distinguishable at time zero. For example, instead of comparing "transplant"
+    vs. "no transplant," compare "transplant today" vs. "no transplant ever" among
+    patients who have survived a fixed waiting period.</p>
+    <p><strong>2. Cloning, censoring, and weighting.</strong> Create "clones" of
+    each individual&mdash;one assigned to each strategy they are compatible with at
+    baseline. Each clone is censored when their data becomes incompatible with
+    their assigned strategy. Inverse probability of censoring weighting (IPCW) is
+    then used to adjust for the informative censoring introduced by the cloning step
+    (Hern&aacute;n et al., 2022).</p>
+    <p style="margin-bottom:0"><strong>3. The plug-in g-formula,</strong> which
+    requires estimating an iterated conditional expectation or the joint distribution
+    of the time-varying treatment, outcome, and confounders
+    (Hern&aacute;n and Robins, 2024, Chapter 21).</p>
+</div>
+
+<h3>5.3 The TARGET reporting guideline</h3>
+
+<p>
+    The importance of properly specifying and reporting all components of a target
+    trial emulation has led to the development of a formal consensus-based
+    reporting standard: the <strong>TARGET</strong> (Transparent Reporting of
+    Observational Studies Emulating a Target Trial) statement
+    (Cashin et al., 2025). Published simultaneously in <em>The BMJ</em> and
+    <em>JAMA</em>, TARGET provides a 21-item checklist organized around the
+    typical structure of a research report.
+</p>
+
+<div class="key-insight">
+    <div class="label">TARGET &mdash; the new state of the art for reporting</div>
+    <p>
+        TARGET is the first formal guideline specifically designed for reporting
+        studies that emulate a target trial. It was developed through systematic
+        review, international expert consensus (18 panelists from 6 countries),
+        and piloting with over 100 stakeholders. The checklist is freely available at
+        <a href="https://target-guideline.org/" style="color: var(--accent);">target-guideline.org</a>.
+    </p>
+    <p style="margin-bottom:0">
+        While the methods described in this module teach you <em>how</em> to design
+        and analyze a TTE study, TARGET tells you <em>what to report</em> when you
+        write it up. Using both together ensures that studies are both methodologically
+        sound and transparently communicated.
+    </p>
+</div>
+
+<p>
+    A key feature of TARGET is its dual-column structure: for each protocol
+    component, the checklist asks the analyst to report both the <em>target trial
+    specification</em> (what the trial would look like) and the <em>emulation</em>
+    (how each component was mapped to the observational data). This mirrors the
+    two-step logic of TTE itself.
+</p>
+
+<table>
+    <tr>
+        <th style="width:35%;">TARGET section</th>
+        <th>Selected items</th>
+    </tr>
+    <tr>
+        <td><strong>Abstract</strong></td>
+        <td>Identify the study as a TTE; report data sources; summarize key assumptions and findings.</td>
+    </tr>
+    <tr>
+        <td><strong>Introduction</strong></td>
+        <td>Describe background, causal question, and rationale for emulating a target trial.</td>
+    </tr>
+    <tr>
+        <td><strong>Methods &mdash; Specification</strong></td>
+        <td>Specify the target trial protocol: eligibility, treatment strategies, assignment, follow-up, outcomes, causal contrasts, identifying assumptions, analysis plan.</td>
+    </tr>
+    <tr>
+        <td><strong>Methods &mdash; Emulation</strong></td>
+        <td>For each protocol component, describe how it was operationalized with the data.</td>
+    </tr>
+    <tr>
+        <td><strong>Results</strong></td>
+        <td>Flow diagram, baseline data, follow-up, missing data, outcomes, effect estimates, sensitivity analyses.</td>
+    </tr>
+    <tr>
+        <td><strong>Discussion</strong></td>
+        <td>Interpretation of findings; limitations considering differences between target trial and emulation.</td>
+    </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 6. METHODS TO EMULATE TRIALS                        -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>6. Methods to Emulate Trials and Their Related Causal Questions</h2>
+
+<p>
+    In this section, we explore approaches that address the emulation failures
+    (i)&ndash;(iv) described in Section 5, and discuss how appropriate designs and
+    statistical methods achieve valid group comparisons, align treatment assignment
+    with the start of follow-up, and handle sustained treatment strategies.
+</p>
+
+<h3>6.1 Sequentially randomized experiments</h3>
+
+<p>
+    Emulating trials in practice often involves comparing drug exposures where
+    the time-varying nature of treatment implies the potential presence of
+    <em>time-varying confounders</em> that, if not adjusted for, can prevent the
+    experiment from being sequentially randomized.
+</p>
+
+<h3 style="margin-top:1.5rem;">6.1.1 G-methods</h3>
+
+<p>
+    Sequentially randomized experiments involve random treatment assignment at
+    each time, dependent solely on the values of prior covariate and treatment
+    history. This defines <em>sequential exchangeability</em> for the outcome,
+    ensuring that treatment arms at each time are exchangeable with respect to
+    the outcome, given prior covariate history and observed treatment history
+    compatible with the strategy (see Hern&aacute;n and Robins, 2024,
+    Chapter 19, Section 3).
+</p>
+
+<p>
+    When addressing time-varying treatments, the challenge of
+    <em>treatment-confounder feedback</em> arises. Traditional regression models
+    (e.g., the Cox proportional hazards model) may introduce bias when
+    time-varying confounders are influenced by past treatment exposure, as
+    classical adjustment can lead to adjusting away some of the treatment effect.
+    This is analogous to mediation: treatment affects a time-varying confounder
+    (an intermediate), which in turn affects the outcome. Conditioning on this
+    intermediate blocks part of the causal pathway.
+</p>
+
+<p>
+    To mitigate this bias, <strong>g-methods</strong> are required: the
+    g-formula, inverse probability (IP) weighting, g-estimation, and their
+    doubly-robust generalizations (combinations of IP weighting and g-formula,
+    or the Longitudinal-Targeted Maximum Likelihood Estimator, L-TMLE). See
+    Hern&aacute;n and Robins (2024), Chapter 21.
+</p>
+
+<div class="warning-box">
+    <div class="label">Not optional</div>
+    <p style="margin-bottom:0">
+        Given the untestable nature of treatment-confounder feedback assumptions,
+        the use of g-methods is not optional but mandatory when time-varying
+        confounding is present.
+    </p>
+</div>
+
+<h3>6.1.2 Treatment switch or treatment discontinuation</h3>
+
+<p>
+    Non-adherence occurs when study participants fail to adhere to the assigned
+    treatment strategy. In real-world data, the most prevalent types of
+    non-adherence are:
+</p>
+
+<table>
+    <tr>
+        <th style="width:35%;">Type</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><strong>Treatment switch</strong></td>
+        <td>Switching from one study drug to another (e.g., from Drug&nbsp;A to Drug&nbsp;B).</td>
+    </tr>
+    <tr>
+        <td><strong>Treatment discontinuation</strong></td>
+        <td>Stopping any treatment completely, or intensifying treatment with additional drugs.</td>
+    </tr>
+</table>
+
+<p>
+    <strong>Treatment discontinuation</strong> is handled by artificially censoring
+    patients at the time of discontinuation, followed by adjustment for the
+    informative censoring through IP weighting of artificial censoring (IPACW)
+    (Murray et al., 2019).
+</p>
+
+<p>
+    <strong>Treatment switch</strong> can be handled via g-methods. If the strongest
+    form of sequential exchangeability holds (as well as positivity and consistency),
+    g-methods allow for validly estimating the causal effect of <em>any</em>
+    treatment strategy. The main difference between IPACW and g-estimation is
+    that IPACW discards a patient's data once they deviate from the strategies of
+    interest, making it more robust against model misspecification but less
+    statistically efficient. G-estimation of structural models uses this data to
+    estimate causal effects, making it more efficient but relying on the assumption
+    that the structural model is correct (Hern&aacute;n et al., 2006).
+</p>
+
+<h3>6.2 Study designs</h3>
+
+<p>
+    We now outline three distinct designs for emulating trials, falling under
+    two primary categories:
+</p>
+
+<table>
+    <tr>
+        <th>Category</th>
+        <th>Design</th>
+        <th>Key reference</th>
+    </tr>
+    <tr>
+        <td rowspan="2"><strong>New-user designs</strong></td>
+        <td>Active-New User Design (ACNU)</td>
+        <td>Lund et al., 2015</td>
+    </tr>
+    <tr>
+        <td>Cloning Censoring Weighting (CCW)</td>
+        <td>Hern&aacute;n, 2018</td>
+    </tr>
+    <tr>
+        <td><strong>Prevalent-user designs</strong></td>
+        <td>Sequential Nested Trials (SNT)</td>
+        <td>Hern&aacute;n et al., 2008</td>
+    </tr>
+</table>
+
+<h3>6.2.1 Active-New User Design (ACNU)</h3>
+
+<p>
+    The ACNU design aims to replicate the structure of a head-to-head RCT. It
+    involves assembling cohorts of patients newly prescribed Drug&nbsp;A and patients
+    newly prescribed Drug&nbsp;B. The "active comparator" element reduces bias by
+    focusing on individuals necessitating treatment and without contraindications.
+    The "new user" component ensures a standardized starting point for follow-up,
+    aligning individuals at treatment initiation (Lund et al., 2015).
+</p>
+
+<div class="scenario-box">
+    <div class="label">ACNU causal question</div>
+    <p style="margin-bottom:0">
+        "What would be the $X$-weeks risk if, at the time of trial start, everybody
+        had initiated and always been treated with Drug&nbsp;A?" versus "What would
+        be the $X$-weeks risk if, at the time of trial start, everybody had initiated
+        and always been treated with Drug&nbsp;B?"
+    </p>
+</div>
+
+<p>
+    ACNU addresses emulation failures (i) and (iii) by aligning time zero and
+    treatment assignment. Treatment discontinuation can be addressed with IPACW
+    (Section 6.1), and treatment switch can be handled with g-methods if
+    assumptions are met.
+</p>
+
+<p>
+    However, the effect estimated with ACNU pertains to a <em>new-user
+    population</em>, which may differ from the population in trials that include
+    prevalent users.
+</p>
+
+<div class="assumption-box">
+    <div class="label">Note on statistical efficiency</div>
+    <p style="margin-bottom:0">
+        Statistical methods yield reliable estimates only if there is sufficient
+        data support. In the ACNU design, if very few patients initiate one of the
+        study drugs within the follow-up window, the analysis extrapolates without
+        adequate data support, creating positivity issues and inconsistent estimates.
+        This motivates more complex designs when data are sparse.
+    </p>
+</div>
+
+<h3>6.2.2 Cloning Censoring Weighting (CCW)</h3>
+
+<p>
+    CCW is a method used to emulate a trial with a <em>grace period</em>&mdash;a
+    defined period at the start of follow-up during which the treatment strategy
+    can differ from that employed during the rest of follow-up. For example, one
+    might allow individuals to initiate Drug&nbsp;A within $X$ months after starting
+    Drug&nbsp;B.
+</p>
+
+<div class="scenario-box">
+    <div class="label">CCW causal question</div>
+    <p style="margin-bottom:0">
+        "What would be the $X$-weeks risk if, at the time of trial start, everybody
+        had initiated within $X$ months and thereafter always been treated with
+        Drug&nbsp;A?" versus "What would be the $X$-weeks risk if, at the time of
+        trial start, everybody had initiated and always been treated with Drug&nbsp;B?"
+    </p>
+</div>
+
+<p>
+    At time zero, since everyone is compatible with both the "initiated within
+    $X$ months" and "always treated" strategies, it is not possible to assign a
+    single strategy to any participant until they switch. The solution is to
+    <em>clone</em> each patient into both treatment strategies at baseline,
+    censoring them when their data becomes incompatible with their assigned
+    strategy, and then applying IPCW to adjust for the informative censoring
+    (Hern&aacute;n et al., 2022).
+</p>
+
+<p>
+    One issue with CCW is that reformulating the emulation with a grace period
+    can result in double counting of events during the grace period, diluting the
+    effect. Additionally, after the grace period ends, many switchers will be
+    artificially censored, resulting in a loss of efficiency. As noted by
+    Hern&aacute;n (2018), an alternative that eliminates immortal time bias,
+    estimates absolute risks, and adequately handles treatment-confounder feedback
+    is the g-formula.
+</p>
+
+<h3>6.2.3 Sequential Nested Trials (SNT)</h3>
+
+<p>
+    The Sequential Nested Trials design solves emulation failures (i), (iii), and
+    (iv) by aligning the start of follow-up, treatment assignment, and capturing
+    <em>all</em> possible users eligible in each strategy&mdash;both prevalent
+    and new users.
+</p>
+
+<p>
+    In our motivating example, this approach could emulate a trial where
+    prevalent use of Drug&nbsp;B is no longer an exclusion criterion.
+    Eligibility criteria are satisfied at multiple points in time for every
+    Drug&nbsp;B user until the initiation of Drug&nbsp;A. There are two unbiased
+    options for handling multiple eligible times: select a single eligible time
+    (as in ACNU or a random eligible time), or select <em>all</em> possible
+    choices of time zero for all participants&mdash;the SNT design
+    (Hern&aacute;n and Robins, 2016; Hern&aacute;n and Robins, 2024, Section 22.4).
+</p>
+
+<div class="scenario-box">
+    <div class="label">SNT causal question</div>
+    <p style="margin-bottom:0">
+        "What would be the $X$-weeks risk if, at the time of trial start, everybody
+        had initiated and always been treated with Drug&nbsp;A?" versus "What would
+        be the $X$-weeks risk if, at the time of trial start, everybody had initiated
+        or stayed and always been treated with Drug&nbsp;B?"
+    </p>
+</div>
+
+<p>
+    The SNT is arguably the most statistically efficient design as it utilizes all
+    available data (patients and outcomes). The ability to align treatment strategies
+    for all eligible patients at time zero results in more efficient estimation,
+    especially during the early follow-up periods (Keogh et al., 2023).
+</p>
+
+<div class="warning-box">
+    <div class="label">Prevalence-incidence (Neyman) bias</div>
+    <p style="margin-bottom:0">
+        Because the SNT includes both prevalent and new users, comparing groups
+        with unbalanced drug history may lead to an unfair comparison if drug
+        history influences the risk of the outcome. The SNT does not address this
+        bias unless the history is balanced in each group at the start of follow-up.
+        Consequently, it is necessary to account for drug history in the statistical
+        analysis, and left truncation must be appropriately handled.
+    </p>
+</div>
+
+<p>
+    Please note that the <em>Prevalent-New User Design</em> (PNUD;
+    Suissa et al., 2017) is also a prevalent user design. It performs sequential
+    exact-matching on a single covariate: study drug history. Subsequently, a
+    second matching (e.g., on propensity score) is carried out within each matched
+    subset. Compared to sequential matching with time-varying covariates
+    (Lu, 2005), the novelty lies in enforcing sequential exact matching on drug
+    history before the propensity score matching. However, this approach answers
+    a different causal question than a clinical trial&mdash;it examines the impact
+    of treatment within those who have received the treatment&mdash;and may not
+    be directly applicable within the TTE framework (Young et al., 2024).
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 7. SUMMARY                                          -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>7. Summary</h2>
+
+<p>
+    The table below summarizes the methods and R packages for each protocol
+    component discussed in this module.
+</p>
+
+<table>
+    <tr>
+        <th>Protocol component</th>
+        <th>Methods</th>
+        <th>R packages</th>
+    </tr>
+    <tr>
+        <td>Unique choice of time zero</td>
+        <td>ACNU</td>
+        <td>&mdash;</td>
+    </tr>
+    <tr>
+        <td>Multiple choice of time zero</td>
+        <td>SNT</td>
+        <td>TrialEmulation</td>
+    </tr>
+    <tr>
+        <td>Emulate random assignment</td>
+        <td>G-methods</td>
+        <td>gfoRmula &middot; gfoRmulaICE &middot; ltmle</td>
+    </tr>
+    <tr>
+        <td>Treatment strategies (sustained)</td>
+        <td>Per-protocol</td>
+        <td>gfoRmula &middot; gfoRmulaICE &middot; ltmle</td>
+    </tr>
+    <tr>
+        <td>Treatment switch</td>
+        <td>G-methods</td>
+        <td>gfoRmula &middot; gfoRmulaICE &middot; ltmle</td>
+    </tr>
+    <tr>
+        <td>Treatment discontinuation</td>
+        <td>IPACW</td>
+        <td>gfoRmula &middot; gfoRmulaICE &middot; ltmle</td>
+    </tr>
+    <tr>
+        <td>Causal contrast</td>
+        <td>Risk difference or ratio</td>
+        <td>gfoRmula &middot; gfoRmulaICE &middot; ltmle</td>
+    </tr>
+    <tr>
+        <td>Prevalent and new-user</td>
+        <td>SNT</td>
+        <td>TrialEmulation</td>
+    </tr>
+</table>
+
+<p>
+    R package links:
+    <a href="https://cran.r-project.org/web/packages/TrialEmulation/index.html" style="color:var(--blue)">TrialEmulation</a>,
+    <a href="https://cran.r-project.org/web/packages/gfoRmula/index.html" style="color:var(--blue)">gfoRmula</a>,
+    <a href="https://cran.r-project.org/web/packages/gfoRmulaICE/" style="color:var(--blue)">gfoRmulaICE</a>,
+    <a href="https://cran.r-project.org/web/packages/ltmle/index.html" style="color:var(--blue)">ltmle</a>.
+</p>
+
+<p>
+    It is recommended to use the doubly robust versions of these estimators
+    when available (see Module 1 and subsequent modules).
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- REFERENCES                                          -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h3>References</h3>
+
+<p style="font-size:0.9rem; line-height:1.6;">
+    Anes, A. M., et al. (2024). The ENCEPP guide on methodological standards in pharmacoepidemiology (revision 11).<br>
+    Aris, I. M., et al. (2021). Separating algorithms from questions and causal inference with unmeasured exposures. <em>American Journal of Epidemiology</em>, 190(7):1414&ndash;1423.<br>
+    Cashin, A. G., et al. (2025). Transparent reporting of observational studies emulating a target trial: the TARGET statement. <em>The BMJ</em>, 390:e087179.<br>
+    Dang, L. E., et al. (2023). A causal roadmap for generating high-quality real-world evidence. <em>Journal of Clinical and Translational Science</em>, 7(1):e212.<br>
+    European Medical Agency (2020). ICH E9 (R1) addendum on estimands and sensitivity analysis in clinical trials.<br>
+    Fu, E. L., et al. (2025). Starting right: aligning eligibility and treatment assignment at time zero when emulating a target trial.<br>
+    Hern&aacute;n, M. A. (2004). A definition of causal effect for epidemiological research. <em>JECH</em>, 58(4):265&ndash;271.<br>
+    Hern&aacute;n, M. A. (2010). The hazards of hazard ratios. <em>Epidemiology</em>, 21(1):13&ndash;15.<br>
+    Hern&aacute;n, M. A. (2018). How to estimate the effect of treatment duration on survival outcomes using observational data. <em>BMJ</em>, 360.<br>
+    Hern&aacute;n, M. A. and Robins, J. M. (2024). <em>Causal Inference: What If</em>. Chapman &amp; Hall/CRC.<br>
+    Hern&aacute;n, M. A., et al. (2006). Comparison of dynamic treatment regimes via inverse probability weighting. <em>Basic &amp; Clinical Pharmacology &amp; Toxicology</em>, 98(3):237&ndash;242.<br>
+    Hern&aacute;n, M. A., et al. (2008). Observational studies analyzed like randomized experiments. <em>Epidemiology</em>, 19(6):766&ndash;779.<br>
+    Hern&aacute;n, M. A. and Robins, J. M. (2016). Using big data to emulate a target trial when a randomized trial is not available. <em>American Journal of Epidemiology</em>, 183(8):758&ndash;764.<br>
+    Hern&aacute;n, M. A., et al. (2016). Specifying a target trial prevents immortal time bias. <em>Journal of Clinical Epidemiology</em>, 79:70&ndash;75.<br>
+    Hern&aacute;n, M. A., et al. (2017). Per-protocol analyses of pragmatic trials. <em>NEJM</em>, 377(14):1391&ndash;1398.<br>
+    Hern&aacute;n, M. A., et al. (2022). Target trial emulation: a framework for causal inference from observational data. <em>JAMA</em>, 328(24):2446&ndash;2447.<br>
+    Hern&aacute;n, M. A., et al. (2025). A structural description of biases that generate immortal time. <em>Epidemiology</em>, 36(1):107&ndash;114.<br>
+    ISIS-2 Collaborative Group (1988). Randomised trial of intravenous streptokinase, oral aspirin, both, or neither among 17,187 cases of suspected acute myocardial infarction. <em>Lancet</em>, 49&ndash;360.<br>
+    Kahan, B. C., et al. (2024). The estimands framework: a primer on the ICH E9 (R1) addendum. <em>BMJ</em>, 384.<br>
+    Keogh, R. H., et al. (2023). Causal inference in survival analysis using longitudinal observational data. <em>Statistics in Medicine</em>, 42(13):2191&ndash;2225.<br>
+    Lu, B. (2005). Propensity score matching with time-dependent covariates. <em>Biometrics</em>, 61(3):721&ndash;728.<br>
+    Lund, J. L., et al. (2015). The active comparator, new user study design in pharmacoepidemiology. <em>Current Epidemiology Reports</em>, 2:221&ndash;228.<br>
+    Martinussen, T. (2022). Causality and the Cox regression model. <em>Annual Review of Statistics and Its Application</em>, 9:249&ndash;259.<br>
+    Martinussen, T., et al. (2018). Subtleties in the interpretation of hazard ratios. arXiv:1810.09192.<br>
+    Murray, E. J., et al. (2019). Guidelines for estimating causal effects in pragmatic randomized trials. arXiv:1911.06030.<br>
+    Stensrud, M. J., et al. (2019). Limitations of hazard ratios in clinical trials. <em>European Heart Journal</em>, 40(17):1378&ndash;1383.<br>
+    Suissa, S., et al. (2017). Prevalent new-user cohort designs for comparative drug effect studies. <em>Pharmacoepidemiology and Drug Safety</em>, 26(4):459&ndash;468.<br>
+    VanderWeele, T. J. (2011). Causal mediation analysis with survival data. <em>Epidemiology</em>, 22(4):582&ndash;585.<br>
+    Young, J. C., et al. (2024). Clarifying the causal contrast: an empirical example applying the prevalent new user study design. <em>Pharmacoepidemiology and Drug Safety</em>, 33(4):e5790.<br>
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- NAVIGATION                                          -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<div class="module-nav">
+    <a href="module1-ipw.html">&larr; Module 1: Inverse Probability Weighting</a>
+    <span style="color: var(--gray);">Module 3 coming soon &rarr;</span>
+</div>
+
+</body>
+</html>

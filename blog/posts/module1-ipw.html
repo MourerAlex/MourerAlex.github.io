@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 1: Inverse Probability Weighting | Causal Inference Methods</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                macros: {
+                    E: '\\mathbb{E}',
+                    P: '\\mathbb{P}',
+                    R: '\\mathbb{R}',
+                    ind: '\\perp\\!\\!\\!\\perp'
+                }
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --accent-light: #fdf0ed;
+            --blue: #2980b9;
+            --blue-light: #eaf2f8;
+            --green: #27ae60;
+            --green-light: #eafaf1;
+            --gray: #7f8c8d;
+            --gray-light: #f8f9fa;
+            --text: #2c3e50;
+            --border: #dee2e6;
+            --max-width: 780px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 18px;
+            line-height: 1.75;
+            color: var(--text);
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            background: #fff;
+        }
+
+        /* ── Header ── */
+        .series-label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        h1 {
+            font-size: 2.4rem;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── Sections ── */
+        h2 {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid var(--accent);
+        }
+        h3 {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.15rem;
+            color: var(--primary);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p { margin-bottom: 1.2rem; }
+
+        /* ── Special boxes ── */
+        .scenario-box {
+            background: var(--blue-light);
+            border-left: 4px solid var(--blue);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .scenario-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .key-insight {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .key-insight .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .definition-box {
+            background: var(--green-light);
+            border-left: 4px solid var(--green);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .definition-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--green);
+            margin-bottom: 0.5rem;
+        }
+
+        .assumption-box {
+            background: var(--gray-light);
+            border-left: 4px solid var(--gray);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .assumption-box .label {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+        th {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--primary);
+            color: #fff;
+            padding: 0.6rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:nth-child(even) { background: var(--gray-light); }
+        .table-caption {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: -0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── DAG ── */
+        .dag-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .dag-container svg {
+            max-width: 420px;
+        }
+        .dag-caption {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        /* ── Math display ── */
+        .math-block {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            background: var(--gray-light);
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        /* ── Notation reference ── */
+        .notation-table {
+            font-size: 0.9rem;
+        }
+        .notation-table td:first-child {
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            width: 120px;
+            text-align: center;
+        }
+
+        /* ── Navigation ── */
+        .module-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 0.9rem;
+        }
+        .module-nav a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+        .module-nav a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            body { font-size: 16px; padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- HEADER                                              -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<div class="series-label">Causal Inference Methods &mdash; Module 1 of 6</div>
+<h1>Inverse Probability Weighting</h1>
+<p class="subtitle">When you can't randomize, reweight.</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 1. THE PROBLEM                                      -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>1. The Problem</h2>
+
+<div class="scenario-box">
+    <div class="label">Running Example</div>
+    <p style="margin-bottom:0">
+        A public health agency wants to know whether a <strong>preventive drug</strong> reduces the risk of a <strong>disease</strong> (binary: yes/no).
+        They have observational data from a large cohort. Two variables were measured at baseline:
+        <strong>age</strong> (continuous, in years) and <strong>sex</strong> (binary: male/female).
+        No randomized trial is available.
+    </p>
+</div>
+
+<p>
+    In an ideal world, we would conduct a randomized experiment: flip a coin for each person,
+    give the drug to those who get heads, and compare disease rates between the two groups.
+    Randomization ensures that, on average, the treated and untreated groups are comparable in
+    every way&mdash;measured or unmeasured. Any difference in outcomes can be attributed to the drug.
+</p>
+
+<p>
+    But this is observational data. Physicians prescribed the drug based on clinical judgment.
+    It turns out that older patients and male patients were more likely to receive the drug,
+    because physicians perceived them as higher risk. The problem is that age and sex also
+    independently affect disease risk. This creates <em>confounding</em>: the very factors that
+    influence who gets treated also influence who gets sick.
+</p>
+
+<p>
+    Let's see what happens when we ignore this. Suppose we simply compare disease rates
+    between treated and untreated individuals:
+</p>
+
+<table>
+    <tr>
+        <th>Group</th>
+        <th>N</th>
+        <th>Disease cases</th>
+        <th>Risk</th>
+    </tr>
+    <tr>
+        <td>Treated ($A = 1$)</td>
+        <td>4,200</td>
+        <td>1,092</td>
+        <td>26.0%</td>
+    </tr>
+    <tr>
+        <td>Untreated ($A = 0$)</td>
+        <td>5,800</td>
+        <td>1,102</td>
+        <td>19.0%</td>
+    </tr>
+</table>
+<p class="table-caption">
+    Table 1.1 &mdash; Crude (unadjusted) comparison of disease risk by treatment status.
+</p>
+
+<p>
+    The naive risk difference is $26.0\% - 19.0\% = +7.0$ percentage points.
+    The drug appears to <em>increase</em> disease risk. Should we conclude the drug is harmful?
+</p>
+
+<div class="key-insight">
+    <div class="label">The trap</div>
+    <p style="margin-bottom:0">
+        No. The treated group is older and more male on average. These patients would have had
+        higher disease risk <em>regardless</em> of treatment. The crude comparison confounds the
+        effect of the drug with the effect of age and sex. We are comparing apples to oranges.
+    </p>
+</div>
+
+<p>
+    To see this concretely, imagine stratifying by age and sex. Within each stratum
+    (e.g., 60-year-old males), the drug actually <em>reduces</em> disease risk. But because
+    the drug was preferentially given to those at highest baseline risk, the overall
+    comparison is reversed. This is a form of Simpson's paradox, and it is the fundamental
+    challenge of causal inference from observational data.
+</p>
+
+<p>
+    The question becomes: <strong>how do we remove the distortion introduced by confounding,
+    so that we can estimate what would have happened if everyone had been treated versus
+    if everyone had been untreated?</strong>
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 2. ACTIVATION                                       -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>2. What You Already Know</h2>
+
+<p>
+    If you have taken an introductory epidemiology or biostatistics course, you likely
+    already know at least two ways to handle confounding.
+</p>
+
+<p>
+    <strong>Stratification.</strong> Split the data into strata defined by the confounders
+    (e.g., age groups $\times$ sex), estimate the treatment effect within each stratum,
+    then combine using a weighted average (as in Mantel-Haenszel estimation). This works
+    well when confounders are few and categorical. But with continuous confounders like age,
+    or with many confounders, the strata become sparse and the approach breaks down.
+</p>
+
+<p>
+    <strong>Regression adjustment.</strong> Fit a model for the outcome&mdash;for instance,
+    a logistic regression $\text{logit}\, \P(Y=1 \mid A, L) = \beta_0 + \beta_1 A + \beta_2 \text{Age} + \beta_3 \text{Sex}$&mdash;and
+    read off the coefficient $\beta_1$ as the adjusted treatment effect. This is the workhorse
+    of applied epidemiology. But it comes with a cost: the estimate depends entirely on
+    getting the outcome model right. If the true relationship between confounders and outcome
+    is nonlinear, or involves interactions you didn't include, the estimate will be biased.
+    And you will typically have no way of knowing.
+</p>
+
+<p>
+    Both approaches share a limitation: they <em>model the outcome</em>. The validity of
+    the causal estimate depends on correctly specifying how confounders relate to the outcome.
+</p>
+
+<div class="key-insight">
+    <div class="label">A different strategy</div>
+    <p style="margin-bottom:0">
+        What if, instead of modeling the outcome, we modeled the <em>treatment assignment</em>?
+        That is, instead of asking "how does disease risk depend on age, sex, and treatment?",
+        we ask "how does the probability of being treated depend on age and sex?"
+        This is the core idea behind inverse probability weighting.
+    </p>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 3. THE IDEA                                         -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>3. The Idea</h2>
+
+<h3>3.1 From randomization to reweighting</h3>
+
+<p>
+    Let us return to the ideal experiment. In a randomized trial with a fair coin,
+    each person has a 50% probability of receiving treatment, regardless of their age or sex.
+    This means that the treated group and the untreated group are, on average, identical
+    in every baseline characteristic. The comparison is fair.
+</p>
+
+<p>
+    In our observational study, the probability of treatment depends on the confounders.
+    A 70-year-old male might have an 80% chance of receiving the drug, while a 30-year-old
+    female might have only a 20% chance. Treatment groups are no longer comparable.
+</p>
+
+<p>
+    The insight of inverse probability weighting is this:
+    <strong>if we know <em>why</em> people were treated&mdash;i.e., the probability of treatment
+    given their characteristics&mdash;we can mathematically undo the selection process</strong>.
+    We do this by giving each person a weight that is inversely proportional to the probability
+    of the treatment they actually received.
+</p>
+
+<h3>3.2 The propensity score</h3>
+
+<div class="definition-box">
+    <div class="label">Definition</div>
+    <p style="margin-bottom:0">
+        The <strong>propensity score</strong> is the conditional probability of receiving
+        treatment given the observed confounders:
+        $$e(\mathbf{L}) = \P(A = 1 \mid \mathbf{L})$$
+        where $\mathbf{L} = (\text{Age}, \text{Sex})$ in our example.
+        It was formalized by Rosenbaum and Rubin (1983).
+    </p>
+</div>
+
+<p>
+    In our running example, we might estimate this using logistic regression:
+    $$\text{logit}\, e(\mathbf{L}) = \alpha_0 + \alpha_1 \, \text{Age} + \alpha_2 \, \text{Sex}$$
+    For a 70-year-old male, this might yield $\hat{e}(\mathbf{L}) = 0.78$.
+    For a 30-year-old female, $\hat{e}(\mathbf{L}) = 0.22$.
+</p>
+
+<h3>3.3 Creating a pseudo-population</h3>
+
+<p>
+    Now here is the key step. Consider a treated 70-year-old male with propensity score 0.78.
+    We give him a weight of $1 / 0.78 \approx 1.28$. Why? Because in the original data,
+    70-year-old males are overrepresented among the treated (they had a high probability of
+    being treated). By weighting him by the inverse of this probability, we effectively
+    say: "this person represents not just himself, but also those similar people who, by
+    chance of clinical decision, did not receive treatment."
+</p>
+
+<p>
+    Similarly, consider an untreated 30-year-old female with propensity score 0.22.
+    Her probability of being untreated is $1 - 0.22 = 0.78$. We give her a weight of
+    $1 / 0.78 \approx 1.28$. She was very likely to be untreated, so she doesn't need
+    much upweighting. But a 70-year-old male who happened <em>not</em> to receive treatment
+    (propensity score 0.78, so probability of being untreated = 0.22) gets a weight of
+    $1/0.22 \approx 4.55$&mdash;he is rare and informative.
+</p>
+
+<div class="key-insight">
+    <div class="label">The intuition</div>
+    <p style="margin-bottom:0">
+        The weights create a <strong>pseudo-population</strong> in which treatment assignment
+        is independent of the confounders&mdash;as if the data came from a randomized experiment.
+        In this pseudo-population, age and sex are equally distributed between treated and
+        untreated groups. The confounding is removed.
+    </p>
+</div>
+
+<h3>3.4 Visualizing the reweighting</h3>
+
+<!-- DAG: Original confounded data -->
+<div class="dag-container">
+    <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg" style="font-family: Helvetica Neue, Arial, sans-serif;">
+        <!-- Title -->
+        <text x="210" y="20" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c3e50">Causal diagram for our running example</text>
+
+        <!-- Nodes -->
+        <!-- L (confounders) -->
+        <rect x="155" y="40" width="110" height="36" rx="6" fill="#eaf2f8" stroke="#2980b9" stroke-width="2"/>
+        <text x="210" y="63" text-anchor="middle" font-size="14" fill="#2c3e50" font-weight="600">L (Age, Sex)</text>
+
+        <!-- A (treatment) -->
+        <rect x="40" y="140" width="110" height="36" rx="6" fill="#eafaf1" stroke="#27ae60" stroke-width="2"/>
+        <text x="95" y="163" text-anchor="middle" font-size="14" fill="#2c3e50" font-weight="600">A (Drug)</text>
+
+        <!-- Y (outcome) -->
+        <rect x="270" y="140" width="110" height="36" rx="6" fill="#fdf0ed" stroke="#e74c3c" stroke-width="2"/>
+        <text x="325" y="163" text-anchor="middle" font-size="14" fill="#2c3e50" font-weight="600">Y (Disease)</text>
+
+        <!-- Arrows -->
+        <!-- L -> A -->
+        <line x1="185" y1="76" x2="115" y2="140" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrowhead)"/>
+        <!-- L -> Y -->
+        <line x1="235" y1="76" x2="305" y2="140" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrowhead)"/>
+        <!-- A -> Y (causal effect of interest) -->
+        <line x1="150" y1="158" x2="270" y2="158" stroke="#e74c3c" stroke-width="2.5" marker-end="url(#arrowhead-red)"/>
+        <!-- A -> Y label -->
+        <text x="210" y="150" text-anchor="middle" font-size="11" fill="#e74c3c" font-style="italic">causal effect?</text>
+
+        <!-- Arrow markers -->
+        <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#7f8c8d"/>
+            </marker>
+            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c"/>
+            </marker>
+        </defs>
+    </svg>
+    <p class="dag-caption">
+        Figure 1.1 &mdash; The confounders L (age, sex) affect both treatment A and outcome Y,
+        creating a backdoor path $A \leftarrow L \rightarrow Y$ that biases the crude association.
+    </p>
+</div>
+
+<p>
+    The logic of IPW can be understood through this diagram. The arrows $L \to A$ and
+    $L \to Y$ create a <em>backdoor path</em> between treatment and outcome that flows
+    through the confounders. The crude association between $A$ and $Y$ is a mixture of the
+    causal effect ($A \to Y$) and the spurious association induced by this backdoor path.
+</p>
+
+<p>
+    What IPW does, conceptually, is <strong>sever the arrow from $L$ to $A$</strong>.
+    By reweighting the data so that treatment is no longer associated with the confounders,
+    we create a pseudo-population where the only remaining path from $A$ to $Y$ is the
+    causal one. In the language of Hernán and Robins (2020), we are emulating a
+    <em>target trial</em> in which treatment was randomly assigned.
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 4. THE MATH                                         -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>4. The Math</h2>
+
+<div class="scenario-box">
+    <div class="label">Prerequisites from <a href="module0-foundations.html">Module 0</a></div>
+    <p style="margin-bottom:0">
+        This section assumes you have read the <a href="module0-foundations.html">Foundations</a> module.
+        In particular: notation ($A$, $Y$, $\mathbf{L}$, $Y^a$, $\psi$, $e(\mathbf{L})$),
+        the three identification assumptions (exchangeability, positivity, consistency),
+        and the identification result:
+        $\psi = \E_{\mathbf{L}}[\E[Y \mid A\!=\!1, \mathbf{L}]] - \E_{\mathbf{L}}[\E[Y \mid A\!=\!0, \mathbf{L}]]$.
+        We now derive IPW as a specific estimation strategy for this identified quantity.
+    </p>
+</div>
+
+<h3>4.1 The IPW estimator</h3>
+
+<p>
+    Rather than modeling the outcome, IPW uses a representation of $\E[Y^a]$ that
+    involves the propensity score. The key identity is:
+</p>
+
+<div class="math-block">
+$$
+\E[Y^a] = \E\!\left[\frac{\mathbb{1}(A = a) \, Y}{f(A \mid \mathbf{L})}\right]
+$$
+</div>
+
+<p>
+    where $f(A \mid \mathbf{L})$ is the conditional probability of the treatment actually
+    received. For binary treatment, this means $f(A = 1 \mid \mathbf{L}) = e(\mathbf{L})$
+    and $f(A = 0 \mid \mathbf{L}) = 1 - e(\mathbf{L})$.
+</p>
+
+<p>
+    To see why this holds, consider the treated case ($a = 1$):
+</p>
+
+<div class="math-block">
+$$
+\begin{aligned}
+\E\!\left[\frac{A \cdot Y}{e(\mathbf{L})}\right]
+&= \E_{\mathbf{L}}\!\left[\E\!\left[\frac{A \cdot Y}{e(\mathbf{L})} \,\Big|\, \mathbf{L}\right]\right] \\[6pt]
+&= \E_{\mathbf{L}}\!\left[\frac{1}{e(\mathbf{L})} \, \E[A \cdot Y \mid \mathbf{L}]\right] \\[6pt]
+&= \E_{\mathbf{L}}\!\left[\frac{1}{e(\mathbf{L})} \, \P(A=1 \mid \mathbf{L}) \, \E[Y \mid A=1, \mathbf{L}]\right] \\[6pt]
+&= \E_{\mathbf{L}}\!\Big[\E[Y \mid A=1, \mathbf{L}]\Big] \\[6pt]
+&= \E[Y^1]
+\end{aligned}
+$$
+</div>
+
+<p>
+    The propensity score cancels with the conditional probability of treatment,
+    leaving exactly the G-formula identification result. But the estimation strategy
+    is different: instead of modeling $\E[Y \mid A, \mathbf{L}]$, we model
+    $\P(A = 1 \mid \mathbf{L})$.
+</p>
+
+<p>
+    This gives us the <strong>Horvitz-Thompson IPW estimator</strong> of the ATE:
+</p>
+
+<div class="math-block">
+$$
+\hat{\psi}_{\text{HT}} = \frac{1}{N} \sum_{i=1}^{N} \frac{A_i \, Y_i}{\hat{e}(\mathbf{L}_i)} \;-\; \frac{1}{N} \sum_{i=1}^{N} \frac{(1 - A_i) \, Y_i}{1 - \hat{e}(\mathbf{L}_i)}
+$$
+</div>
+
+<h3>4.2 The Hájek (stabilized) estimator</h3>
+
+<p>
+    The Horvitz-Thompson estimator can be numerically unstable when propensity scores
+    are close to 0 or 1, because the weights $1/\hat{e}(\mathbf{L})$ become very large.
+    A more stable variant normalizes the weights so they sum to 1 within each
+    treatment group:
+</p>
+
+<div class="math-block">
+$$
+\hat{\psi}_{\text{Hájek}}
+= \frac{\displaystyle\sum_{i=1}^{N} \frac{A_i \, Y_i}{\hat{e}(\mathbf{L}_i)}}{\displaystyle\sum_{i=1}^{N} \frac{A_i}{\hat{e}(\mathbf{L}_i)}}
+\;-\;
+\frac{\displaystyle\sum_{i=1}^{N} \frac{(1-A_i) \, Y_i}{1-\hat{e}(\mathbf{L}_i)}}{\displaystyle\sum_{i=1}^{N} \frac{(1-A_i)}{1-\hat{e}(\mathbf{L}_i)}}
+$$
+</div>
+
+<p>
+    This is equivalent to computing the weighted mean outcome among treated
+    (with weights $1/\hat{e}$) minus the weighted mean among untreated
+    (with weights $1/(1-\hat{e})$).
+    The Hájek estimator is a ratio estimator and hence only
+    asymptotically unbiased, but it typically has smaller variance than the
+    Horvitz-Thompson in finite samples and is the version more commonly used in practice.
+</p>
+
+<h3>4.3 Stabilized weights</h3>
+
+<p>
+    An alternative approach to reducing variance is to use <strong>stabilized weights</strong>
+    (Hernán & Robins, 2020; Robins et al., 2000). Instead of weighting by
+    $1 / \P(A \mid \mathbf{L})$, we weight by:
+</p>
+
+<div class="math-block">
+$$
+SW_i = \frac{\P(A_i)}{P(A_i \mid \mathbf{L}_i)}
+$$
+</div>
+
+<p>
+    where $\P(A_i)$ is the marginal probability of the treatment actually received.
+    For a treated person, this is $\P(A=1) / e(\mathbf{L}_i)$; for an untreated person,
+    $\P(A=0) / (1 - e(\mathbf{L}_i))$.
+</p>
+
+<p>
+    The numerator does not affect consistency of the estimator (the propensity score
+    in the denominator is what removes confounding), but it brings the weights closer
+    to 1 on average, reducing their variability. In a correctly specified model,
+    stabilized weights sum to approximately $N$ in the full sample, whereas
+    unstabilized weights can have a much larger or smaller sum. This is particularly
+    useful in practice for fitting weighted regression models (marginal structural models).
+</p>
+
+<h3>4.4 What IPW is really doing</h3>
+
+<p>
+    Let us step back and see the bigger picture. We can write the IPW estimator compactly
+    using the general form:
+</p>
+
+<div class="math-block">
+$$
+\hat{\psi}_{\text{IPW}} = \frac{1}{N} \sum_{i=1}^{N} \left[\frac{A_i}{\hat{e}(\mathbf{L}_i)} - \frac{1 - A_i}{1 - \hat{e}(\mathbf{L}_i)}\right] Y_i
+$$
+</div>
+
+<p>
+    Each observation $i$ contributes to the estimate, but its contribution is
+    <em>reweighted</em> by how surprising its treatment status is given its covariates.
+    A treated person with a low propensity score (someone who was unlikely to be treated
+    but was) gets a large weight&mdash;they are rare and informative. A treated person
+    with a high propensity score (someone who was very likely to be treated) gets a
+    small weight&mdash;they are expected and less informative.
+</p>
+
+<p>
+    This is the deep connection to survey sampling: just as the Horvitz-Thompson estimator
+    in survey statistics corrects for unequal sampling probabilities, the IPW estimator
+    corrects for unequal treatment probabilities. The analogy is precise&mdash;confounding
+    <em>is</em> a sampling problem, where nature "sampled" people into treatment and
+    control groups with probabilities that depend on their characteristics.
+</p>
+
+<div class="key-insight">
+    <div class="label">Summary so far</div>
+    <p>
+        IPW estimates the causal effect by modeling the <em>treatment assignment mechanism</em>
+        rather than the <em>outcome</em>. Under the identification assumptions, the IPW
+        estimator is consistent for the ATE when the propensity score model is correctly
+        specified&mdash;regardless of the true form of the outcome model.
+    </p>
+    <p style="margin-bottom:0;">
+        But this is also its vulnerability: if the propensity score model is wrong, the
+        IPW estimate will generally be biased. The next section explores exactly how and
+        when this happens.
+    </p>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 5. WHAT BREAKS                                      -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>5. What Breaks</h2>
+
+<p>
+    IPW can fail in several distinct ways. Understanding these failure modes is essential
+    both for responsible application and for motivating the more robust estimators we will
+    encounter in later modules.
+</p>
+
+<h3>5.1 Propensity score misspecification</h3>
+
+<p>
+    The IPW estimator is consistent <em>only</em> when the propensity score model
+    $e(\mathbf{L})$ is correctly specified. In practice, "correctly specified" means that
+    the fitted model captures the true relationship between the confounders and treatment
+    assignment, including any nonlinearities and interactions.
+</p>
+
+<p>
+    Return to our running example. Suppose that the true treatment assignment depends on
+    age in a nonlinear way&mdash;perhaps through $\exp(\text{Age}/2)$ rather than Age
+    itself&mdash;and we fit a logistic regression with Age entered linearly. The estimated
+    propensity scores will be wrong, and the resulting weights will not correctly remove
+    confounding. The IPW estimate will be biased, and <strong>this bias does not shrink
+    with larger sample sizes</strong>. More data cannot fix a wrong model.
+</p>
+
+<p>
+    Naimi, Mishler & Kennedy (2023) demonstrated this vividly in a simulation study. They
+    generated data from a known model with four confounders, then deliberately fitted
+    the propensity score to <em>transformed</em> versions of those confounders (e.g.,
+    $Z_1 = \exp(C_1/2)$ instead of $C_1$). Under this misspecification, the IPW estimator
+    showed substantial bias that persisted even at $n = 5{,}000$. The G-computation
+    estimator was equally biased under its own form of misspecification. Only the doubly
+    robust estimators (AIPW, TMLE) offered partial protection&mdash;a preview of Module 3.
+</p>
+
+<div class="key-insight">
+    <div class="label">Lesson</div>
+    <p style="margin-bottom:0">
+        IPW places all its eggs in one basket: the propensity score model.
+        If that model is wrong, there is no safety net. The bias is of the same
+        order as the bias from a misspecified outcome regression. IPW and G-computation
+        are "singly robust"&mdash;each depends on getting one model right.
+    </p>
+</div>
+
+<h3>5.2 Positivity violations and extreme weights</h3>
+
+<p>
+    Even when the propensity score model is correctly specified, IPW can behave poorly
+    in practice when positivity is <em>near-violated</em>: that is, when some individuals
+    have propensity scores very close to 0 or 1.
+</p>
+
+<p>
+    Consider a 85-year-old male in our running example. If almost all such patients receive
+    the drug, the estimated propensity score might be $\hat{e}(\mathbf{L}) = 0.98$.
+    If this patient happens <em>not</em> to be treated, his weight is
+    $1/(1 - 0.98) = 50$. This single individual now counts as 50 people in the
+    pseudo-population. A single outlier can dominate the entire estimate.
+</p>
+
+<p>
+    The consequences are twofold. First, <strong>high variance</strong>: the estimate
+    becomes unstable across samples because a few extreme weights drive the result.
+    Second, <strong>finite-sample bias</strong>: even though the estimator is
+    asymptotically unbiased, in any realistic sample the extreme weights introduce
+    erratic behavior. Austin & Stuart (2017) showed in simulations that when the
+    treatment-selection process is strong (i.e., confounders strongly predict treatment),
+    both IPTW and matching produced biased estimates of marginal hazard ratios, even
+    with a correctly specified propensity score model.
+</p>
+
+<h3>5.3 Practical diagnostics and remedies</h3>
+
+<p>
+    Several practical strategies can mitigate (but not eliminate) these problems:
+</p>
+
+<p>
+    <strong>Weight truncation (trimming).</strong> Cap the weights at some percentile
+    (e.g., the 1st and 99th percentiles) to limit the influence of extreme observations.
+    This introduces a small bias but can dramatically reduce variance. The trade-off
+    depends on the severity of the positivity violation.
+</p>
+
+<p>
+    <strong>Stabilized weights.</strong> As discussed in Section 4.3, using
+    $SW = \P(A) / \P(A \mid \mathbf{L})$ instead of $1/\P(A \mid \mathbf{L})$ reduces
+    weight variability without affecting consistency.
+</p>
+
+<p>
+    <strong>Covariate balance checking.</strong> After weighting, verify that the
+    weighted distribution of confounders is similar between treated and untreated groups.
+    Common diagnostics include standardized mean differences (SMD) before and after
+    weighting; the target is typically $|\text{SMD}| < 0.1$.
+</p>
+
+<p>
+    <strong>Propensity score distribution overlap.</strong> Plot the distributions of
+    $\hat{e}(\mathbf{L})$ in both treatment groups. If there are regions where one group
+    has density but the other does not, positivity is violated there, and the IPW
+    estimate for those subgroups is unreliable.
+</p>
+
+<h3>5.4 Unmeasured confounding</h3>
+
+<p>
+    Finally, and most fundamentally: IPW (like all methods in this series that rely on
+    the exchangeability assumption) cannot correct for confounders that are not measured.
+    If a variable affects both treatment and outcome but is absent from $\mathbf{L}$,
+    the propensity score cannot account for it, and the estimate will be biased regardless
+    of how well the propensity score model fits the observed data.
+</p>
+
+<p>
+    This is not a limitation specific to IPW&mdash;it applies equally to G-computation,
+    AIPW, and TMLE. No statistical method can substitute for a well-designed study with
+    adequate confounder measurement. The identification assumptions are assumptions about
+    the world, not about the estimator.
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 6. CODE                                             -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>6. Implementation</h2>
+
+<p>
+    We now implement the IPW estimator on our running example. We first simulate the data
+    from a known data-generating process so that we can verify that IPW recovers the true
+    causal effect, then show the implementation in both R and Python.
+</p>
+
+<h3>6.1 Data-generating process</h3>
+
+<p>
+    We use the shared DGP defined in <a href="module0-foundations.html">Module 0</a>:
+</p>
+
+<div class="math-block">
+$$
+\begin{aligned}
+\text{Age} &\sim \text{Uniform}(25,\, 75) \\[4pt]
+\text{Sex} &\sim \text{Bernoulli}(0.5) \quad (\text{1 = male, 0 = female})\\[4pt]
+\P(A = 1 \mid \mathbf{L}) &= \text{expit}(-2 + 0.03 \cdot \text{Age} + 0.5 \cdot \text{Sex}) \\[4pt]
+\P(Y = 1 \mid A, \mathbf{L}) &= \text{expit}(-1.5 + 0.04 \cdot \text{Age} + 0.3 \cdot \text{Sex} - 0.8 \cdot A)
+\end{aligned}
+$$
+</div>
+
+<p>
+    The true causal effect of $A$ on $Y$ is a risk difference of approximately $-0.14$
+    (the drug reduces disease risk by about 14 percentage points). The coefficient $-0.8$
+    on the log-odds scale translates to this risk difference after averaging over the
+    confounder distribution. Older age and male sex both increase treatment probability
+    <em>and</em> disease risk, creating confounding that reverses the apparent effect if
+    unaccounted for.
+</p>
+
+<h3>6.2 R implementation</h3>
+
+<pre style="background: var(--gray-light); padding: 1.2rem 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.88rem; line-height: 1.5; font-family: 'Courier New', monospace;">
+<code><span style="color:#7f8c8d;"># ── Simulate data ──────────────────────────────────────</span>
+set.seed(42)
+n &lt;- 10000
+age &lt;- runif(n, 25, 75)
+sex &lt;- rbinom(n, 1, 0.5)
+
+expit &lt;- function(x) 1 / (1 + exp(-x))
+
+<span style="color:#7f8c8d;"># Treatment model (true propensity score)</span>
+ps_true &lt;- expit(-2 + 0.03 * age + 0.5 * sex)
+A &lt;- rbinom(n, 1, ps_true)
+
+<span style="color:#7f8c8d;"># Outcome model</span>
+p_y &lt;- expit(-1.5 + 0.04 * age + 0.3 * sex - 0.8 * A)
+Y &lt;- rbinom(n, 1, p_y)
+
+<span style="color:#7f8c8d;"># ── Estimate propensity scores ─────────────────────────</span>
+ps_model &lt;- glm(A ~ age + sex, family = binomial)
+ps_hat &lt;- predict(ps_model, type = "response")
+
+<span style="color:#7f8c8d;"># ── Naive (unadjusted) estimate ────────────────────────</span>
+naive &lt;- mean(Y[A == 1]) - mean(Y[A == 0])
+cat("Naive estimate:", round(naive, 4), "\n")
+
+<span style="color:#7f8c8d;"># ── Horvitz-Thompson IPW estimator ─────────────────────</span>
+ipw_ht &lt;- mean(A * Y / ps_hat) - mean((1 - A) * Y / (1 - ps_hat))
+cat("IPW (Horvitz-Thompson):", round(ipw_ht, 4), "\n")
+
+<span style="color:#7f8c8d;"># ── Hájek (normalized) IPW estimator ───────────────────</span>
+ipw_hajek &lt;- ( sum(A * Y / ps_hat) / sum(A / ps_hat) ) -
+              ( sum((1-A) * Y / (1-ps_hat)) / sum((1-A) / (1-ps_hat)) )
+cat("IPW (Hájek):", round(ipw_hajek, 4), "\n")
+
+<span style="color:#7f8c8d;"># ── Diagnostics: covariate balance ─────────────────────</span>
+w1 &lt;- A / ps_hat                   <span style="color:#7f8c8d;"># weights for treated</span>
+w0 &lt;- (1 - A) / (1 - ps_hat)      <span style="color:#7f8c8d;"># weights for untreated</span>
+
+smd_age_before &lt;- (mean(age[A==1]) - mean(age[A==0])) / sd(age)
+smd_age_after  &lt;- (weighted.mean(age, w1 * A) -
+                    weighted.mean(age, w0 * (1-A))) / sd(age)
+
+cat("SMD (age) before weighting:", round(smd_age_before, 3), "\n")
+cat("SMD (age) after weighting: ", round(smd_age_after, 3), "\n")</code>
+</pre>
+
+<h3>6.3 Python implementation</h3>
+
+<pre style="background: var(--gray-light); padding: 1.2rem 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.88rem; line-height: 1.5; font-family: 'Courier New', monospace;">
+<code><span style="color:#7f8c8d;"># ── Simulate data ──────────────────────────────────────</span>
+import numpy as np
+from scipy.special import expit
+from sklearn.linear_model import LogisticRegression
+
+np.random.seed(42)
+n = 10_000
+age = np.random.uniform(25, 75, n)
+sex = np.random.binomial(1, 0.5, n)
+
+<span style="color:#7f8c8d;"># Treatment model (true propensity score)</span>
+ps_true = expit(-2 + 0.03 * age + 0.5 * sex)
+A = np.random.binomial(1, ps_true)
+
+<span style="color:#7f8c8d;"># Outcome model</span>
+p_y = expit(-1.5 + 0.04 * age + 0.3 * sex - 0.8 * A)
+Y = np.random.binomial(1, p_y)
+
+<span style="color:#7f8c8d;"># ── Estimate propensity scores ─────────────────────────</span>
+L = np.column_stack([age, sex])
+ps_model = LogisticRegression(max_iter=1000)
+ps_model.fit(L, A)
+ps_hat = ps_model.predict_proba(L)[:, 1]
+
+<span style="color:#7f8c8d;"># ── Naive (unadjusted) estimate ────────────────────────</span>
+naive = Y[A == 1].mean() - Y[A == 0].mean()
+print(f"Naive estimate: {naive:.4f}")
+
+<span style="color:#7f8c8d;"># ── Horvitz-Thompson IPW estimator ─────────────────────</span>
+ipw_ht = np.mean(A * Y / ps_hat) - np.mean((1 - A) * Y / (1 - ps_hat))
+print(f"IPW (Horvitz-Thompson): {ipw_ht:.4f}")
+
+<span style="color:#7f8c8d;"># ── Hájek (normalized) IPW estimator ───────────────────</span>
+ipw_hajek = ( np.sum(A * Y / ps_hat) / np.sum(A / ps_hat) -
+              np.sum((1-A) * Y / (1-ps_hat)) / np.sum((1-A) / (1-ps_hat)) )
+print(f"IPW (Hájek): {ipw_hajek:.4f}")
+
+<span style="color:#7f8c8d;"># ── Diagnostics: covariate balance ─────────────────────</span>
+w1 = A / ps_hat
+w0 = (1 - A) / (1 - ps_hat)
+
+smd_before = (age[A==1].mean() - age[A==0].mean()) / age.std()
+smd_after  = ( np.average(age, weights=w1*A) -
+               np.average(age, weights=w0*(1-A)) ) / age.std()
+
+print(f"SMD (age) before weighting: {smd_before:.3f}")
+print(f"SMD (age) after weighting:  {smd_after:.3f}")</code>
+</pre>
+
+<div class="scenario-box">
+    <div class="label">Expected output</div>
+    <p style="margin-bottom:0">
+        The naive estimate will be positive (around +0.04 to +0.08), wrongly suggesting the
+        drug increases disease risk. Both IPW estimators should recover approximately $-0.14$,
+        close to the true ATE. The SMD for age should drop from around 0.20&ndash;0.30
+        (before weighting) to near 0 (after weighting), confirming that the pseudo-population
+        is balanced.
+    </p>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 7. TAKEAWAY + BRIDGE                                -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<h2>7. Takeaway</h2>
+
+<h3>7.1 What we learned</h3>
+
+<p>
+    Inverse probability weighting estimates causal effects by modeling the treatment
+    assignment mechanism rather than the outcome. It creates a pseudo-population in which
+    confounders are balanced between treatment groups, emulating a randomized experiment.
+    When the propensity score model is correctly specified and positivity holds, the IPW
+    estimator is consistent for the ATE.
+</p>
+
+<p>
+    Its main vulnerability is that it depends entirely on one model being right: the
+    propensity score. Misspecification leads to bias that does not disappear with more data.
+    Near-violations of positivity cause extreme weights that inflate variance and can make
+    the estimate erratic in finite samples.
+</p>
+
+<h3>7.2 Comparison table</h3>
+
+<p>
+    This table will grow across modules. After Module 1, we have one row:
+</p>
+
+<table>
+    <tr>
+        <th>Method</th>
+        <th>What it models</th>
+        <th>Consistent if...</th>
+        <th>Main vulnerability</th>
+    </tr>
+    <tr>
+        <td><strong>IPW</strong></td>
+        <td>Treatment assignment $\P(A \mid \mathbf{L})$</td>
+        <td>Propensity score correctly specified</td>
+        <td>Extreme weights; single-model dependence</td>
+    </tr>
+    <tr style="color: var(--gray); font-style: italic;">
+        <td>G-formula</td>
+        <td colspan="3">Coming in Module 2...</td>
+    </tr>
+    <tr style="color: var(--gray); font-style: italic;">
+        <td>AIPW</td>
+        <td colspan="3">Coming in Module 3...</td>
+    </tr>
+</table>
+
+<h3>7.3 Bridge to Module 2</h3>
+
+<div class="key-insight">
+    <div class="label">What comes next</div>
+    <p style="margin-bottom:0">
+        IPW models the treatment. The <strong>G-formula</strong> takes the opposite approach:
+        it models the <em>outcome</em> $\E[Y \mid A, \mathbf{L}]$ and uses it to predict
+        what would happen under each treatment level. It is equally powerful and equally
+        fragile&mdash;just in a different direction. Understanding both is necessary to
+        appreciate why, in Module 3, we combine them into the doubly robust AIPW estimator
+        that protects against misspecification of either model (but not both).
+    </p>
+</div>
+
+<h3>References</h3>
+
+<p style="font-size: 0.9rem; color: var(--gray); line-height: 1.6;">
+    Hernán MA, Robins JM (2020). <em>Causal Inference: What If.</em> Boca Raton: Chapman & Hall/CRC.<br>
+    Horvitz DG, Thompson DJ (1952). A generalization of sampling without replacement from a finite universe. <em>JASA</em> 47:663&ndash;685.<br>
+    Naimi AI, Cole SR, Kennedy EH (2017). An introduction to g methods. <em>Int J Epidemiol</em> 46:756&ndash;762.<br>
+    Naimi AI, Mishler AE, Kennedy EH (2023). Challenges in obtaining valid causal effect estimates with machine learning algorithms. <em>Am J Epidemiol</em> 192:1536&ndash;1544.<br>
+    Austin PC, Stuart EA (2017). The performance of inverse probability of treatment weighting and full matching on the propensity score. <em>Stat Methods Med Res</em> 26:1654&ndash;1670.<br>
+    Rosenbaum PR, Rubin DB (1983). The central role of the propensity score in observational studies for causal effects. <em>Biometrika</em> 70:41&ndash;55.<br>
+    Robins JM, Hernán MA, Brumback B (2000). Marginal structural models and causal inference in epidemiology. <em>Epidemiology</em> 11:550&ndash;560.
+</p>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- NAV                                                 -->
+<!-- ════════════════════════════════════════════════════ -->
+
+<div class="module-nav">
+    <a href="module0-foundations.html">&larr; Module 0: Foundations</a>
+    <a href="module2-gformula.html">Module 2: The G-formula &rarr;</a>
+</div>
+
+</body>
+</html>
