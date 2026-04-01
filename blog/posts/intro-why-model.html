@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Introduction: Why Model? — Causal Inference Methods | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=21">
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">← Posts</a>
+
+    <div class="series-label">Causal Inference Methods &mdash; Introduction</div>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-15</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>Why Model?</h1>
+    <p class="subtitle">From data and question to estimation strategy.</p>
+
+    <hr>
+
+    <p>
+      A statistical model is an approximation: a set of parametric assumptions that
+      allows patterns observed in the data to be extrapolated to the target population,
+      filling gaps where direct observations are absent or too sparse. Without such
+      structure, the raw information one can extract from data is often insufficient
+      to answer the causal questions we care about.
+    </p>
+
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#s1">Three questions for every causal analysis</a></li>
+        <li><a href="#s2">What do we have? The data</a></li>
+        <li><a href="#s3">What do we want? From research question to estimand</a></li>
+        <li><a href="#s4">What to do? From stratification to modeling</a>
+          <ol style="margin: 0.2em 0 0 0; padding-left: 1.2em; line-height: 1.9;">
+            <li><a href="#s41">When nonparametric approaches break down</a></li>
+            <li><a href="#s42">The solution: a model</a></li>
+          </ol>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Running scenario -->
+    <div class="callout callout-scenario">
+      <div class="callout-label">Running scenario &mdash; used throughout this post</div>
+      <p>
+        Two drugs are available in clinical practice to reduce the risk of
+        <strong>heart failure</strong> in a susceptible population.
+      </p>
+      <p>
+        <strong>Drug A</strong> is taken weekly and is the more effective option against
+        heart failure. It carries a known risk of <strong>blindness</strong>: approximately
+        2% of patients on Drug A develop blindness during treatment. This risk is not
+        uniform &mdash; it doubles for women relative to men, and increases with age.
+        Drug A is under active pharmacovigilance surveillance.
+      </p>
+      <p style="margin-bottom: 0;">
+        <strong>Drug B</strong> is less effective against heart failure but carries no
+        blindness risk, making it the safer option from an adverse-event perspective.
+      </p>
+    </div>
+
+    <!-- Research question: highlighted -->
+    <p style="background: #eaf2f8; border-left: 3px solid #2980b9; padding: 0.8em 1.2em; margin: 1.5em 0; border-radius: 0 4px 4px 0; font-size: 0.97em;">
+      <strong>Research question:</strong> What is the causal effect of Drug A compared with
+      Drug B on heart failure risk in the population of eligible patients? This question
+      arises because no direct evidence exists &mdash; existing trials compared Drug A
+      against placebo, leaving the head-to-head comparison unanswered.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 1. THREE QUESTIONS                                    -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s1">1. Three questions for every causal analysis</h2>
+
+    <p>
+      A useful framework for structuring any epidemiologic investigation asks three
+      questions in sequence: <em>What do I want? What do I have? What do I do?</em>
+      Ung and Dahabreh (2025) note that while many methodological frameworks emphasize
+      the procedural steps of an analysis &mdash; the "what do I do" &mdash; the most
+      rigorous ones begin by making the research question itself explicit, then account
+      for what the available data can and cannot support, before selecting a method.
+      These three questions define the overarching structure of any well-conducted study
+      and naturally recur as each component of the design and analysis is worked out.
+    </p>
+
+    <p>
+      The order matters. Picking a method before stating what you want, or before
+      understanding what you have, is one of the most common sources of confusion
+      in applied causal inference. This post works through all three questions using
+      the scenario above and, in doing so, arrives at the question that motivates
+      the rest of the series: <em>why do we need a model?</em>
+    </p>
+
+
+    <!-- Diagram: estimand → [why we model: data → estimator → estimate] -->
+    <!-- Placed before section 2 — single data box inside the WHY WE MODEL region -->
+
+    <div style="margin: 2.5em 0 1em 0;">
+      <svg viewBox="0 0 610 185" xmlns="http://www.w3.org/2000/svg"
+           style="font-family:'DM Sans',sans-serif; width:100%; max-width:610px; display:block; margin: 0 auto;">
+
+        <!-- WHY WE MODEL box (drawn first so nodes sit on top) -->
+        <rect x="175" y="12" width="420" height="158" rx="7"
+              fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="385" y="31" text-anchor="middle"
+              font-size="11" font-weight="700" fill="#2a5f4f" letter-spacing="1">WHY WE MODEL</text>
+        <line x1="190" y1="37" x2="580" y2="37" stroke="#c3d9d2" stroke-width="0.8"/>
+
+        <!-- Data box — single box, inside the WHY WE MODEL region, top area -->
+        <rect x="233" y="45" width="95" height="32" rx="5"
+              fill="#f0efed" stroke="#b0ada8" stroke-width="1.3"/>
+        <text x="280" y="65" text-anchor="middle" font-size="13" fill="#666">data</text>
+
+        <!-- Estimand box — outside, left -->
+        <rect x="15" y="118" width="118" height="34" rx="5"
+              fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="74" y="139" text-anchor="middle" font-size="13" fill="#1a1916">estimand</text>
+
+        <!-- Estimator box — inside WHY WE MODEL, bottom-left -->
+        <rect x="225" y="118" width="110" height="34" rx="5"
+              fill="#ffffff" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="280" y="139" text-anchor="middle" font-size="13" fill="#1a1916">estimator</text>
+
+        <!-- Estimate box — inside WHY WE MODEL, bottom-right -->
+        <rect x="398" y="118" width="105" height="34" rx="5"
+              fill="#ffffff" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="450" y="139" text-anchor="middle" font-size="13" fill="#1a1916">estimate</text>
+
+        <!-- Grey bidirectional arrows: data ↔ estimand (diagonal, crossing box boundary) -->
+        <line x1="246" y1="74" x2="128" y2="118"
+              stroke="#c8c5c0" stroke-width="1.3" marker-end="url(#bd)"/>
+        <line x1="123" y1="113" x2="252" y2="69"
+              stroke="#c8c5c0" stroke-width="1.3" marker-end="url(#bd)"/>
+
+        <!-- Main arrow: estimand → estimator (green, crosses box boundary directly to estimator) -->
+        <line x1="133" y1="135" x2="225" y2="135"
+              stroke="#2a5f4f" stroke-width="2" marker-end="url(#ag)"/>
+
+        <!-- Arrow: data → estimator (down, dark grey, inside box) -->
+        <line x1="280" y1="77" x2="280" y2="118"
+              stroke="#999" stroke-width="1.3" marker-end="url(#ad)"/>
+
+        <!-- Arrow: estimator → estimate (green) -->
+        <line x1="335" y1="135" x2="398" y2="135"
+              stroke="#2a5f4f" stroke-width="2" marker-end="url(#ag2)"/>
+
+        <defs>
+          <marker id="bd" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#c8c5c0"/>
+          </marker>
+          <marker id="ag" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a5f4f"/>
+          </marker>
+          <marker id="ag2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a5f4f"/>
+          </marker>
+          <marker id="ad" markerWidth="7" markerHeight="5" refX="3.5" refY="5" orient="auto">
+            <polygon points="0 0, 7 0, 3.5 5" fill="#999"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="dag-caption" style="text-align: center;">
+        The estimand is fixed by the research question. Given the estimand and the data,
+        the estimator produces the final estimate. Grey arrows reflect that the research question
+        and available data inform each other (which variables to collect, what is feasible) &mdash;
+        but this is secondary to the main estimation flow.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 2. WHAT DO WE HAVE?                                  -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s2">2. What do we have? The data</h2>
+
+    <p>
+      We have a large administrative database of patients initiating one of the two
+      treatments. The data are clean &mdash; no missing values, no measurement error,
+      no censoring. Each patient's record contains: treatment received
+      ($A \in \{\text{Drug A},\, \text{Drug B}\}$), age (continuous, in years),
+      sex (binary), and heart failure event during follow-up (binary $Y$).
+    </p>
+
+    <p>
+      Treatment was not randomly assigned. Physicians prescribed based on clinical
+      judgment, and that judgment has a systematic pattern: because of Drug A's
+      blindness risk, older patients and women are preferentially steered toward
+      Drug B &mdash; precisely the patients most susceptible to that adverse event.
+      Age and sex therefore simultaneously determine treatment choice and independently
+      affect heart failure risk. This is <em>confounding by indication</em>.
+    </p>
+
+    <p>
+      A patient population that received Drug A will be systematically younger and
+      more male than one that received Drug B, not because of any pharmacological
+      difference between the drugs, but because of how prescribing decisions were made.
+      Any crude comparison of outcomes conflates the causal effect of treatment with
+      this baseline imbalance.
+    </p>
+
+    <!-- DAG -->
+    <div class="dag-container">
+      <svg viewBox="0 0 500 215" xmlns="http://www.w3.org/2000/svg"
+           style="font-family: 'DM Sans', sans-serif;">
+        <text x="250" y="20" text-anchor="middle" font-size="13" font-weight="500" fill="#1a1916">
+          Confounding structure: age and sex affect both treatment and outcome
+        </text>
+
+        <rect x="170" y="38" width="160" height="40" rx="6"
+              fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="250" y="57" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">L = (Age, Sex)</text>
+        <text x="250" y="71" text-anchor="middle" font-size="11" fill="#5a7fa0" font-style="italic">confounders</text>
+
+        <rect x="20" y="150" width="145" height="40" rx="6"
+              fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+        <text x="93" y="169" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">A (Drug A or B)</text>
+        <text x="93" y="183" text-anchor="middle" font-size="11" fill="#27ae60" font-style="italic">treatment</text>
+
+        <rect x="340" y="150" width="140" height="40" rx="6"
+              fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="410" y="167" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">Y (heart failure)</text>
+        <text x="410" y="182" text-anchor="middle" font-size="11" fill="#2a5f4f" font-style="italic">outcome</text>
+
+        <line x1="197" y1="78" x2="123" y2="150" stroke="#a09d96" stroke-width="1.5" marker-end="url(#dag-g)"/>
+        <line x1="303" y1="78" x2="377" y2="150" stroke="#a09d96" stroke-width="1.5" marker-end="url(#dag-g)"/>
+        <line x1="165" y1="170" x2="340" y2="170" stroke="#2a5f4f" stroke-width="2" marker-end="url(#dag-t)"/>
+        <text x="253" y="161" text-anchor="middle" font-size="11" fill="#2a5f4f" font-style="italic">causal effect?</text>
+
+        <defs>
+          <marker id="dag-g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a09d96"/>
+          </marker>
+          <marker id="dag-t" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a5f4f"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">
+        Figure 1 &mdash; Age and sex ($\mathbf{L}$) affect both treatment $A$ and outcome $Y$,
+        opening a backdoor path $A \leftarrow \mathbf{L} \rightarrow Y$ that biases any
+        unadjusted comparison between the two drugs.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 3. WHAT DO WE WANT?                                  -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s3">3. What do we want? From research question to estimand</h2>
+
+    <p>
+      With the research question stated and the data described, the next step is to
+      translate that question into a precise mathematical object: the <em>estimand</em>.
+      This translation matters more than it might seem. Two analysts working from the
+      same informal question can produce incompatible results if they are targeting
+      different quantities &mdash; for instance, an effect in the treated population
+      versus the full eligible population, or a short-term risk versus a longer horizon.
+      Precision in the estimand is what makes an analysis interpretable and its results
+      comparable across studies.
+    </p>
+
+    <p>
+      Once the estimand is fixed, it determines what follows: which identification
+      assumptions are needed, which confounders must be adjusted for, and what a
+      correctly specified estimator would look like. An estimate produced without a
+      stated estimand is a number in search of a question. The chain below is the
+      structure this series commits to:
+    </p>
+
+    <table>
+      <tr>
+        <th>Concept</th>
+        <th>Definition</th>
+        <th>In this analysis</th>
+      </tr>
+      <tr>
+        <td><strong>Research question</strong></td>
+        <td>The scientific or clinical question, in plain language</td>
+        <td>Does Drug A cause fewer heart failures than Drug B?</td>
+      </tr>
+      <tr>
+        <td><strong>Estimand</strong></td>
+        <td>The precise mathematical quantity that answers the research question</td>
+        <td>$\psi = \E[Y^{\text{A}}] - \E[Y^{\text{B}}]$</td>
+      </tr>
+      <tr>
+        <td><strong>Estimator</strong></td>
+        <td>The procedure applied to data to compute an estimate of the estimand</td>
+        <td>IPW, G-formula, doubly robust methods</td>
+      </tr>
+      <tr>
+        <td><strong>Estimate</strong></td>
+        <td>The numerical result obtained from applying the estimator to the data</td>
+        <td>The risk difference, with its uncertainty</td>
+      </tr>
+    </table>
+
+    <p>
+      The estimate is only the end product of this chain. It inherits its meaning
+      from the estimand and its validity from the estimator. The order &mdash; question,
+      estimand, estimator, estimate &mdash; is not a formality. It is the structure
+      that makes the analysis interpretable and the conclusions defensible.
+    </p>
+
+    <p>
+      Formally, for each patient $i$ and each treatment $a$, the
+      <em>potential outcome</em> $Y^a_i$ denotes the heart failure outcome that
+      patient $i$ <em>would</em> experience under treatment $a$, possibly contrary
+      to what actually happened. Because each patient receives only one treatment,
+      only one potential outcome is ever observed: $Y^1_i$ if Drug A was prescribed,
+      $Y^0_i$ if Drug B was prescribed (where 1 and 0 denote the two drugs for concision).
+      The estimand is the average treatment effect (ATE):
+    </p>
+
+    <div class="math-block">
+      $$\psi = \E[Y^{\text{A}}] - \E[Y^{\text{B}}]$$
+    </div>
+
+    <p>
+      This is the difference in population-mean heart failure risk under universal
+      assignment to Drug A versus universal assignment to Drug B. We expect $\psi < 0$:
+      Drug A is the more effective option, so the counterfactual risk under Drug A is
+      lower. Having stated the estimand, we can now ask how to estimate it from the
+      available data &mdash; and whether the raw data are sufficient to do so.
+    </p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">Scope of this post</div>
+      <p style="margin-bottom: 0;">
+        We work here with clean data &mdash; no missing values, no censoring,
+        no measurement error. Each of these complications introduces additional
+        identifiability challenges and will be addressed in dedicated posts.
+        Setting them aside isolates the core problem: estimating a causal effect
+        from observational data in the presence of <em>measured</em> confounding.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 4. WHAT TO DO?                                       -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s4">4. What to do? From stratification to modeling</h2>
+
+    <p>
+      Under conditional exchangeability, positivity, and consistency
+      (the identifiability conditions detailed in Module 0 Assumptions),
+      $\psi$ is identified by the <em>standardized</em> risk difference:
+    </p>
+
+    <div class="math-block">
+      $$\psi \;=\; \sum_{\ell}\, \E[Y \mid A = \text{A},\, \mathbf{L} = \ell]\;\P(\mathbf{L} = \ell)
+             \;-\; \sum_{\ell}\, \E[Y \mid A = \text{B},\, \mathbf{L} = \ell]\;\P(\mathbf{L} = \ell)$$
+    </div>
+
+    <p>
+      The recipe: estimate the outcome risk under each treatment within every stratum
+      $\ell$ of the confounders, then average over the marginal distribution of
+      $\mathbf{L}$. This is <em>standardization</em> &mdash; the nonparametric approach
+      Hernán &amp; Robins develop in Chapter 2 (2020). When the confounder vector is
+      discrete and the strata are well-populated, it is unbiased and requires no
+      modeling assumptions. With a binary confounder like sex (two strata), it is
+      entirely tractable.
+    </p>
+
+    <h3 id="s41">4.1 When nonparametric approaches break down</h3>
+
+    <p>
+      Age complicates this immediately. Being continuous, it assigns each individual
+      to their own stratum in principle: no two patients need share an identical age
+      value, and estimating a risk among patients with exactly age $t = 47.3$ years
+      is meaningless when no one else in the dataset has that value. The natural
+      response is <em>categorization</em> &mdash; grouping age into, say, five bins.
+      This restores feasibility at the cost of residual confounding within each bin.
+    </p>
+
+    <p>
+      Categorization works for a single continuous variable. The deeper problem
+      surfaces as the confounder vector grows. Physicians weighing Drug A's blindness
+      risk likely consider comorbidities beyond age and sex: hypertension, diabetes,
+      prior cardiac events, renal function, smoking status. Five such binary
+      confounders, combined with five age categories and sex, already produce:
+    </p>
+
+    <div class="math-block">
+      $$5_{\,\text{age}} \;\times\; 2_{\,\text{sex}} \;\times\; 2^5_{\,\text{binary}} \;=\; 320 \text{ strata}
+        \;\;\Longrightarrow\;\; 640 \text{ cells to fill}$$
+    </div>
+
+    <p>
+      A substantial fraction of those 640 cells will be empty or near-empty in any
+      real database. The nonparametric estimator, which asks the data within each
+      cell to speak for themselves, becomes undefined or wildly imprecise.
+      This is the <em>curse of dimensionality</em>: the very act of conditioning
+      on all measured confounders &mdash; which identification requires &mdash;
+      exhausts the data's ability to say anything informative
+      (Hernán &amp; Robins, Ch. 10.5; Robins and Ritov, 1997).
+      Each additional binary confounder doubles the number of strata,
+      and the problem worsens exponentially.
+    </p>
+
+    <h3 id="s42">4.2 The solution: a model</h3>
+
+    <p>
+      The way out is to supplement the data with a <em>model</em>: an a priori
+      restriction on how the outcome or treatment probabilities vary with covariates.
+      Hernán &amp; Robins (Ch. 11) define a model precisely as such a restriction
+      &mdash; it adds information not in the data, which is exactly what is needed
+      when the data are too sparse to estimate stratum-specific risks independently.
+      A logistic regression, for instance, assumes the log-odds of the outcome
+      is a linear function of the covariates:
+    </p>
+
+    <div class="math-block">
+      $$\log\frac{\P(Y=1 \mid A,\, \mathbf{L})}{1 - \P(Y=1 \mid A,\, \mathbf{L})}
+        \;=\; \theta_0 + \theta_1 A + \theta_2\,\text{Age} + \theta_3\,\text{Sex} + \cdots$$
+    </div>
+
+    <p>
+      Rather than estimating 640 cell-specific risks independently, this model fits
+      a single smooth surface over the covariate space using all observations jointly.
+      Patients in sparse or empty strata receive predicted risks informed by
+      neighboring strata through the model's parametric structure. The restriction
+      may not hold exactly &mdash; it almost never does &mdash; but it makes estimation
+      tractable where the nonparametric estimator collapses. The cost is potential
+      bias from misspecification; the benefit is finite-sample feasibility.
+    </p>
+
+    <p>
+      This is why we model: not out of a belief that parametric forms are true,
+      but because any realistic confounder space &mdash; even a modest one &mdash;
+      leaves the data unable to speak for themselves. Concretely, modeling will allow
+      us to estimate either the <em>propensity score</em>
+      $\P(A = \text{A} \mid \mathbf{L})$, the <em>outcome regression</em>
+      $\E[Y \mid A, \mathbf{L}]$, or both, and to plug these into the standardization
+      formula to recover a tractable estimate of $\psi$. Those are the building blocks
+      of IPW, G-methods, and doubly robust estimators covered in this series.
+    </p>
+
+    <!-- Red end-note box: bridge to Part 2 -->
+    <div style="background: #fff5f5; border-left: 4px solid #c0392b; padding: 1em 1.4em; margin: 2em 0 0.5em 0; border-radius: 0 4px 4px 0;">
+      <div style="font-size: 0.78em; font-weight: 700; color: #c0392b; letter-spacing: 0.08em; margin-bottom: 0.5em; text-transform: uppercase;">Looking ahead</div>
+      <p style="margin: 0;">
+        A statistical model that smooths the data is not yet a <em>causal</em> model.
+        It can borrow information across strata and produce predictions, but it does
+        not by itself tell us which variables to condition on, which adjustments open
+        new biases rather than closing old ones, or how the data-generating process
+        relates to the counterfactual world. That is the subject for later.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- WHY CAUSAL MODEL? — closing section (not in TOC)     -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h1>Why causal model?</h1>
+
+    <p>
+      A statistical model becomes a <em>causal</em> model once its parameters are
+      anchored to a well-defined estimand through explicit identification assumptions
+      &mdash; exchangeability, positivity, and consistency. These assumptions license
+      the <em>G-formula</em>: a generalization of standardization that recovers mean
+      potential outcomes as a functional of the observed data distribution. In practice,
+      fitting parametric models for the required conditional distributions &mdash; the
+      <em>parametric G-formula</em> &mdash; extends this identification strategy from
+      a static snapshot of baseline confounders to full sequences of time-varying
+      exposures and covariate histories. The extension is not merely a technical
+      generalization: in a longitudinal setting, classical regression conditions on
+      post-treatment covariates that either lie on the causal pathway or have been
+      affected by prior treatment, blocking or distorting the causal effect of
+      interest; the same mechanism operates under informative censoring, where
+      standard survival models condition on variables that jointly predict dropout
+      and the outcome, introducing selection bias. When earlier treatment values
+      affect later confounders, which in turn affect subsequent treatment &mdash;
+      confounder feedback &mdash; no regression-based estimator can remove the
+      resulting bias without explicitly targeting a causal parameter through
+      G-methods or marginal structural models.
+    </p>
+    <p>
+      Even in the comparatively simple
+      setting of baseline-only confounding with non-informative censoring, the causal
+      framework delivers three further advantages: doubly robust estimators combine
+      treatment and outcome models so that consistency of only one is sufficient,
+      removing the need to choose between a propensity-score analysis and an outcome
+      regression at the outset; extending those components with machine learning &mdash;
+      as in targeted maximum likelihood estimation (TMLE) &mdash; relaxes parametric
+      functional-form assumptions and protects against the misspecification that any
+      fixed parametric family is prone to; and anchoring the analysis to a
+      pre-specified target parameter keeps the focus on the quantity of scientific
+      interest rather than on a practitioner&rsquo;s preferred estimator, such as
+      the Cox proportional hazards ratio, whose causal interpretation depends on
+      assumptions that are rarely stated explicitly.
+    </p>
+
+    <hr>
+
+    <h3>References</h3>
+
+    <p style="font-size: 13px; line-height: 1.8;">
+      Hernán MA, Robins JM (2020). <em>Causal Inference: What If.</em>
+      Boca Raton: Chapman &amp; Hall/CRC. [Ch. 2, Ch. 10.5, Ch. 11]<br>
+      Robins JM, Ritov Y (1997). Toward a curse of dimensionality appropriate (CODA) asymptotic theory
+      for semi-parametric models. <em>Statistics in Medicine</em> 16:285&ndash;319.<br>
+      Ung L, Dahabreh IJ (2025). Keep asking: What do I want? What do I have? What do I do?
+      <em>European Journal of Epidemiology</em> 40:245&ndash;254.
+    </p>
+
+    <!-- Navigation -->
+    <div class="module-nav">
+      <span class="nav-prev">&larr; Series overview</span>
+      <a href="intro-why-causal-model.html">Introduction, Part 2: Why a causal model? &rarr;</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>

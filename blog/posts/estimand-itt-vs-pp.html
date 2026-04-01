@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intention-to-Treat vs. Per-Protocol — Estimands | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=21">
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">← Posts</a>
+
+    <div class="series-label">Estimands</div>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-26</span>
+      <span class="post-tag">Causal Inference</span>
+      <span class="post-tag">Estimands</span>
+    </div>
+
+    <h1>Intention-to-Treat vs. Per-Protocol</h1>
+    <p class="subtitle">Two estimands, one dataset &mdash; and why the choice matters more than it seems.</p>
+
+    <a href="poster-itt-vs-pp.html" target="_blank" style="display:block; margin: 1.4em 0 0.4em 0;">
+      <img src="poster-preview.png"
+           alt="Poster summarising this post"
+           style="width:100%; border-radius:5px; border:1px solid #e3e1de; display:block;">
+    </a>
+    <p style="font-size:12px; color:#6b6967; font-style:italic; margin-bottom:1.2em;">
+      Poster summarising this post &mdash;
+      <a href="poster-itt-vs-pp.html" target="_blank" style="color:#2a5f4f;">open full-screen</a>.
+    </p>
+
+    <hr>
+
+    <p>
+      Every comparative study, whether a randomised trial or an observational database analysis,
+      implicitly or explicitly targets one of two fundamentally different causal quantities: the
+      effect of being <em>assigned</em> a treatment, or the effect of actually
+      <em>receiving</em> it. These are not the same thing, and the gap between them grows
+      whenever patients deviate from their assigned strategy &mdash; which in long-term
+      pragmatic trials and real-world evidence studies is not the exception but the rule.
+      Clarifying which effect is being estimated is not a technicality; it is what makes a
+      result interpretable and actionable.
+    </p>
+
+    <!-- TOC -->
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#s1">Defining the two estimands</a></li>
+        <li><a href="#s2">Why ITT is attractive in RCTs</a></li>
+        <li><a href="#s3">When ITT misleads</a>
+          <ol style="margin: 0.2em 0 0 0; padding-left: 1.2em; line-height: 1.9;">
+            <li><a href="#s31">ITT is not universally valid</a></li>
+            <li><a href="#s32">The ITT effect depends on adherence</a></li>
+            <li><a href="#s33">ITT does not answer the clinical question</a></li>
+          </ol>
+        </li>
+        <li><a href="#s4">The case for per-protocol</a>
+          <ol style="margin: 0.2em 0 0 0; padding-left: 1.2em; line-height: 1.9;">
+            <li><a href="#s41">What PP answers that ITT cannot</a></li>
+            <li><a href="#s42">PP requires causal methods &mdash; and that is a feature</a></li>
+            <li><a href="#s43">ITT and PP coincide under perfect adherence</a></li>
+          </ol>
+        </li>
+        <li><a href="#s5">ITT and PP in the ICH E9(R1) estimand framework</a></li>
+        <li><a href="#s6">What changes in real-world evidence</a></li>
+      </ol>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 1. DEFINING THE TWO ESTIMANDS                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s1">1. Defining the two estimands</h2>
+
+    <!-- Definition callouts -->
+    <div class="callout callout-definition">
+      <div class="callout-label">Intention-to-treat (ITT) effect</div>
+      <p style="margin-bottom: 0;">
+        The causal effect of being <strong>assigned</strong> to one treatment strategy compared
+        with another, regardless of whether patients actually received or adhered to the
+        assigned treatment during follow-up.
+      </p>
+    </div>
+
+    <div class="callout callout-definition" style="margin-top: 1em;">
+      <div class="callout-label">Per-protocol (PP) effect</div>
+      <p style="margin-bottom: 0;">
+        The causal effect of <strong>receiving</strong> the assigned treatment strategies
+        throughout follow-up, exactly as specified in the study protocol &mdash;
+        the effect that would have been observed if all participants had fully adhered.
+      </p>
+    </div>
+
+    <p>
+      The distinction hinges on the role of adherence. In any trial, treatment is first
+      <em>assigned</em> (by randomisation or by a clinical decision) and then
+      <em>received</em> to varying degrees. Let $Z$ denote treatment assignment and
+      $A$ denote treatment actually received. ITT compares outcomes across levels of $Z$;
+      PP compares outcomes across levels of $A$, conditioning on full adherence throughout
+      follow-up.
+    </p>
+
+    <p>
+      The causal effect of the assigned treatment $Z$ on the outcome $Y$ operates through
+      three distinct channels, illustrated in the diagram below: the effect of the
+      received treatment ($A \to Y$); the degree to which assignment translates into
+      receipt ($Z \to A$, i.e., adherence); and any direct behavioural changes triggered
+      by assignment awareness itself ($Z \to Y$, a path that blinding is designed to
+      block). Unmeasured factors $U$ that simultaneously predict adherence and the outcome
+      can confound the per-protocol effect, even in a randomised trial.
+    </p>
+
+    <!-- Causal structure DAG — poster style -->
+    <div class="dag-container" style="margin: 2em 0;">
+      <svg viewBox="0 0 480 175" xmlns="http://www.w3.org/2000/svg"
+           style="font-family:'DM Sans',sans-serif; max-width:640px; width:100%;">
+
+        <!-- Z: assignment -->
+        <text x="62"  y="96"  text-anchor="middle" font-size="34" font-weight="700" fill="#1a1916">Z</text>
+        <text x="62"  y="113" text-anchor="middle" font-size="10" fill="#555" font-style="italic">assignment</text>
+        <text x="62"  y="125" text-anchor="middle" font-size="9.5" fill="#27ae60" font-style="italic">randomised</text>
+
+        <!-- A: received -->
+        <text x="240" y="96"  text-anchor="middle" font-size="34" font-weight="700" fill="#1a1916">A</text>
+        <text x="240" y="113" text-anchor="middle" font-size="10" fill="#555" font-style="italic">received</text>
+
+        <!-- Y: outcome -->
+        <text x="418" y="96"  text-anchor="middle" font-size="34" font-weight="700" fill="#1a1916">Y</text>
+        <text x="418" y="113" text-anchor="middle" font-size="10" fill="#555" font-style="italic">outcome</text>
+
+        <!-- U: unmeasured, bottom-left -->
+        <text x="62"  y="158" text-anchor="middle" font-size="26" font-weight="700" fill="#aaa">U</text>
+        <text x="62"  y="172" text-anchor="middle" font-size="9"   fill="#bbb" font-style="italic">unmeasured</text>
+
+        <!-- Z → A -->
+        <line x1="82"  y1="85" x2="218" y2="85" stroke="#1a1916" stroke-width="1.8" marker-end="url(#p-blk)"/>
+
+        <!-- A → Y -->
+        <line x1="258" y1="85" x2="396" y2="85" stroke="#1a1916" stroke-width="1.8" marker-end="url(#p-blk2)"/>
+
+        <!-- Z → Y curved — behavioural changes -->
+        <path d="M82,78 Q240,28 396,78"
+              fill="none" stroke="#2a5f4f" stroke-width="1.4" stroke-dasharray="6,3"
+              marker-end="url(#p-teal)"/>
+        <text x="240" y="22" text-anchor="middle" font-size="10" fill="#2a5f4f" font-style="italic">behavioural changes</text>
+
+        <!-- U → A -->
+        <line x1="80"  y1="150" x2="218" y2="100" stroke="#ccc" stroke-width="1.3" marker-end="url(#p-grey)"/>
+
+        <!-- U → Y -->
+        <line x1="84"  y1="150" x2="398" y2="102" stroke="#ccc" stroke-width="1.3" marker-end="url(#p-grey2)"/>
+
+        <defs>
+          <marker id="p-blk"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="p-blk2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="p-teal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2a5f4f"/></marker>
+          <marker id="p-grey" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+          <marker id="p-grey2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">
+        Figure 1 &mdash; The causal structure linking assignment $Z$, received treatment $A$,
+        unmeasured adherence predictors $U$, and outcome $Y$. The ITT effect operates along
+        <em>all</em> paths from $Z$ to $Y$. The PP effect isolates the path
+        $A \to Y$ and requires adjustment for $U$, which confounds adherence even after
+        randomisation.
+      </p>
+    </div>
+
+    <p>
+      Formally, the ITT estimand targets
+      $\psi_{\text{ITT}} = \E[Y^{Z=1}] - \E[Y^{Z=0}]$,
+      the average difference in outcomes under universal assignment to each arm. Because
+      $Z$ is randomised, this quantity is identified without any covariate adjustment.
+      The PP estimand targets
+      $\psi_{\text{PP}} = \E[Y^{A=1,\,\text{full adherence}}] - \E[Y^{A=0,\,\text{full adherence}}]$,
+      the effect in a world where all participants adhered to their assigned protocol.
+      Identification of $\psi_{\text{PP}}$ requires additional assumptions, even in a
+      randomised trial.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 2. WHY ITT IS ATTRACTIVE                             -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s2">2. Why ITT is attractive in RCTs</h2>
+
+    <p>
+      The dominance of ITT in clinical trial reporting is not accidental. It has three
+      genuine virtues that made it the natural default for an era of short, double-blind,
+      placebo-controlled trials.
+    </p>
+
+    <p>
+      <strong>Randomisation protects it.</strong> Because $Z$ is randomised, the groups
+      assigned to each arm are exchangeable at baseline. The ITT comparison
+      $\E[Y \mid Z=1] - \E[Y \mid Z=0]$ is an unbiased estimate of $\psi_{\text{ITT}}$
+      without any adjustment for confounders. No post-randomisation decisions, however
+      complex, can introduce confounding at the level of $Z$.
+    </p>
+
+    <p>
+      <strong>It provides a valid test of the null in placebo-controlled, double-blind trials.</strong>
+      If the treatment has no causal effect, then neither $A$ nor $Z$ can cause $Y$
+      to change. An ITT analysis will correctly yield a null result regardless of
+      adherence. Conversely, if the ITT analysis detects an effect, the true
+      effect must be at least as large &mdash; making it genuinely conservative in the
+      sense of being biased toward the null. For regulatory approval of efficacy this
+      has historically been considered sufficient.
+    </p>
+
+    <p>
+      <strong>It is simple.</strong> The ITT analysis requires only that patients be
+      analysed in the group to which they were assigned. No tracking of post-randomisation
+      treatment decisions, no measurement of time-varying confounders, no modelling of
+      adherence. This simplicity reduces both analyst degrees of freedom and the risk of
+      outcome-driven analytic choices.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 3. WHEN ITT MISLEADS                                 -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s3">3. When ITT misleads</h2>
+
+    <p>
+      Each of the three virtues above comes with a corresponding failure mode. The
+      situations in which ITT breaks down are not rare edge cases; they are the norm
+      in modern comparative effectiveness research.
+    </p>
+
+    <h3 id="s31">3.1 ITT is not universally valid</h3>
+
+    <p>
+      The null-hypothesis validity argument requires double-blinding. In an open-label
+      trial, patients know their assignment. This awareness can modify behaviour
+      &mdash; adherence to co-medications, lifestyle changes, contact with the healthcare
+      system &mdash; and these behavioural changes are part of the direct $Z \to Y$ path.
+      An ITT analysis in an open-label trial estimates the combined effect of the drug
+      <em>and</em> the behavioural changes it triggers, not the treatment effect alone.
+    </p>
+
+    <p>
+      For <strong>safety outcomes</strong>, the conservatism argument reverses entirely.
+      If an ITT analysis of a potential harm finds no statistically significant effect,
+      that is not reassurance that the treatment is safe &mdash; the attenuation from
+      non-adherence may have obscured a genuine harmful effect. Hernán and
+      Hernández-Díaz (2012) describe such a study as a &ldquo;randomised cynical trial&rdquo;:
+      one that cannot detect toxicity by design.
+    </p>
+
+    <p>
+      In <strong>non-inferiority trials with an active comparator</strong>, matters are
+      worse. When the two arms have different adherence patterns, the direction of the
+      ITT bias depends on which arm has lower adherence. It is entirely possible for an
+      ITT analysis to declare a genuinely inferior treatment non-inferior because the
+      reference arm has lower adherence, pulling both groups toward an attenuated null.
+      Hernán and Hernández-Díaz (2012) illustrate this formally with a scenario where
+      the new treatment reduces blood glucose by 10 mg/dL and the reference by 22 mg/dL,
+      yet differential drop-out yields an ITT estimate below the non-inferiority margin.
+    </p>
+
+    <p>
+      Finally, <strong>informative censoring</strong> invalidates both ITT and PP analyses
+      if not properly handled. When patients are lost to follow-up for reasons related to
+      their health status, standard complete-case analyses of either estimand are biased.
+    </p>
+
+    <h3 id="s32">3.2 The ITT effect depends on adherence</h3>
+
+    <p>
+      Even when the ITT analysis is valid, the result it produces is
+      <em>trial-specific</em>. The magnitude of
+      $\psi_{\text{ITT}} = \E[Y^{Z=1}] - \E[Y^{Z=0}]$ depends on the adherence
+      pattern of participants in that particular trial, not just on the treatment itself.
+      Two trials with identical treatment effects but different non-adherence
+      rates will produce different ITT estimates. The ITT effect in a tightly monitored
+      efficacy trial with 95% adherence cannot be directly extrapolated to a pragmatic
+      setting where 40% of patients discontinue within six months.
+    </p>
+
+    <p>
+      Long-term trials are by design more vulnerable. Sustained treatment strategies
+      are precisely the ones most relevant to chronic disease management, and precisely
+      the ones where substantial non-adherence and loss to follow-up accumulate over time.
+      As Hernán and Robins (2017) note, the ITT effect estimate from such trials
+      &ldquo;may not be directly relevant for guiding decisions in clinical settings
+      with different adherence patterns.&rdquo;
+    </p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">The conservative framing cuts both ways</div>
+      <p style="margin-bottom: 0;">
+        The common characterisation of the ITT effect as &ldquo;conservative&rdquo;
+        (i.e., biased toward the null) tacitly acknowledges that the PP effect is the
+        quantity of primary interest &mdash; the one whose true value we want to know.
+        If ITT is the floor, PP is the target. Calling ITT conservative while never
+        estimating PP is to report the lower bound and call it the answer.
+      </p>
+    </div>
+
+    <h3 id="s33">3.3 ITT does not answer the clinical question</h3>
+
+    <p>
+      Effectiveness is conventionally defined as how well a treatment works in everyday
+      practice. It is sometimes argued that ITT, precisely because it incorporates
+      real-world non-adherence, is the most clinically meaningful measure of
+      effectiveness. Hernán and Hernández-Díaz (2012) show this argument is flawed.
+    </p>
+
+    <p>
+      First, the degree of adherence in a trial may differ from the degree of adherence
+      in clinical practice, for at least two reasons. Trial participants are closely
+      monitored and have accepted an informed consent procedure; both effects tend to
+      increase adherence above clinical norms. Conversely, once trial results are
+      published, community adherence may change &mdash; possibly increasing after a
+      positive trial, possibly decreasing if the trial finds adverse effects. The ITT
+      estimate from the trial therefore does not predict the effectiveness that will
+      actually be observed in clinical practice.
+    </p>
+
+    <p>
+      Second, and more fundamentally, patients deciding whether to initiate and adhere
+      to a treatment want to know the expected benefit <em>if they take it as directed</em>,
+      not the population-average outcome in a trial where a substantial proportion did
+      not. For a couple evaluating contraception methods, the ITT failure rate in a trial
+      where 40% of participants used the method incorrectly is not the relevant number.
+      The per-protocol failure rate for consistent users is.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 4. THE CASE FOR PER-PROTOCOL                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s4">4. The case for per-protocol</h2>
+
+    <h3 id="s41">4.1 What PP answers that ITT cannot</h3>
+
+    <p>
+      The per-protocol effect $\psi_{\text{PP}}$ estimates what would happen if all
+      patients followed their assigned protocol. Unlike $\psi_{\text{ITT}}$, this
+      quantity does not depend on the trial-specific degree of adherence. Two trials
+      with identical treatment effects and different adherence patterns will produce
+      different ITT estimates but, if correctly estimated, the same PP estimate. This
+      makes PP effects <em>comparable</em> across trials and more easily
+      <em>transportable</em> to clinical settings with their own adherence patterns.
+    </p>
+
+    <p>
+      The PP effect also corresponds more naturally to what regulators, clinicians, and
+      patients actually want to know when evaluating a treatment's benefit-risk profile:
+      the effect of the treatment when used as instructed. Murray, Swanson, and Hernán
+      (2019) argue that in pragmatic trials &mdash; which are specifically designed to
+      guide clinical decisions rather than seek regulatory approval &mdash; the PP effect
+      deserves particular prominence, precisely because pragmatic trials tend to have
+      lower adherence and are therefore the setting where the ITT effect is least
+      informative.
+    </p>
+
+    <h3 id="s42">4.2 PP requires causal methods &mdash; and that is a feature</h3>
+
+    <p>
+      The traditional objection to PP analyses is that they sacrifice the protection of
+      randomisation: once we condition on received treatment $A$ rather than assigned
+      treatment $Z$, the groups are no longer exchangeable. Patients who adhere to
+      treatment may differ systematically from those who do not on prognostic factors
+      that also affect the outcome, introducing post-randomisation confounding.
+    </p>
+
+    <p>
+      The standard &ldquo;naive&rdquo; PP analysis &mdash; simply restricting follow-up
+      to the period during which a participant was adherent, and censoring them at
+      non-adherence &mdash; treats non-adherence as if it were independent of health
+      status. This is almost never true. Patients often discontinue treatment because of
+      side effects, disease progression, or deteriorating health, all of which also
+      predict the outcome. Naive PP analyses can therefore be more biased than ITT
+      analyses, a lesson driven home by the Coronary Drug Project.
+    </p>
+
+    <div class="callout callout-scenario">
+      <div class="callout-label">The Coronary Drug Project &mdash; a cautionary tale turned success story</div>
+      <p>
+        In this landmark randomised trial (1966&ndash;1975), a post-hoc analysis found
+        that patients in the <em>placebo</em> arm who adhered to placebo had substantially
+        lower 5-year mortality (roughly 9 percentage points) than those who did not adhere
+        to placebo. Since placebo cannot affect mortality, this difference had to reflect
+        unmeasured prognostic factors that predicted both adherence and survival. The
+        finding was widely cited as evidence that per-protocol analyses are inherently
+        unreliable.
+      </p>
+      <p style="margin-bottom: 0;">
+        A reanalysis published in 2015 (Hernán and Robins, 2017) revised this conclusion.
+        Using logistic regression with standardised estimates, an improved definition of
+        adherence that decoupled it from loss to follow-up, and g-methods to adjust for
+        post-randomisation prognostic factors, the adjusted difference in 5-year mortality
+        between adherent and non-adherent placebo patients fell from 9.4 to 2.5 percentage
+        points. Proper adjustment for time-varying confounders &mdash; not abandonment of
+        PP analysis &mdash; was the solution.
+      </p>
+    </div>
+
+    <p>
+      Three rules, articulated by Hernán and Robins (2017), are required to obtain a
+      valid per-protocol estimate. First, participants should <em>not</em> be censored
+      simply because they stopped treatment for clinical reasons &mdash; stopping for
+      an adverse event is not a protocol deviation, it is part of the protocol. Second,
+      participants should be censored when their adherence status becomes unknown, not
+      when their outcome becomes known through other means. Third, adjustment must be
+      made for time-varying prognostic factors that predict adherence and are themselves
+      affected by prior treatment &mdash; the classic feedback loop that standard
+      regression cannot handle and that requires g-methods such as inverse probability
+      weighting or the g-formula.
+    </p>
+
+    <h3 id="s43">4.3 ITT and PP coincide under perfect adherence</h3>
+
+    <p>
+      When all participants adhere perfectly to their assigned treatment throughout
+      follow-up, $Z = A$ for every individual. The two estimands then target the same
+      quantity: $\psi_{\text{ITT}} = \psi_{\text{PP}}$. This equivalence is the
+      limiting case that unifies the two approaches. As non-adherence grows, the two
+      estimates diverge, with $|\psi_{\text{ITT}}| \leq |\psi_{\text{PP}}|$ in the
+      placebo-controlled setting.
+    </p>
+
+    <p>
+      This relationship has a practical implication. If a well-conducted analysis finds
+      a large discrepancy between the ITT and PP estimates, that discrepancy is
+      informative: it quantifies the cost of non-adherence in this specific population
+      and trial context, and it helps clinicians advise patients on the expected benefit
+      under realistic adherence versus under optimal adherence. Reporting both estimates
+      together, rather than choosing between them, is therefore the more complete
+      scientific output.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 5. ICH E9(R1)                                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s5">5. ITT and PP in the ICH E9(R1) estimand framework</h2>
+
+    <p>
+      The ICH E9(R1) addendum on estimands in clinical trials (2019) formalises the idea
+      that every clinical trial should specify, before data collection, the precise causal
+      quantity it intends to estimate. The addendum introduces the concept of
+      <em>intercurrent events</em> &mdash; post-randomisation events that affect either
+      the interpretation of, or the ability to observe, the outcome of interest &mdash;
+      and requires that each such event be handled through an explicit <em>strategy</em>.
+    </p>
+
+    <p>
+      Non-adherence and treatment discontinuation are the canonical intercurrent events.
+      The two main strategies the addendum defines map directly onto the ITT and PP
+      dichotomy:
+    </p>
+
+    <table>
+      <tr>
+        <th>ICH E9(R1) Strategy</th>
+        <th>Corresponds to</th>
+        <th>What is being estimated</th>
+      </tr>
+      <tr>
+        <td><strong>Treatment policy strategy</strong></td>
+        <td>ITT</td>
+        <td>Effect of the assigned treatment, regardless of whether it was taken</td>
+      </tr>
+      <tr>
+        <td><strong>Hypothetical strategy</strong></td>
+        <td>PP</td>
+        <td>Effect in a hypothetical world where all patients adhered to the protocol</td>
+      </tr>
+      <tr>
+        <td>Principal stratum strategy</td>
+        <td>&mdash;</td>
+        <td>Effect in the subgroup who would adhere under either arm</td>
+      </tr>
+      <tr>
+        <td>While on treatment strategy</td>
+        <td>Partial PP</td>
+        <td>Effect while treatment is ongoing (event rate before discontinuation)</td>
+      </tr>
+    </table>
+
+    <p>
+      A key contribution of the ICH E9(R1) framework is to make explicit that the
+      choice of strategy is a <em>scientific</em> decision, not a statistical one. It
+      must reflect the clinical question of interest &mdash; which itself depends on
+      whether the trial is designed for regulatory approval, clinical guidance, or
+      comparative effectiveness. Both the treatment policy strategy and the hypothetical
+      strategy are legitimate targets; what is not legitimate is leaving the choice
+      implicit or allowing it to be made post-hoc based on convenience.
+    </p>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Key point from ICH E9(R1)</div>
+      <p style="margin-bottom: 0;">
+        Each intercurrent event requires its own explicitly stated strategy. In a trial
+        with multiple intercurrent events &mdash; treatment discontinuation, rescue
+        medication use, and loss to follow-up &mdash; the estimand must specify a strategy
+        for each. Mixed strategies are permissible: for example, a treatment policy
+        strategy for rescue medication (whatever the patient takes is part of the
+        treatment policy being evaluated) combined with a hypothetical strategy for
+        discontinuation due to adverse events.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 6. RWE                                               -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2 id="s6">6. What changes in real-world evidence</h2>
+
+    <p>
+      In randomised trials, the ITT analysis enjoys its main advantages because
+      treatment <em>assignment</em> is randomised and therefore unconfounded. In
+      real-world evidence (RWE) studies, there is no randomisation. Treatment is chosen
+      by clinicians and patients based on clinical judgment, patient preferences, and
+      characteristics that also predict the outcome. Assignment is not exogenous, and
+      there is no analog of $Z$ that is free of confounding.
+    </p>
+
+    <p>
+      The other features that drive non-adherence in trials are also amplified in
+      observational settings. Treatment intention is rarely recorded, making it difficult
+      to even define an ITT-like estimand. Awareness of treatment is universal, so
+      behavioural changes driven by assignment awareness are the norm rather than a
+      controlled exception. Adherence is systematically lower in routine care than in
+      monitored trials. Loss to follow-up is often informative and linked to clinical
+      events. And the comparator is rarely a placebo, making the direction of any
+      adherence-related bias unpredictable.
+    </p>
+
+    <p>
+      Under these conditions, a naive ITT-like analysis &mdash; comparing patients who
+      initiated one treatment against those who initiated another, regardless of what
+      they subsequently received &mdash; estimates the effect of treatment
+      <em>initiation</em> in a population with the specific adherence patterns observed
+      in that database. This estimate may be deeply context-specific and difficult to
+      interpret. A per-protocol analysis, properly conducted with adjustment for
+      time-varying confounders, targets a quantity that is conceptually cleaner and more
+      transferable across settings.
+    </p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">Practical recommendation for RWE</div>
+      <p style="margin-bottom: 0;">
+        In real-world evidence studies, the per-protocol effect is generally the more
+        informative primary target, complemented by an ITT-like analysis as a
+        sensitivity check. This reverses the conventional hierarchy of clinical trials
+        &mdash; but the reversal is justified: the ITT effect in an RWE setting carries
+        neither the randomisation protection of a trial nor the interpretive clarity of
+        a well-defined protocol, whereas the PP effect, once properly estimated with
+        g-methods, answers the question that clinicians and patients actually care about.
+      </p>
+    </div>
+
+    <p>
+      Hernán and Hernández-Díaz (2012) recommend that all RCTs with substantial
+      non-adherence or loss to follow-up be analysed using both approaches: an ITT
+      analysis to estimate the effect of assigned treatment, and a PP analysis &mdash;
+      appropriately adjusted via inverse probability weighting or g-estimation &mdash;
+      to estimate the effect of treatment as received. The same logic applies, with
+      additional urgency, to observational studies.
+    </p>
+
+    <hr>
+
+    <h3>References</h3>
+    <p style="font-size: 13px; line-height: 1.8;">
+      Hernán MA, Hernández-Díaz S (2012). Beyond the intention-to-treat in comparative
+      effectiveness research. <em>Clinical Trials</em> 9(1):48&ndash;55.<br>
+      Hernán MA, Robins JM (2017). Per-protocol analyses of pragmatic trials.
+      <em>New England Journal of Medicine</em> 377(14):1391&ndash;1398.<br>
+      Murray EJ, Swanson SA, Hernán MA (2019). Guidelines for estimating causal effects in
+      pragmatic randomized trials. <em>arXiv preprint</em> 1911.06030.<br>
+      ICH E9(R1) (2019). Addendum on estimands and sensitivity analysis in clinical trials
+      to the guideline on statistical principles for clinical trials. International Council
+      for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use.<br>
+      Gervasoni EE, De Bus L, Vansteelandt S, Dukes O (2026). On estimands in target trial
+      emulation. <em>arXiv preprint</em> 2601.03377.
+    </p>
+
+    <!-- Navigation -->
+    <div class="module-nav">
+      <span class="nav-prev">&larr; Posts</span>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>

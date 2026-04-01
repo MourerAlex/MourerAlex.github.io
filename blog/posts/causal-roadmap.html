@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Causal Roadmap — Side Module | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=23">
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+  <style>
+    /* ── B&W table for ICH E9(R1) / Target Trial ── */
+    .framework-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 1.5rem 0;
+    }
+    .framework-table th {
+      background: #1a1916;
+      color: #ffffff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .framework-table td {
+      padding: 8px 14px;
+      border-bottom: 1px solid #d8d5cd;
+      vertical-align: middle;
+      font-weight: 700 !important;
+      font-family: 'DM Sans', sans-serif !important;
+      color: #1a1916;
+    }
+    .framework-table tr:nth-child(odd)  td { background: #f0efed; }
+    .framework-table tr:nth-child(even) td { background: #e4e2df; }
+    .framework-table td:empty { background: #e4e2df; }
+  </style>
+
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+
+    <div class="series-label">Causal Inference Methods &mdash; Side Module</div>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-25</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>The Causal Roadmap</h1>
+    <p class="subtitle">A step-by-step guide to defining the study design.</p>
+
+    <hr>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- INTRO                                                -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <p>
+      The Causal Roadmap (van der Laan &amp; Rose, 2011) was developed by Mark van der Laan
+      and team. It organises the design of a causal study into six interconnected steps.
+      The Roadmap can help investigators to prespecify design and analysis plans for studies
+      that utilise real-world data (RWD), choose between study designs, and propose
+      high-quality real-world evidence (RWE) studies to the FDA and other agencies.
+    </p>
+
+    <p>
+      This framework has been formalised conjointly with two companion frameworks
+      (Dang et al., 2023): the <strong>ICH E9(R1) Estimand Framework</strong> and
+      <strong>Target Trial Emulation</strong> (Hern&aacute;n &amp; Robins, 2016).
+      Each can be used separately or jointly; together they help define the components
+      of an estimand, a causal question, and an analysis plan via clear specification.
+    </p>
+
+    <p>
+      We illustrate the roadmap with a running example drawn from pharmacoepidemiology.
+    </p>
+
+    <div class="callout callout-scenario">
+      <div class="callout-label">Running example</div>
+      <p>
+        <em>The real-world effectiveness of study drug vs. comparator in
+        patients with T2D for endpoint&nbsp;X.</em>
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- STEP 1 — STUDY OBJECTIVE                             -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>1. Study Objective</h2>
+
+    <p>
+      Start from the scientific question. What effect, in what population, over what
+      time horizon?
+    </p>
+
+    <div class="callout callout-scenario">
+      <div class="callout-label">Example</div>
+      <p>
+        <em>The real-world effectiveness of study drug vs. comparator in patients
+        with T2D for endpoint&nbsp;X.</em>
+      </p>
+    </div>
+
+    <p>
+      The study objective drives every subsequent choice. It must be stated
+      before looking at the data, to avoid letting data availability dictate the
+      scientific question.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- STEP 2 — DATA COLLECTION                             -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>2. Data Collection</h2>
+
+    <p>
+      Characterise the data source and assess whether it can support the study objective.
+      Key questions:
+    </p>
+
+    <p>
+      <strong>Database characteristics</strong> &mdash; what type of data (e.g. claims, EHR,
+      registry)? What population does it capture?<br>
+      <strong>Eligibility criteria reproducible</strong> &mdash; can the target population be
+      reproduced from the available variables?<br>
+      <strong>Outcomes observability</strong> &mdash; is the endpoint of interest captured
+      reliably?<br>
+      <strong>Confounders availability</strong> &mdash; are the key confounders measured?<br>
+      <strong>Treatment information</strong> &mdash; is there sufficient detail (prescription
+      date, pickup date, dose) to reconstruct treatment strategies?
+    </p>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Decision checkpoint</div>
+      <p>
+        <strong>Does the data support the current design?</strong>
+        If <strong>yes</strong>: proceed to step&nbsp;3.
+        If <strong>no</strong>: revisit the study objective or seek a different data source.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- STEP 3 — DESIGN METHODS                              -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>3. Design Methods</h2>
+
+    <p>
+      The design choice must address three key challenges:
+    </p>
+
+    <p>
+      <strong>Establishing time zero</strong> &mdash; when does follow-up start for each
+      individual?<br>
+      <strong>Assigning individuals to a unique treatment strategy at time zero</strong> &mdash;
+      each person must be uniquely assigned to one strategy at the start of follow-up.<br>
+      <strong>Enough individuals initiating each treatment strategy of interest</strong> &mdash;
+      sample size, given eligibility criteria and database, must be deemed sufficient for
+      running the analysis.
+    </p>
+
+    <p>
+      The attainment of these three components, with the help of statistical methods to
+      form comparable groups, will mark the time&mdash;and achievement&mdash;of
+      emulated randomisation.
+    </p>
+
+    <p>
+      Verification at this stage includes: establishing time zero and assigning treatment
+      groups, checking the number of participants by treatment group and adherence
+      pattern, and confirming that patient characteristics are in line with the study
+      objective.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- STEP 4 — CAUSAL QUESTION                             -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>4. Causal Question</h2>
+
+    <p>
+      The causal question must be phrased as a precise counterfactual contrast. A useful
+      template:
+    </p>
+
+    <div class="callout callout-definition">
+      <div class="callout-label">Structured causal question</div>
+      <p>
+        <em>What would be the</em>
+        <strong>X-year risk ratio</strong>
+        <em>of</em> <strong>all-cause death</strong>
+        <em>if, at start of follow-up, all eligible patients</em>
+        (list conditions)
+        <em>had initiated and always been treated with</em>
+        <strong>study drug</strong> <em>versus</em> <strong>comparator</strong>,
+        <em>as though</em> patients never&hellip; (per-protocol / hypothetical),
+        <em>regardless of</em>&hellip; (as-assigned / treatment policy)?
+      </p>
+    </div>
+
+    <p>
+      The best way to answer this question is to evaluate the potential outcomes under
+      both treatment strategies, with a structural causal model describing the generation
+      of those potential outcomes.
+    </p>
+
+    <p>
+      Both the ICH E9(R1) and Target Trial Emulation frameworks prompt investigators
+      to define the components of the causal question and estimand via clear specification.
+      The table below shows how their elements align:
+    </p>
+
+    <table class="framework-table">
+      <tr>
+        <th>ICH E9 (R1)</th>
+        <th>Target trial protocol</th>
+      </tr>
+      <tr>
+        <td>Population</td>
+        <td>Eligibility criteria</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>Treatment assignment</td>
+      </tr>
+      <tr>
+        <td>Treatment</td>
+        <td>Treatment strategies</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>Follow-up period</td>
+      </tr>
+      <tr>
+        <td>Endpoint</td>
+        <td>Outcome</td>
+      </tr>
+      <tr>
+        <td>Population summary</td>
+        <td>Causal contrasts</td>
+      </tr>
+      <tr>
+        <td>Intercurrent events</td>
+        <td></td>
+      </tr>
+    </table>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- STEP 5 — CAUSAL MODEL                                -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>5. Causal Model</h2>
+
+    <p>
+      Encode the data-generating process&mdash;the study type (e.g. pragmatic
+      randomised trial, retrospective cohort study) and the factors that affect
+      treatment strategies and outcome&mdash;as well as potential mediators, colliders,
+      and confounders: nonrandomised factors that may affect both the treatment/exposure
+      and the outcome. Sources for this step include database knowledge, medical
+      assumptions, and treatment guidelines.
+    </p>
+
+    <!-- DAG -->
+    <div class="dag-container">
+      <svg viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg" style="font-family: 'DM Sans', sans-serif;">
+        <text x="230" y="18" text-anchor="middle" font-size="12" font-weight="500" fill="#1a1916">Structural causal model</text>
+
+        <rect x="160" y="40" width="140" height="36" rx="6" fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="230" y="63" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">Covariates</text>
+
+        <rect x="40" y="150" width="120" height="36" rx="6" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+        <text x="100" y="173" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">Treatment</text>
+
+        <rect x="300" y="150" width="120" height="36" rx="6" fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="360" y="173" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">Outcome</text>
+
+        <text x="230" y="210" text-anchor="middle" font-size="11" fill="#a09d96" font-style="italic">Unknown confounders?</text>
+
+        <line x1="195" y1="76" x2="120" y2="150" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-g)"/>
+        <line x1="265" y1="76" x2="340" y2="150" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-g)"/>
+        <line x1="160" y1="168" x2="300" y2="168" stroke="#2a5f4f" stroke-width="2" marker-end="url(#arr-grn)"/>
+
+        <line x1="180" y1="205" x2="120" y2="186" stroke="#a09d96" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr-g)"/>
+        <line x1="280" y1="205" x2="340" y2="186" stroke="#a09d96" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr-g)"/>
+
+        <defs>
+          <marker id="arr-g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a09d96"/>
+          </marker>
+          <marker id="arr-grn" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a5f4f"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">
+        Figure 1 &mdash; A simplified causal model. Measured covariates affect both
+        treatment and outcome. The dashed arrows represent potential unknown confounders
+        whose presence would threaten exchangeability.
+      </p>
+    </div>
+
+    <p>
+      The causal model makes identifiability conditions explicit. Two key conditions
+      must hold for the population summary to be identifiable from the data:
+    </p>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Exchangeability</div>
+      <p>
+        No unmeasured confounders affect both treatment and outcome, and no
+        conditioning on mediators.
+      </p>
+    </div>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Positivity</div>
+      <p>
+        Every individual has a positive probability of following any treatment strategy,
+        given their measured characteristics.
+      </p>
+    </div>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Decision checkpoint</div>
+      <p>
+        <strong>Is the population summary identifiable?</strong>
+        If <strong>yes</strong>: proceed to estimation.
+        If <strong>no</strong>: revisit the causal model, reassess confounders, or
+        plan a sensitivity analysis to quantify the causal gap.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- STEP 6 — ESTIMATION                                  -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>6. Estimation</h2>
+
+    <p>
+      With the causal question defined, the data assessed, the study designed, and
+      identifiability established, the final step is to choose an estimator that
+      targets the statistical estimand under a realistic statistical model, using
+      IPW, g-methods, or doubly robust extensions.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- OVERVIEW DIAGRAM                                     -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>Overview</h2>
+
+    <div class="dag-container">
+      <svg viewBox="0 0 680 510" xmlns="http://www.w3.org/2000/svg" style="font-family: 'DM Sans', sans-serif;">
+
+        <!-- Step 1 -->
+        <rect x="230" y="10" width="220" height="40" rx="6" fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="340" y="25" text-anchor="middle" font-size="10" fill="#2a5f4f" font-weight="600" font-family="'DM Mono', monospace">1</text>
+        <text x="340" y="40" text-anchor="middle" font-size="12" fill="#1a1916" font-weight="500">Study objective</text>
+        <line x1="340" y1="50" x2="340" y2="75" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-ov)"/>
+
+        <!-- Step 2 -->
+        <rect x="230" y="75" width="220" height="40" rx="6" fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="340" y="90" text-anchor="middle" font-size="10" fill="#2980b9" font-weight="600" font-family="'DM Mono', monospace">2</text>
+        <text x="340" y="105" text-anchor="middle" font-size="12" fill="#1a1916" font-weight="500">Data collection</text>
+        <!-- Decision: Data support? -->
+        <rect x="500" y="75" width="160" height="40" rx="4" fill="#fff8f0" stroke="#c9956b" stroke-width="1" stroke-dasharray="4 2"/>
+        <text x="580" y="92" text-anchor="middle" font-size="10" fill="#96652d">Data support</text>
+        <text x="580" y="106" text-anchor="middle" font-size="10" fill="#96652d">current design?</text>
+        <line x1="450" y1="95" x2="500" y2="95" stroke="#c9956b" stroke-width="1" stroke-dasharray="4 2"/>
+        <text x="464" y="88" font-size="10" fill="#27ae60" font-weight="500">Yes</text>
+        <text x="606" y="128" font-size="10" fill="#c0392b" font-weight="500">No ↺</text>
+        <line x1="340" y1="115" x2="340" y2="145" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-ov)"/>
+
+        <!-- Step 3 -->
+        <rect x="230" y="145" width="220" height="40" rx="6" fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="340" y="160" text-anchor="middle" font-size="10" fill="#2980b9" font-weight="600" font-family="'DM Mono', monospace">3</text>
+        <text x="340" y="175" text-anchor="middle" font-size="12" fill="#1a1916" font-weight="500">Design methods</text>
+        <line x1="340" y1="185" x2="340" y2="215" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-ov)"/>
+
+        <!-- Step 4 -->
+        <rect x="230" y="215" width="220" height="40" rx="6" fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="340" y="230" text-anchor="middle" font-size="10" fill="#2a5f4f" font-weight="600" font-family="'DM Mono', monospace">4</text>
+        <text x="340" y="245" text-anchor="middle" font-size="12" fill="#1a1916" font-weight="500">Causal question</text>
+        <!-- Companion frameworks left -->
+        <rect x="20" y="215" width="172" height="40" rx="4" fill="#fafaf8" stroke="#d8d5cd" stroke-width="1"/>
+        <text x="106" y="231" text-anchor="middle" font-size="9" fill="#6b6860" font-family="'DM Mono', monospace">ICH E9(R1)</text>
+        <text x="106" y="246" text-anchor="middle" font-size="9" fill="#6b6860" font-family="'DM Mono', monospace">Target Trial Emulation</text>
+        <line x1="192" y1="235" x2="230" y2="235" stroke="#d8d5cd" stroke-width="1" stroke-dasharray="4 2"/>
+        <line x1="340" y1="255" x2="340" y2="285" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-ov)"/>
+
+        <!-- Step 5 -->
+        <rect x="230" y="285" width="220" height="40" rx="6" fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="340" y="300" text-anchor="middle" font-size="10" fill="#2a5f4f" font-weight="600" font-family="'DM Mono', monospace">5</text>
+        <text x="340" y="315" text-anchor="middle" font-size="12" fill="#1a1916" font-weight="500">Causal model</text>
+        <!-- Decision: Identifiable? -->
+        <rect x="500" y="285" width="160" height="40" rx="4" fill="#fff8f0" stroke="#c9956b" stroke-width="1" stroke-dasharray="4 2"/>
+        <text x="580" y="302" text-anchor="middle" font-size="10" fill="#96652d">Population summary</text>
+        <text x="580" y="316" text-anchor="middle" font-size="10" fill="#96652d">is identifiable?</text>
+        <line x1="450" y1="305" x2="500" y2="305" stroke="#c9956b" stroke-width="1" stroke-dasharray="4 2"/>
+        <text x="464" y="298" font-size="10" fill="#27ae60" font-weight="500">Yes</text>
+        <text x="606" y="338" font-size="10" fill="#c0392b" font-weight="500">No ↺</text>
+        <!-- Knowledge sources left -->
+        <rect x="20" y="280" width="172" height="52" rx="4" fill="#fafaf8" stroke="#d8d5cd" stroke-width="1"/>
+        <text x="106" y="298" text-anchor="middle" font-size="9" fill="#6b6860">Database knowledge</text>
+        <text x="106" y="311" text-anchor="middle" font-size="9" fill="#6b6860">Medical assumptions</text>
+        <text x="106" y="324" text-anchor="middle" font-size="9" fill="#6b6860">Treatment guidelines</text>
+        <line x1="192" y1="305" x2="230" y2="305" stroke="#d8d5cd" stroke-width="1" stroke-dasharray="4 2"/>
+        <line x1="340" y1="325" x2="340" y2="355" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-ov)"/>
+
+        <!-- Step 6 -->
+        <rect x="230" y="355" width="220" height="40" rx="6" fill="#f5f0fa" stroke="#7b5ea7" stroke-width="1.5"/>
+        <text x="340" y="370" text-anchor="middle" font-size="10" fill="#7b5ea7" font-weight="600" font-family="'DM Mono', monospace">6</text>
+        <text x="340" y="385" text-anchor="middle" font-size="12" fill="#1a1916" font-weight="500">Estimation</text>
+
+        <!-- Assumptions bar -->
+        <rect x="20" y="420" width="630" height="50" rx="6" fill="#fafaf8" stroke="#eeece6" stroke-width="1"/>
+        <text x="340" y="440" text-anchor="middle" font-size="11" fill="#1a1916" font-weight="500">Key identifiability assumptions</text>
+        <text x="340" y="457" text-anchor="middle" font-size="11" fill="#6b6860">Exchangeability (no unmeasured confounding) &bull; Positivity (overlap) &bull; Consistency</text>
+
+        <defs>
+          <marker id="arr-ov" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a09d96"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">
+        Figure 2 &mdash; The six-step Causal Roadmap. Green boxes define the causal problem;
+        blue boxes address data and design; the purple box covers estimation.
+        Decision checkpoints (dashed orange) feed back to earlier steps when the answer is no.
+        Companion frameworks and knowledge sources enter at steps 4 and 5.
+      </p>
+    </div>
+
+
+    <hr>
+
+    <h3>References</h3>
+
+    <p style="font-size: 13px; line-height: 1.7;">
+      Van der Laan MJ, Rose S (2011). Targeted learning: causal inference for
+      observational and experimental data (Vol. 4). New York: Springer.<br>
+      Dang LE, Tarp JM, Abrahamsen B, et al. (2023). A causal roadmap for generating
+      high-quality real-world evidence. <em>J Clin Transl Sci</em> 7:e212.<br>
+      Hern&aacute;n MA, Robins JM (2016). Using big data to emulate a target trial when
+      a randomized trial is not available. <em>Am J Epidemiol</em> 183:758&ndash;764.
+    </p>
+
+    <div class="module-nav">
+      <a href="module0-foundations.html">&larr; Module 0: Foundations</a>
+      <a href="module1-ipw.html">Module 1: IPW &rarr;</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ITT vs PP — Poster | Alex Mourer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:   #2a918b;
+      --beige:  #ccc5bd;
+      --navy:   #001965;
+      --text:   #1a1916;
+      --muted:  #666360;
+      --border: #dedad6;
+      --bg:     #ffffff;
+      --surf:   #f8f7f5;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    /* ── Shell ── */
+    .poster {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      min-height: 580px;
+    }
+
+    /* ── Header ── */
+    .poster-header {
+      background: var(--beige);
+      padding: 0.75em 2em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2em;
+      flex-shrink: 0;
+      border-bottom: 3px solid var(--teal);
+    }
+
+    .h-title {
+      font-size: clamp(17px, 1.8vw, 26px);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .h-title span { color: var(--teal); }
+
+    .h-sub {
+      font-size: clamp(10px, 0.9vw, 12.5px);
+      color: var(--muted);
+      margin-top: 0.2em;
+      font-weight: 400;
+    }
+
+    .h-meta {
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1.6;
+    }
+
+    /* ── Body grid ── */
+    .poster-body {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .col {
+      padding: 0.9em 1.1em;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7em;
+    }
+
+    .col:last-child { border-right: none; }
+
+    .col::-webkit-scrollbar { width: 3px; }
+    .col::-webkit-scrollbar-thumb { background: var(--beige); border-radius: 2px; }
+
+    /* ── Column title ── */
+    .col-title {
+      font-size: clamp(12px, 1.1vw, 15px);
+      font-weight: 700;
+      color: var(--bg);
+      background: var(--teal);
+      letter-spacing: 0.01em;
+      padding: 0.35em 0.7em;
+      margin: -0.9em -1.1em 0.5em -1.1em;
+      border-bottom: 2px solid var(--beige);
+    }
+
+    /* ── Section heading ── */
+    .sh {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--teal);
+      padding-bottom: 0.3em;
+      border-bottom: 1.5px solid var(--teal);
+    }
+
+    /* ── Sub-heading ── */
+    h3 {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0.5em 0 0.2em;
+    }
+
+    h3:first-child { margin-top: 0; }
+
+    /* ── Body copy ── */
+    p { font-size: 12px; }
+    p + p { margin-top: 0.4em; }
+    em { font-style: italic; }
+    strong { font-weight: 600; }
+
+    /* ── Definition boxes: thin-bordered, minimal fill ── */
+    .box {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.6em 0.8em;
+      background: var(--surf);
+    }
+
+    .box-teal  { border-left: 2.5px solid var(--teal); background: #f2f9f8; }
+    .box-beige { border-left: 2.5px solid var(--beige); }
+    .box-dark  { border-left: 2.5px solid var(--navy); background: #f5f6fa; }
+
+    .box-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.3em;
+    }
+
+    .box p { font-size: 12px; }
+    .box p + p { margin-top: 0.35em; }
+
+    /* ── Lists ── */
+    ul.pts { list-style: none; padding: 0; }
+
+    ul.pts li {
+      padding: 0.3em 0 0.3em 1.3em;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    ul.pts li:last-child { border-bottom: none; }
+
+    ul.pts li::before {
+      position: absolute;
+      left: 0.1em;
+      top: 0.32em;
+      font-size: 11px;
+    }
+
+    ul.pts.dot li::before { content: '•'; color: var(--teal); }
+    ul.pts.num { list-style: none; counter-reset: pts; }
+    ul.pts.num li::before {
+      content: counter(pts) ')';
+      counter-increment: pts;
+      font-weight: 600;
+      font-size: 10.5px;
+      color: var(--teal);
+    }
+
+    /* ── DAG ── */
+    .dag-wrap {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.6em 0.5em 0.5em;
+      background: var(--surf);
+      text-align: center;
+    }
+
+    .dag-wrap svg { width: 100%; max-width: 320px; }
+
+    .dag-cap {
+      font-size: 10.5px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 0.35em;
+      line-height: 1.35;
+    }
+
+    /* ── Equality highlight ── */
+    .eq-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      border: 1px solid var(--teal);
+      border-radius: 4px;
+      padding: 0.55em 0.8em;
+      background: #f2f9f8;
+    }
+
+    .eq-row .eq-text {
+      font-size: clamp(12px, 1.3vw, 16px);
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .eq-row .eq-text .hl { color: var(--teal); }
+
+    .eq-row .eq-cond {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      flex: 1;
+    }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    th {
+      background: var(--teal);
+      color: #fff;
+      padding: 0.3em 0.5em;
+      text-align: left;
+      font-weight: 500;
+      font-size: 10.5px;
+    }
+    td { padding: 0.3em 0.5em; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:nth-child(even) td { background: var(--surf); }
+
+    /* ── Inline tag ── */
+    .tag {
+      display: inline-block;
+      border: 1px solid var(--teal);
+      border-radius: 3px;
+      color: var(--teal);
+      padding: 0.05em 0.4em;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* ── Thin hr ── */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Italic side note ── */
+    .aside {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-style: italic;
+      padding-left: 0.7em;
+      border-left: 2px solid var(--beige);
+    }
+
+    /* ── Footer ── */
+    .poster-footer {
+      background: var(--surf);
+      border-top: 1px solid var(--border);
+      padding: 0.45em 2em;
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      gap: 0;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .poster-footer strong { color: var(--text); font-weight: 600; margin-right: 0.5em; }
+    .ref + .ref::before { content: ' · '; color: var(--beige); }
+  </style>
+</head>
+<body>
+<div class="poster">
+
+  <!-- HEADER -->
+  <div class="poster-header">
+    <div>
+      <div class="h-title">Intention-to-Treat <span>vs.</span> Per-Protocol</div>
+      <div class="h-sub">Two estimands, one dataset &mdash; when the choice matters and what to do about it</div>
+    </div>
+    <div class="h-meta">
+      Alex Mourer &mdash; Causal Inference Methods<br>
+      Hernán &amp; Hernández-Díaz 2012 &middot; Hernán &amp; Robins 2017 &middot; Murray et al. 2019
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="poster-body">
+
+    <!-- ── COL 1: Background & Causal Structure ── -->
+    <div class="col">
+
+      <div class="col-title">Introduction</div>
+
+      <div class="sh">Definitions</div>
+
+      <div class="box box-teal">
+        <div class="box-label">Intention-to-treat (ITT) effect</div>
+        <p>The effect of being <strong>assigned</strong> to a treatment strategy,
+        regardless of the treatment actually received during follow-up.</p>
+      </div>
+
+      <div class="box box-teal">
+        <div class="box-label">Per-protocol (PP) effect</div>
+        <p>The effect of <strong>receiving</strong> the assigned treatment throughout
+        follow-up, exactly as specified in the study protocol.</p>
+      </div>
+
+      <hr>
+
+      <div class="sh">Causal structure</div>
+
+      <div class="dag-wrap">
+        <!-- Original poster notation: A = assignment, Z = received/adherence, Y = outcome, U = unmeasured -->
+        <svg viewBox="0 0 300 145" xmlns="http://www.w3.org/2000/svg"
+             style="font-family:'DM Sans',sans-serif;">
+
+          <!-- A: assignment -->
+          <text x="28"  y="68" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1916">A</text>
+          <text x="28"  y="82" text-anchor="middle" font-size="8.5" fill="#666" font-style="italic">assignment</text>
+
+          <!-- Z: received -->
+          <text x="150" y="68" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1916">Z</text>
+          <text x="150" y="82" text-anchor="middle" font-size="8.5" fill="#666" font-style="italic">received</text>
+
+          <!-- Y: outcome -->
+          <text x="272" y="68" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1916">Y</text>
+          <text x="272" y="82" text-anchor="middle" font-size="8.5" fill="#666" font-style="italic">outcome</text>
+
+          <!-- U: unmeasured -->
+          <text x="28"  y="128" text-anchor="middle" font-size="14" font-weight="700" fill="#888">U</text>
+          <text x="28"  y="140" text-anchor="middle" font-size="8"   fill="#aaa" font-style="italic">unmeasured</text>
+
+          <!-- A → Z -->
+          <line x1="40" y1="62" x2="134" y2="62" stroke="#1a1916" stroke-width="1.6" marker-end="url(#mblk)"/>
+          <!-- Z → Y -->
+          <line x1="162" y1="62" x2="256" y2="62" stroke="#1a1916" stroke-width="1.6" marker-end="url(#mblk2)"/>
+
+          <!-- A → Y (direct, curved, behavioural) -->
+          <path d="M40,56 Q150,18 256,56" fill="none" stroke="#2a918b" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#mteal)"/>
+          <text x="150" y="22" text-anchor="middle" font-size="8" fill="#2a918b" font-style="italic">behavioural changes</text>
+
+          <!-- U → Z -->
+          <line x1="38" y1="120" x2="135" y2="74" stroke="#999" stroke-width="1.2" marker-end="url(#mgrey)"/>
+          <!-- U → Y -->
+          <line x1="42" y1="122" x2="258" y2="76" stroke="#999" stroke-width="1.2" marker-end="url(#mgrey2)"/>
+
+          <defs>
+            <marker id="mblk"  markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+            <marker id="mblk2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+            <marker id="mteal" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#2a918b"/></marker>
+            <marker id="mgrey" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#999"/></marker>
+            <marker id="mgrey2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#999"/></marker>
+          </defs>
+        </svg>
+        <p class="dag-cap">
+          The causal effect of assigned treatment <strong>A</strong> depends on:
+          the effect of received treatment Z (Z→Y); the degree of adherence (A→Z);
+          and concurrent behavioural changes (A→Y, dashed).
+          U confounds adherence even after randomisation.
+        </p>
+      </div>
+
+      <p class="aside">
+        The fact that ITT is called &ldquo;conservative&rdquo; (biased toward the null) tacitly
+        acknowledges that PP is the true target &mdash; ITT is its lower bound, not the answer.
+      </p>
+
+    </div><!-- /col 1 -->
+
+
+    <!-- ── COL 2: ITT strengths & failure modes ── -->
+    <div class="col">
+
+      <div class="col-title">Intention-To-Treat</div>
+
+      <div class="sh">Why ITT is attractive in RCTs</div>
+
+      <ul class="pts dot">
+        <li><strong>Randomisation operates on treatment assignment.</strong>
+          Z is randomised → no confounding. No covariate adjustment required.</li>
+        <li><strong>Valid test of the null (placebo, double-blind).</strong>
+          If the treatment has no effect, ITT correctly finds null regardless of
+          adherence. A significant result guarantees a true effect at least as large.</li>
+        <li><strong>Simple and attractive.</strong>
+          No post-randomisation tracking, no time-varying modelling, fewer analyst
+          degrees of freedom.</li>
+      </ul>
+
+      <hr>
+
+      <div class="sh">When ITT is not universally valid</div>
+
+      <h3>1) ITT is not universally valid</h3>
+      <ul class="pts dot">
+        <li>When the randomised trial is not double-blinded.</li>
+        <li>When studying harms &mdash; bias toward null is anti-conservative for safety.</li>
+        <li>When informative censoring is present.</li>
+      </ul>
+
+      <h3>2) ITT estimates depend on adherence</h3>
+      <p>
+        The direction and magnitude of the ITT effect depends on the adherence pattern.
+        If the comparator is not placebo, part of the effect is mediated by adherence only.
+        Long follow-up is by design more prone to substantial loss-to-follow-up
+        and non-adherence.
+      </p>
+
+      <h3>3) ITT does not provide the complete picture</h3>
+      <p>
+        May not be a valid measure of effectiveness. A true effectiveness measure
+        should incorporate the effects of assignment awareness. For patients who
+        are interested in the benefit-risk profile of the treatment <em>when taken
+        as instructed</em>, ITT does not answer their question.
+      </p>
+
+      <div class="box box-beige" style="margin-top:0.2em;">
+        <p>In non-inferiority trials with an active comparator, differential adherence
+        can make an inferior treatment appear non-inferior &mdash; or vice versa.
+        The direction of the ITT bias is unpredictable.</p>
+      </div>
+
+    </div><!-- /col 2 -->
+
+
+    <!-- ── COL 3: The case for PP ── -->
+    <div class="col">
+
+      <div class="col-title">Per-Protocol</div>
+
+      <div class="sh">Classical view</div>
+
+      <h3>Why PP is unattractive in RCTs</h3>
+      <ul class="pts dot">
+        <li>PP effect cannot be guaranteed by randomisation.</li>
+        <li>Generally requires adjustment for prognostic factors that predict adherence.</li>
+        <li>Requires untestable assumptions for identification and estimation.</li>
+      </ul>
+
+      <div class="box" style="margin-top:0.1em;">
+        <div class="box-label">Coronary Drug Project cautionary tale</div>
+        <p>
+          Placebo-arm adherers had ~9 pp lower mortality than non-adherers &mdash;
+          yet placebo cannot cause mortality. Unmeasured prognostic factors explained
+          the gap. A 2015 reanalysis with g-methods reduced it to 2.5 pp.
+          <strong>Proper causal adjustment is the solution, not abandoning PP.</strong>
+        </p>
+      </div>
+
+      <hr>
+
+      <div class="sh">Advantages</div>
+
+      <h3>Why PP has decisive advantages</h3>
+      <ul class="pts dot">
+        <li><strong>Mitigates ITT main problems</strong> &mdash; valid regardless of
+          blinding; correct direction for safety outcomes.</li>
+        <li><strong>Interpretation does not depend on trial-specific adherence.</strong>
+          PP is comparable and transportable across studies.</li>
+        <li><strong>More relevant for clinical decisions.</strong>
+          Patients want the effect of the treatment when taken as instructed.</li>
+        <li>Adherence/effectiveness may be greater in RCTs due to earlier detection
+          of problems &mdash; PP corrects for this rather than incorporating it.</li>
+      </ul>
+
+      <div class="box box-teal">
+        <div class="box-label">How to estimate PP validly (Hernán &amp; Robins 2017)</div>
+        <ul class="pts dot" style="margin-top:0.2em;">
+          <li>Do not censor participants who stop for clinical reasons.</li>
+          <li>Censor when adherence status becomes unknown, not when outcomes are known.</li>
+          <li>Adjust for time-varying confounders via <strong>g-methods</strong>
+            (IPW, G-formula) &mdash; standard regression introduces feedback bias.</li>
+        </ul>
+      </div>
+
+    </div><!-- /col 3 -->
+
+
+    <!-- ── COL 4: Synthesis, ICH E9R1, RWE ── -->
+    <div class="col">
+
+      <div class="col-title">Conclusion</div>
+
+      <div class="sh">ITT and PP are equal under perfect conditions</div>
+
+      <div class="eq-row">
+        <div class="eq-text"><span class="hl">ITT</span> effect = <span class="hl">PP</span> effect</div>
+        <div class="eq-cond">when all participants adhere fully throughout follow-up</div>
+      </div>
+
+      <p>
+        As non-adherence grows, the two estimates diverge. The gap quantifies the
+        cost of non-adherence in that context and is itself informative. Reporting
+        <em>both</em> is the more complete output.
+      </p>
+
+      <hr>
+
+      <div class="sh">Conclusion</div>
+
+      <h3>In RCT</h3>
+      <p>Exclusive reliance on ITT effect estimates is hard to justify for
+        randomised trials with:</p>
+      <ul class="pts num" style="margin-top:0.3em;">
+        <li>Substantial non-adherence</li>
+        <li>Evaluating harms</li>
+        <li>Not placebo-controlled or not double-blinded</li>
+      </ul>
+
+      <hr>
+
+      <div class="sh">Relationships to the estimand framework ICH E9(R1)</div>
+
+      <p style="font-size:12px;">
+        <strong>ITT</strong> corresponds to the <strong>Treatment Policy Strategy</strong>;
+        <strong>PP</strong> (sometimes referred to as &ldquo;on-treatment&rdquo;) aligns
+        with the <strong>Hypothetical Strategy</strong>. Each intercurrent event requires
+        a clearly defined strategy.
+      </p>
+
+      <table>
+        <tr>
+          <th>ICH E9(R1) strategy</th>
+          <th>Corresponds to</th>
+        </tr>
+        <tr>
+          <td>Treatment policy</td>
+          <td><span class="tag">ITT</span> — effect regardless of receipt</td>
+        </tr>
+        <tr>
+          <td>Hypothetical</td>
+          <td><span class="tag">PP</span> — effect under full adherence</td>
+        </tr>
+        <tr>
+          <td>Principal stratum</td>
+          <td>Effect in would-adhere subgroup</td>
+        </tr>
+        <tr>
+          <td>While on treatment</td>
+          <td>Event rate during active treatment</td>
+        </tr>
+      </table>
+
+      <hr>
+
+      <div class="sh">RWE studies</div>
+
+      <p>
+        In RWE studies: treatment intention is unknown, assignment is non-randomised,
+        awareness can lead to behavioural changes, adherence tends to be lower,
+        loss-to-follow-up is often informative, and the comparator is rarely equivalent
+        to a placebo. Therefore, <strong>prioritising PP analysis as the primary,
+        complemented by ITT analysis, could be standard practice.</strong>
+      </p>
+
+    </div><!-- /col 4 -->
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="poster-footer">
+    <strong>References</strong>
+    <span class="ref">Hernán MA, Hernández-Díaz S (2012). <em>Clin Trials</em> 9(1):48–55.</span>
+    <span class="ref">Hernán MA, Robins JM (2017). <em>NEJM</em> 377(14):1391–1398.</span>
+    <span class="ref">Murray EJ, Swanson SA, Hernán MA (2019). <em>arXiv</em> 1911.06030.</span>
+    <span class="ref">ICH E9(R1) (2019). Addendum on estimands. ICH.</span>
+  </div>
+
+</div>
+</body>
+</html>

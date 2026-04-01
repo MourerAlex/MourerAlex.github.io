@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Mourer — Causal Inference & Biostatistics</title>
+  <meta name="description" content="Research and writing on causal inference, biostatistics, and machine learning.">
+  <link rel="stylesheet" href="css/style.css?v=27">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})">
+  </script>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="active">Home</a>
+        <a href="blog/index.html">Posts</a>
+        <a href="about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container" style="position:relative; z-index:1;">
+      <div class="hero-grid">
+        <div>
+          <h1>Thinking carefully about <em>causation,</em> not just association.</h1>
+        </div>
+        <div>
+          <div class="hero-text-box">
+            <p class="hero-bio">
+              This site explores modern methods in statistics, biostatistics, causal inference,
+              epidemiology and machine learning — with two goals: distil complex methods into
+              accessible explanations, and bridge theory and practice by implementing ideas from
+              recent research in practical settings.
+            </p>
+          </div>
+          <div class="hero-tags">
+            <span class="tag">Causal Inference</span>
+            <span class="tag">Biostatistics</span>
+            <span class="tag">Machine Learning</span>
+
+            <span class="tag">Survival Analysis</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOME INTRO -->
+  <section class="home-intro">
+    <div class="container">
+      <div class="home-intro-grid">
+
+        <div class="home-intro-left">
+          <p>Posts aim to keep the target of inference scientifically meaningful and assumptions explicit. A particular focus on longitudinal data, time-to-event outcomes, and applications in clinical medicine and pharmacoepidemiology.</p>
+          <p>Everything here is written to be rigorous but readable — equations when necessary, intuition always.</p>
+        </div>
+
+        <div class="home-intro-right">
+          <div class="section-header">
+            <span class="section-label">Latest Posts</span>
+            <a href="blog/index.html" class="view-all">View all →</a>
+          </div>
+          <div class="home-post-list">
+            <a class="home-post-item" href="blog/posts/module0-foundations.html">
+              <span class="home-post-date">2025-03-23</span>
+              <span class="home-post-title">Causal Inference Methods: Module 0 — Foundations</span>
+              <span class="post-tag">Causal Inference</span>
+            </a>
+            <a class="home-post-item" href="blog/posts/ate-estimation.html">
+              <span class="home-post-date">2025-03-10</span>
+              <span class="home-post-title">ATE Estimation under Unconfoundedness</span>
+              <span class="post-tag">Causal Inference</span>
+            </a>
+            <a class="home-post-item" href="blog/posts/survival-analysis.html">
+              <span class="home-post-date">2025-02-18</span>
+              <span class="home-post-title">Competing Risks and the Fine-Gray Model</span>
+              <span class="post-tag">Biostatistics</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- MID BANNER -->
+  <section class="home-mid-banner">
+    <div class="home-mid-banner-inner">
+      <div class="home-mid-banner-text">
+        <span class="section-label">For you</span>
+        <h2>Making causal analysis a little more casual.</h2>
+        <p>More on my background on the About page. Working on your own analysis and want a second opinion? I'm happy to help — reach out.</p>
+        <div>
+          <a href="about/index.html" style="
+            display:inline-flex; align-items:center; gap:8px;
+            font-family:var(--mono); font-size:11px; letter-spacing:0.06em;
+            text-transform:uppercase; color:var(--text);
+            padding:10px 20px; border:1px solid #a8cfc0;
+            border-radius:var(--radius); transition:all 0.15s;
+          " onmouseover="this.style.background='var(--accent)';this.style.color='white';this.style.borderColor='var(--accent)'"
+             onmouseout="this.style.background='';this.style.color='var(--text)';this.style.borderColor='#a8cfc0'">
+            About me →
+          </a>
+        </div>
+      </div>
+      <div class="home-mid-banner-image">
+        <img src="Cubes turquoise suspendus dans l'air.png" alt="">
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPIC CARDS -->
+  <section class="home-topics">
+    <div class="home-topics-grid">
+      <div class="home-topic-card">
+        <span class="section-label">Causal Inference</span>
+        <h3>Identification and estimation from observational data.</h3>
+        <p>Potential outcomes, DAGs, identification strategies, doubly robust estimators, and the assumptions needed to learn from messy real-world data.</p>
+        <a href="blog/index.html?cat=causal" class="topic-link">View posts →</a>
+      </div>
+      <div class="home-topic-card">
+        <span class="section-label">Biostatistics</span>
+        <h3>Survival, competing risks, and longitudinal methods.</h3>
+        <p>Time-to-event outcomes, the Fine-Gray model, clinical trial design, and the statistical foundations behind modern clinical research.</p>
+        <a href="blog/index.html?cat=biostat" class="topic-link">View posts →</a>
+      </div>
+      <div class="home-topic-card">
+        <span class="section-label">Machine Learning</span>
+        <h3>Machine learning in the service of causal questions.</h3>
+        <p>Double ML, causal forests, and representation learning — where predictive power meets the need for valid causal inference.</p>
+        <a href="blog/index.html?cat=ml" class="topic-link">View posts →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT BANNER -->
+  <section class="about-banner">
+    <div class="about-banner-inner">
+      <div class="about-banner-content">
+        <div class="section-label" style="margin-bottom:32px;">About me</div>
+        <p class="about-banner-bio">
+          About ten years working as a data scientist, with four of those spent in pharma focused
+          on real-world evidence. I spend most of my time at the intersection of causal inference,
+          biostatistics, and epidemiology — trying to generate reliable evidence out of
+          observational data.
+        </p>
+        <div class="about-banner-meta">
+          <div class="about-banner-meta-item">
+            <span class="meta-label">Location</span>
+            <span class="meta-value">Somewhere in France</span>
+          </div>
+          <div class="about-banner-meta-item">
+            <span class="meta-label">Contact</span>
+            <a href="https://www.linkedin.com/in/alex-mourer" target="_blank" class="meta-value meta-link">LinkedIn →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>

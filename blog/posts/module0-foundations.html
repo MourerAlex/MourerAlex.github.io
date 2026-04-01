@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 0: Foundations — Causal Inference Methods | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=21">
+
+  <!-- MathJax with custom macros matching the module -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">← Posts</a>
+
+    <div class="series-label">Causal Inference Methods &mdash; Module 0 of 6</div>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-23</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>Foundations</h1>
+    <p class="subtitle">The language, assumptions, and logic that every method in this series shares.</p>
+
+    <hr>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 1. WHY THIS MODULE                                   -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>1. Why a Foundations Module?</h2>
+
+    <p>
+      Every method in this series&mdash;IPW, G-formula, AIPW, the one-step estimator,
+      TMLE&mdash;is a different <strong>estimation strategy</strong> for the same causal quantity,
+      under the same set of assumptions, expressed in the same notation.
+      If we repeated the notation, estimand definition, and assumptions inside each module,
+      three things would happen: redundancy, inconsistency risk, and the false impression
+      that the methods differ more fundamentally than they do.
+    </p>
+
+    <p>
+      This module lays down the shared foundation once. Every subsequent module
+      will open with a brief recall box pointing back here, then move directly
+      to what is specific to that method.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 2. THE SETUP                                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>2. The Setup</h2>
+
+    <p>
+      We observe data on $n$ individuals from a population. For each individual, we record
+      three things: a treatment they received, an outcome we care about, and a set of
+      pre-treatment variables that might confound the relationship between the two.
+    </p>
+
+    <div class="callout callout-scenario">
+      <div class="callout-label">Running Example — used across all modules</div>
+      <p>
+        A public health agency wants to know whether a <strong>preventive drug</strong>
+        reduces the risk of a <strong>disease</strong> (binary: yes/no).
+        They have observational data from a large cohort. Two variables were measured
+        at baseline: <strong>age</strong> (continuous, in years) and
+        <strong>sex</strong> (binary: male/female). No randomized trial is available.
+      </p>
+    </div>
+
+    <p>
+      In an ideal world, we would conduct a randomized experiment: flip a coin for each
+      person, give the drug to those who get heads, and compare disease rates. Randomization
+      ensures that, on average, the treated and untreated groups are comparable in every
+      way&mdash;measured or unmeasured. Any difference in outcomes can be attributed to the drug.
+    </p>
+
+    <p>
+      But this is observational data. Physicians prescribed the drug based on clinical
+      judgment. Older patients and male patients were more likely to receive the drug,
+      because physicians perceived them as higher risk. The problem is that age and sex
+      also independently affect disease risk. This creates <em>confounding</em>: the very
+      factors that influence who gets treated also influence who gets sick.
+    </p>
+
+    <!-- DAG -->
+    <div class="dag-container">
+      <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg" style="font-family: 'DM Sans', sans-serif;">
+        <text x="210" y="20" text-anchor="middle" font-size="13" font-weight="500" fill="#1a1916">Causal diagram for our running example</text>
+
+        <rect x="155" y="40" width="110" height="36" rx="6" fill="#eaf2f8" stroke="#2980b9" stroke-width="1.5"/>
+        <text x="210" y="63" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">L (Age, Sex)</text>
+
+        <rect x="40" y="140" width="110" height="36" rx="6" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+        <text x="95" y="163" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">A (Drug)</text>
+
+        <rect x="270" y="140" width="110" height="36" rx="6" fill="#eef6f2" stroke="#2a5f4f" stroke-width="1.5"/>
+        <text x="325" y="163" text-anchor="middle" font-size="13" fill="#1a1916" font-weight="500">Y (Disease)</text>
+
+        <line x1="185" y1="76" x2="115" y2="140" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+        <line x1="235" y1="76" x2="305" y2="140" stroke="#a09d96" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+        <line x1="150" y1="158" x2="270" y2="158" stroke="#2a5f4f" stroke-width="2" marker-end="url(#arr-green)"/>
+        <text x="210" y="149" text-anchor="middle" font-size="11" fill="#2a5f4f" font-style="italic">causal effect?</text>
+
+        <defs>
+          <marker id="arr-gray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a09d96"/>
+          </marker>
+          <marker id="arr-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a5f4f"/>
+          </marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">
+        Figure 0.1 &mdash; The confounders $\mathbf{L}$ (age, sex) affect both treatment $A$ and outcome $Y$,
+        creating a backdoor path $A \leftarrow L \rightarrow Y$ that biases the crude association.
+      </p>
+    </div>
+
+    <p>
+      The arrows $L \to A$ and $L \to Y$ create a <em>backdoor path</em> between treatment
+      and outcome. The crude association between $A$ and $Y$ is a mixture of the causal
+      effect ($A \to Y$) and the spurious association flowing through this path.
+      Every method in this series is a different way of blocking that backdoor path
+      to isolate the causal effect.
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 3. NOTATION                                          -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>3. Notation</h2>
+
+    <p>
+      We use the following notation throughout this series. It is consistent across
+      all modules, so that the connections between methods remain clear.
+    </p>
+
+    <table>
+      <tr>
+        <th>Symbol</th>
+        <th>Meaning</th>
+      </tr>
+      <tr>
+        <td>$A$</td>
+        <td>Binary treatment indicator ($A = 1$: treated, $A = 0$: untreated)</td>
+      </tr>
+      <tr>
+        <td>$Y$</td>
+        <td>Binary outcome ($Y = 1$: disease, $Y = 0$: no disease)</td>
+      </tr>
+      <tr>
+        <td>$\mathbf{L}$</td>
+        <td>Vector of measured confounders; here $\mathbf{L} = (\text{Age}, \text{Sex})$</td>
+      </tr>
+      <tr>
+        <td>$Y^a$</td>
+        <td>Potential (counterfactual) outcome under treatment $A = a$</td>
+      </tr>
+      <tr>
+        <td>$\psi$</td>
+        <td>Average treatment effect (ATE): $\psi = \E[Y^1] - \E[Y^0]$</td>
+      </tr>
+      <tr>
+        <td>$e(\mathbf{L})$</td>
+        <td>Propensity score: $\P(A = 1 \mid \mathbf{L})$</td>
+      </tr>
+      <tr>
+        <td>$\bar{Q}(A, \mathbf{L})$</td>
+        <td>Outcome regression: $\E[Y \mid A, \mathbf{L}]$</td>
+      </tr>
+    </table>
+
+    <h3>3.1 Potential outcomes</h3>
+
+    <p>
+      The potential outcomes framework (Neyman, 1923; Rubin, 1974) is the language we use
+      to define causal effects. For each individual and each possible treatment value $a$,
+      we posit a potential outcome $Y^a$: the outcome that <em>would</em> be observed if,
+      possibly contrary to fact, the individual received treatment $a$.
+    </p>
+
+    <p>
+      Each person has two potential outcomes: $Y^1$ (outcome if treated) and $Y^0$
+      (outcome if untreated). We only ever observe one of them&mdash;the one corresponding
+      to the treatment actually received. This is the <strong>fundamental problem of
+      causal inference</strong> (Holland, 1986): individual causal effects
+      $Y^1 - Y^0$ are never directly observable.
+    </p>
+
+    <h3>3.2 The estimand</h3>
+
+    <p>
+      Because we cannot observe individual effects, we target a population-level
+      summary. Our target estimand is the <strong>average treatment effect (ATE)</strong>,
+      also known as the average causal effect or the causal risk difference:
+    </p>
+
+    <div class="math-block">
+      $$\psi = \E[Y^1] - \E[Y^0] = \P(Y^1 = 1) - \P(Y^0 = 1)$$
+    </div>
+
+    <p>
+      This is the difference in disease risk that would be observed if the
+      <em>entire population</em> were treated versus if the entire population
+      were untreated. It is a contrast between two counterfactual worlds.
+      In our running example, we will see that the true ATE is approximately
+      $-0.14$: the drug reduces disease risk by about 14 percentage points.
+    </p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">Why population-level?</div>
+      <p>
+        We cannot learn $Y^1_i - Y^0_i$ for any single person $i$, but we
+        <em>can</em> learn the average $\E[Y^1 - Y^0] = \E[Y^1] - \E[Y^0]$
+        under certain assumptions. The rest of this module makes those
+        assumptions precise.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 4. IDENTIFICATION ASSUMPTIONS                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>4. Identification Assumptions</h2>
+
+    <p>
+      The ATE $\psi$ is defined in terms of potential outcomes $Y^1$ and $Y^0$,
+      which are not simultaneously observable. To estimate $\psi$ from observational
+      data, we need three structural assumptions that allow us to express the
+      counterfactual quantity in terms of the observed data distribution.
+      These assumptions are shared by <em>every</em> method in this series.
+    </p>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Assumption 1 &mdash; Exchangeability (no unmeasured confounding)</div>
+      <p>
+        $$Y^a \ind A \mid \mathbf{L}, \quad \text{for } a \in \{0, 1\}$$
+        Conditional on the measured confounders $\mathbf{L}$, the potential outcomes are
+        independent of the treatment actually received. Equivalently: within strata of
+        $\mathbf{L}$, treatment assignment is "as good as random." This is untestable
+        from the data alone and requires subject-matter knowledge.
+      </p>
+    </div>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Assumption 2 &mdash; Positivity (overlap)</div>
+      <p>
+        $$0 < \P(A = 1 \mid \mathbf{L} = \mathbf{l}) < 1, \quad \text{for all } \mathbf{l} \text{ with } \P(\mathbf{L} = \mathbf{l}) > 0$$
+        Every individual in the population has a nonzero probability of receiving either
+        treatment level. If some subgroup is <em>never</em> treated (or <em>always</em> treated),
+        we cannot learn about the counterfactual for that subgroup. Positivity is empirically
+        assessable, and we will see that violations cause serious practical problems.
+      </p>
+    </div>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Assumption 3 &mdash; Consistency</div>
+      <p>
+        $$Y = Y^a \quad \text{when } A = a$$
+        The observed outcome for a person who received treatment $a$ equals their potential
+        outcome under $a$. This links the counterfactual framework to observed data.
+        It requires that there is a single, well-defined version of treatment,
+        ruling out hidden variations in how the drug is administered.
+      </p>
+    </div>
+
+    <h3>4.1 What the assumptions buy us</h3>
+
+    <p>
+      Each assumption plays a distinct role. Exchangeability lets us condition on
+      treatment without introducing selection bias. Consistency lets us replace
+      potential outcomes with observed outcomes. Positivity ensures we have data
+      in every corner of the covariate space.
+    </p>
+
+    <p>
+      Together, they are sometimes called the <strong>identifiability conditions</strong>
+      or the <strong>no-confounding conditions</strong>. When people say a causal effect
+      is "identified," they mean: under these assumptions, the causal quantity can be
+      expressed as a function of the observed data distribution.
+    </p>
+
+    <h3>4.2 What they do <em>not</em> buy us</h3>
+
+    <p>
+      These assumptions are about the <em>world</em>, not about any particular estimator.
+      They tell us that it is <em>possible in principle</em> to learn $\psi$ from the data.
+      They say nothing about <em>how</em> to estimate it well. That is the job of the
+      estimation methods in Modules 1&ndash;6.
+    </p>
+
+    <p>
+      Crucially, <strong>no statistical method can rescue you if these assumptions
+      are violated</strong>. If there is unmeasured confounding, IPW, G-formula, AIPW,
+      and TMLE will all be biased. The assumptions are prerequisites, not things the
+      methods "handle."
+    </p>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 5. THE IDENTIFICATION RESULT                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>5. The Identification Result</h2>
+
+    <p>
+      Under the three assumptions above, the counterfactual mean $\E[Y^a]$ can be
+      expressed as a function of the observed data. The proof proceeds in three steps:
+    </p>
+
+    <div class="math-block">
+      $$
+      \begin{aligned}
+      \E[Y^a]
+      &= \E_{\mathbf{L}}\!\Big[\E[Y^a \mid \mathbf{L}]\Big]
+          && \text{(law of total expectation)} \\[6pt]
+      &= \E_{\mathbf{L}}\!\Big[\E[Y^a \mid A = a, \mathbf{L}]\Big]
+          && \text{(exchangeability: } Y^a \ind A \mid \mathbf{L}\text{)} \\[6pt]
+      &= \E_{\mathbf{L}}\!\Big[\E[Y \mid A = a, \mathbf{L}]\Big]
+          && \text{(consistency: } Y = Y^a \text{ when } A = a\text{)}
+      \end{aligned}
+      $$
+    </div>
+
+    <p>
+      The right-hand side involves only observed quantities: the conditional expectation
+      of the observed outcome given treatment and confounders, averaged over the
+      distribution of confounders. This is the <em>identification</em> of the causal
+      parameter&mdash;we have translated a causal question into a statistical one.
+    </p>
+
+    <p>The ATE is therefore:</p>
+
+    <div class="math-block">
+      $$\psi = \E_{\mathbf{L}}\!\Big[\E[Y \mid A = 1, \mathbf{L}]\Big] - \E_{\mathbf{L}}\!\Big[\E[Y \mid A = 0, \mathbf{L}]\Big]$$
+    </div>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">The key equation</div>
+      <p>
+        This expression is the starting point for <em>every</em> estimation method
+        in this series. Each method is a different strategy for computing this quantity
+        from a finite sample:
+      </p>
+      <p>
+        <strong>G-formula</strong> (Module 2): directly model $\E[Y \mid A, \mathbf{L}]$
+        and average the predictions.<br>
+        <strong>IPW</strong> (Module 1): rewrite it using the propensity score and reweight
+        the observed outcomes.<br>
+        <strong>AIPW</strong> (Module 3): combine both approaches for double robustness.<br>
+        <strong>TMLE</strong> (Module 6): use targeted bias reduction on the G-formula estimate.
+      </p>
+      <p>Same estimand, same identification, different estimation.</p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 6. THE DATA-GENERATING PROCESS                       -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>6. The Simulation DGP</h2>
+
+    <p>
+      To ground everything in concrete numbers, we define a data-generating process
+      that we will reuse across all modules. Because we control the DGP, we know
+      the true causal effect and can verify that each estimator recovers it.
+    </p>
+
+    <div class="math-block">
+      $$
+      \begin{aligned}
+      \text{Age} &\sim \text{Uniform}(25,\, 75) \\[4pt]
+      \text{Sex} &\sim \text{Bernoulli}(0.5) \quad (\text{1 = male, 0 = female})\\[4pt]
+      \P(A = 1 \mid \mathbf{L}) &= \text{expit}(-2 + 0.03 \cdot \text{Age} + 0.5 \cdot \text{Sex}) \\[4pt]
+      \P(Y = 1 \mid A, \mathbf{L}) &= \text{expit}(-1.5 + 0.04 \cdot \text{Age} + 0.3 \cdot \text{Sex} - 0.8 \cdot A)
+      \end{aligned}
+      $$
+    </div>
+
+    <p>
+      where $\text{expit}(x) = 1/(1 + e^{-x})$ is the inverse logit function.
+    </p>
+
+    <p>
+      The true causal effect of $A$ on $Y$ is a risk difference of approximately
+      $\psi \approx -0.14$: the drug reduces disease risk by about 14 percentage points.
+      The coefficient $-0.8$ on the log-odds scale translates to this risk difference
+      after averaging over the confounder distribution.
+    </p>
+
+    <p>
+      Notice the confounding structure: older age and male sex both increase treatment
+      probability <em>and</em> disease risk. A naive comparison of treated versus
+      untreated will be confounded upward, making the drug appear harmful even though
+      its true effect is protective. This is exactly the scenario we need to test
+      whether each estimation method works.
+    </p>
+
+    <div class="callout callout-scenario">
+      <div class="callout-label">Why this DGP?</div>
+      <p>
+        It is simple enough to understand completely (two confounders, binary treatment,
+        binary outcome, logistic models), yet rich enough to demonstrate all the issues:
+        confounding, propensity score estimation, model misspecification,
+        and the differences between estimators. Every module will simulate from this
+        same DGP, so results are directly comparable.
+      </p>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- 7. ROAD MAP                                          -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <h2>7. Road Map</h2>
+
+    <p>
+      With notation, assumptions, and the identification result in hand, here is how
+      the rest of the series is organized. Each module tackles one estimation strategy
+      for the same identified ATE:
+    </p>
+
+    <table>
+      <tr>
+        <th>Module</th>
+        <th>Method</th>
+        <th>Core idea</th>
+      </tr>
+      <tr>
+        <td><strong>1</strong></td>
+        <td>IPW</td>
+        <td>Model treatment assignment, reweight outcomes</td>
+      </tr>
+      <tr>
+        <td><strong>2</strong></td>
+        <td>G-formula</td>
+        <td>Model outcome, predict under each treatment</td>
+      </tr>
+      <tr>
+        <td><strong>3</strong></td>
+        <td>AIPW</td>
+        <td>Combine both models for double robustness</td>
+      </tr>
+      <tr>
+        <td><strong>4</strong></td>
+        <td>Double robustness</td>
+        <td>Why and when "two chances to get it right" works</td>
+      </tr>
+      <tr>
+        <td><strong>5</strong></td>
+        <td>One-step estimator</td>
+        <td>Influence functions and semiparametric efficiency</td>
+      </tr>
+      <tr>
+        <td><strong>6</strong></td>
+        <td>TMLE</td>
+        <td>Targeted bias reduction via a clever submodel</td>
+      </tr>
+    </table>
+
+    <p>
+      Each module follows the same structure: motivating problem, intuition,
+      formal derivation, failure modes, R + Python implementation on the shared DGP,
+      and a bridge to the next module. The running example, notation, and DGP
+      established here carry through unchanged.
+    </p>
+
+    <hr>
+
+    <!-- References -->
+    <h3>References</h3>
+
+    <p style="font-size: 13px; line-height: 1.7;">
+      Hernán MA, Robins JM (2020). <em>Causal Inference: What If.</em> Boca Raton: Chapman &amp; Hall/CRC.<br>
+      Holland PW (1986). Statistics and causal inference. <em>JASA</em> 81:945&ndash;960.<br>
+      Neyman J (1923). On the application of probability theory to agricultural experiments. <em>Statistical Science</em> 5:465&ndash;480 (1990 translation).<br>
+      Rubin DB (1974). Estimating causal effects of treatments in randomized and nonrandomized studies. <em>J Educ Psychol</em> 66:688&ndash;701.
+    </p>
+
+    <!-- Module navigation -->
+    <div class="module-nav">
+      <span class="nav-prev">← Series introduction</span>
+      <a href="module1-ipw.html">Module 1: Inverse Probability Weighting →</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>

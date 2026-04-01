@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Posts — Alex Mourer</title>
+  <link rel="stylesheet" href="../css/style.css?v=23">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <style>
+    .posts-banner {
+      border-bottom: 1px solid #d0d4e4;
+      background: #e8eaf2;
+      overflow: hidden;
+    }
+    .posts-banner-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+      min-height: 260px;
+    }
+    .posts-banner-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 72px 48px 72px 0;
+    }
+    .posts-banner h1 {
+      font-size: clamp(36px, 4vw, 52px);
+      font-weight: 300;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .posts-banner p {
+      font-size: 15px;
+      color: var(--text-muted);
+      font-weight: 300;
+      max-width: 380px;
+      line-height: 1.7;
+    }
+    .posts-banner-image {
+      display: flex;
+      align-items: stretch;
+      border-left: 1px solid #d0d4e4;
+    }
+    .posts-banner-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 65%;
+      display: block;
+    }
+    @media (max-width: 768px) {
+      .posts-banner-inner { grid-template-columns: 1fr; }
+      .posts-banner-image { display: none; }
+      .posts-banner-text { padding: 48px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../index.html">Home</a>
+        <a href="index.html" class="active">Posts</a>
+        <a href="../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="posts-banner">
+    <div class="posts-banner-inner">
+      <div class="posts-banner-text">
+        <h1>Posts</h1>
+        <p>Notes, essays, and tutorials on causal inference, biostatistics, and machine learning.</p>
+      </div>
+      <div class="posts-banner-image">
+        <img src="../Disposition de carreaux gris-bleu.png" alt="">
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterPosts('all', this)">All</button>
+      <button class="filter-btn" onclick="filterPosts('causal', this)">Causal Inference</button>
+      <button class="filter-btn" onclick="filterPosts('biostat', this)">Biostatistics</button>
+      <button class="filter-btn" onclick="filterPosts('ml', this)">Machine Learning</button>
+    </div>
+
+    <div class="posts-list">
+
+      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module0-foundations.html'">
+        <span class="post-list-date">2025-03-23</span>
+        <div class="post-list-title">
+          Causal Inference Methods: Module 0 — Foundations
+          <span>Potential outcomes, identification assumptions, and the shared framework behind IPW, G-formula, AIPW, and TMLE.</span>
+        </div>
+        <span class="post-list-tag">Causal Inference</span>
+      </article>
+
+      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/ate-estimation.html'">
+        <span class="post-list-date">2025-03-10</span>
+        <div class="post-list-title">
+          Average Treatment Effect Estimation under Unconfoundedness
+          <span>From potential outcomes to doubly robust estimators, with interactive visualisations.</span>
+        </div>
+        <span class="post-list-tag">Causal Inference</span>
+      </article>
+
+      <article class="post-list-item" data-cat="biostat" onclick="location.href='posts/survival-analysis.html'">
+        <span class="post-list-date">2025-02-18</span>
+        <div class="post-list-title">
+          Competing Risks and the Fine-Gray Model
+          <span>When patients can fail for multiple reasons, Kaplan-Meier curves mislead.</span>
+        </div>
+        <span class="post-list-tag">Biostatistics</span>
+      </article>
+
+      <article class="post-list-item" data-cat="ml" onclick="location.href='posts/dml.html'">
+        <span class="post-list-date">2025-01-30</span>
+        <div class="post-list-title">
+          Double Machine Learning: Orthogonalisation Explained
+          <span>Neyman orthogonality and nuisance estimation without bias.</span>
+        </div>
+        <span class="post-list-tag">ML</span>
+      </article>
+
+      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/dag-intro.html'">
+        <span class="post-list-date">2024-12-05</span>
+        <div class="post-list-title">
+          A Practical Introduction to DAGs
+          <span>Directed acyclic graphs as a language for causal assumptions.</span>
+        </div>
+        <span class="post-list-tag">Causal Inference</span>
+      </article>
+
+      <article class="post-list-item" data-cat="biostat" onclick="location.href='posts/propensity-score.html'">
+        <span class="post-list-date">2024-11-12</span>
+        <div class="post-list-title">
+          Propensity Score Methods: What They Can and Cannot Do
+          <span>Matching, weighting, and the limits of balancing observed covariates.</span>
+        </div>
+        <span class="post-list-tag">Biostatistics</span>
+      </article>
+
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+  <script>
+    function filterPosts(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.post-list-item').forEach(item => {
+        item.style.display = (cat === 'all' || item.dataset.cat === cat) ? '' : 'none';
+      });
+    }
+
+    // Auto-filter from URL parameter
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var cat = params.get('cat');
+      if (cat) {
+        var btn = document.querySelector('.filter-btn[onclick*="' + cat + '"]');
+        if (btn) filterPosts(cat, btn);
+      }
+    })();
+  </script>
+
+</body>
+</html>

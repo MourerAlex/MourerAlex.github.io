@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATE Estimation under Unconfoundedness — Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=21">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})">
+  </script>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../../blog/index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="post-layout">
+
+    <a href="../../blog/index.html" class="back-link">← Posts</a>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-10</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>Average Treatment Effect Estimation under Unconfoundedness</h1>
+
+    <p class="lead">
+      How do we estimate the causal effect of a treatment when we can't randomise?
+      This post builds up from potential outcomes to doubly robust estimators,
+      with the key assumptions spelled out at each step.
+    </p>
+
+    <hr>
+
+    <h2>Potential Outcomes</h2>
+
+    <p>
+      For each unit $i$, we define two <strong>potential outcomes</strong>:
+      $Y_i(1)$ under treatment, and $Y_i(0)$ under control.
+      The individual treatment effect is $\tau_i = Y_i(1) - Y_i(0)$,
+      but we only ever observe one of these — the fundamental problem of causal inference.
+    </p>
+
+    <p>The quantity we usually target is the <strong>Average Treatment Effect</strong>:</p>
+
+    <div class="math-block">
+      $$\text{ATE} = \mathbb{E}[\tau_i] = \mathbb{E}[Y_i(1) - Y_i(0)]$$
+    </div>
+
+    <h2>The Unconfoundedness Assumption</h2>
+
+    <p>
+      In an observational study, treatment $D_i$ is not randomly assigned.
+      To identify the ATE, we need to assume that, conditional on observed covariates $X_i$,
+      treatment assignment is as good as random:
+    </p>
+
+    <div class="math-block">
+      $$(Y_i(0), Y_i(1)) \perp\!\!\!\perp D_i \mid X_i$$
+    </div>
+
+    <div class="callout">
+      <p><strong>Key intuition:</strong> once we control for everything in $X_i$ that jointly affects treatment and outcome, there's no remaining confounding. This is a strong assumption — and untestable from data alone.</p>
+    </div>
+
+    <p>We also require <strong>overlap</strong> (or positivity): every unit has some positive probability of receiving either treatment:</p>
+
+    <div class="math-block">
+      $$0 < e(x) < 1 \quad \forall x \in \mathcal{X}$$
+    </div>
+
+    <p>where $e(x) = P(D_i = 1 \mid X_i = x)$ is the <strong>propensity score</strong>.</p>
+
+    <h2>Doubly Robust Estimation</h2>
+
+    <p>
+      The Augmented Inverse Probability Weighted (AIPW) estimator combines outcome modelling
+      and propensity score weighting. It is <strong>doubly robust</strong>: consistent if
+      either the outcome model $\hat{\mu}(d, x)$ or the propensity score $\hat{e}(x)$ is correctly specified.
+    </p>
+
+    <div class="math-block">
+      $$\hat{\tau}^{\text{AIPW}} = \frac{1}{n}\sum_{i=1}^n \left[
+        \hat{\mu}(1, X_i) - \hat{\mu}(0, X_i)
+        + \frac{D_i\bigl(Y_i - \hat{\mu}(1,X_i)\bigr)}{\hat{e}(X_i)}
+        - \frac{(1-D_i)\bigl(Y_i - \hat{\mu}(0,X_i)\bigr)}{1 - \hat{e}(X_i)}
+      \right]$$
+    </div>
+
+    <p>
+      The first two terms are the direct regression adjustment.
+      The last two terms are augmentation corrections that remove bias
+      when one of the models is misspecified.
+    </p>
+
+    <hr>
+
+    <p style="font-size:13px; color:var(--text-faint);">
+      Next: <a href="dml.html" style="color:var(--accent);">Double Machine Learning →</a>
+    </p>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
+
+</body>
+</html>
