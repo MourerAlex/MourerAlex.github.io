@@ -69,7 +69,7 @@
 <li><strong>Immortal time bias:</strong> both groups share a well-defined time zero — there is no gap between becoming eligible and entering the study</li>
 <li><strong>Prevalent user bias:</strong> patients are observed from treatment start, so baseline covariates are not shaped by years of prior drug exposure</li>
 </ul>
-<div class="callout callout-scenario">
+<div class="callout callout-definition">
   <div class="callout-label">Causal question</div>
   <p><em>What is the effect of initiating drug A versus drug B, among treatment-naïve patients<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> at first prescription?</em> This targets an ATE in the new-user population — the same estimand a head-to-head RCT would produce.</p>
 </div>
@@ -318,24 +318,36 @@
 <p>Thomas et al. (2020, Section 5) distinguish three approaches to handling confounding within pseudo-experiments, ranging from the most aggressive matching to the least. We present them in that order — from methods that give everything to matching, through to methods that give everything to regression — because this progression leads naturally to SNT, which removes matching entirely.</p>
 <p>All three approaches target the ATT and produce matched cohorts rather than full trial emulations.</p>
 <h3 id="lu-2005-propensity-score-matching-on-all-covariates-option-3">3.1 Lu (2005) — Propensity score matching on all covariates (Option 3)</h3>
-<p><strong>Causal question:</strong> <em>What is the effect of receiving treatment at time t, compared to not (yet) receiving it, among those treated at t?</em> (ATT)</p>
+<div class="callout callout-definition">
+  <div class="callout-label">Causal question</div>
+  <p><em>What is the effect of receiving treatment at time t, compared to not (yet) receiving it, among those treated at t?</em> (ATT)</p>
+</div>
 <p>Bo Lu’s 2005 paper in <em>Biometrics</em> was the first to formalise propensity score matching for settings where both treatment and covariates vary over time. A Cox proportional hazards model with time-varying covariates estimates the hazard of treatment initiation, and the resulting linear predictor serves as the time-dependent propensity score. At each treatment time, a risk set of not-yet-treated patients is formed, and the treated patient is matched to controls with the closest scores.</p>
 <p>The key theoretical contribution (Proposition 1) is that matching on this score balances the covariate distribution between treated and control groups at every time point — the time-dependent analogue of Rosenbaum &amp; Rubin (1983). This means that if the propensity score model is correctly specified, confounding is removed at each pseudo-experiment.</p>
 <p>The method is agnostic to the time scale. Lu’s original application — a study of cystoscopy for interstitial cystitis in a prospective cohort — used study time. But in claims databases with staggered entry, calendar time is the natural choice. The risk set at each treatment date automatically restricts matching to contemporaneous patients: a 2008 initiator can only be matched within the 2008 risk set. Calendar time can additionally appear as a covariate in the PS model to capture secular trends, but the temporal restriction comes from the risk set construction itself.</p>
 <p>In Thomas et al.’s classification, this is <strong>Option 3</strong>: match on all relevant confounders via a score. The regression model for the outcome does relatively little work — most of the confounding is handled at the design stage through matching. The limitation is that treatment history — duration on prior drugs, number of prescriptions, cumulative dose — is not structurally enforced. It enters the propensity score as one covariate among many, and whether it is adequately balanced depends on model specification.</p>
 <h3 id="schaubel-2006-exact-matching-on-key-strata-plus-regression-option-2">3.2 Schaubel (2006) — Exact matching on key strata plus regression (Option 2)</h3>
-<p><strong>Causal question:</strong> same as Lu — ATT.</p>
+<div class="callout callout-definition">
+  <div class="callout-label">Causal question</div>
+  <p>Same as Lu — ATT.</p>
+</div>
 <p>Schaubel, Wolfe and Port (2006, <em>Biometrics</em>) developed sequential stratification for the kidney transplant wait-list problem. The key difference from Lu is in how confounding is handled: rather than compressing all covariates into a propensity score, sequential stratification exact-matches on a small number of critical variables and adjusts for the rest parametrically via stratified Cox regression.</p>
 <p>In Thomas et al.’s classification, this is <strong>Option 2</strong>: a hybrid of design-level matching and model-based adjustment. The variables that are hardest to model, or most strongly related to the outcome, are handled nonparametrically through exact matching. The rest are handled by regression. This makes fewer parametric assumptions than Lu’s approach, at the cost of potentially losing patients who don’t match on the strata variables.</p>
 <p>At each treatment time, a stratum is formed containing the treated patient and all patients who meet the exact matching criteria at that moment. A stratified Cox model pools information across all strata. Schaubel’s framework explicitly conceptualises each stratum as a mini-experiment in which treatment is “conditionally randomised” given the matching variables — language that directly anticipates Hernán’s target trial concept, though the two approaches developed independently.</p>
 <p>The same patient can appear in multiple strata (as a control in earlier experiments and potentially as treated in a later one). This is the same issue that arises with matching-with-replacement in Lu’s tvPS and with patients entering multiple trials in SNT. The solution in all cases is robust sandwich variance estimation or bootstrapping to account for within-patient correlation.</p>
 <p>Several applications demonstrate the method’s range. Kennedy et al. (2010) applied it to salvage androgen deprivation therapy for prostate cancer. Arterburn et al. (2015) used it for bariatric surgery in the VA system. Richey et al. (2024) conducted a simulation comparison: tvPS (Option 3) and SS (Option 2) performed comparably on bias, coverage, and precision, but tvPS achieved better match completeness (100% vs. 74–92%) because exact matching is subject to the curse of dimensionality.</p>
 <h3 id="sequential-cox-models-match-on-time-and-eligibility-only-regression-does-everything-option-1">3.3 Sequential Cox models — Match on time and eligibility only, regression does everything (Option 1)</h3>
-<p><strong>Causal question:</strong> same as above — ATT (or closer to ATE depending on implementation).</p>
+<div class="callout callout-definition">
+  <div class="callout-label">Causal question</div>
+  <p>Same as above — ATT (or closer to ATE depending on implementation).</p>
+</div>
 <p>Gran et al. (2010) described an approach where confounding is handled entirely through regression. All eligible, at-risk patients enter each pseudo-experiment — there is no covariate matching at all. A stratified Cox model is fitted within each experiment, adjusting for Z(sⱼ) parametrically. The overall effect is estimated by pooling across experiments.</p>
 <p>In Thomas et al.’s classification, this is <strong>Option 1</strong>: match on time and eligibility only, parametric regression addresses confounding. The baseline hazard is experiment-specific (nonparametric in the time dimension), but all covariates enter the model parametrically. This places the heaviest reliance on the regression model being correctly specified, but includes the most patients — no one is excluded for failing to match.</p>
 <h3 id="pnud-suissa-20162017-a-special-case-combining-options-2-and-3">3.4 PNUD (Suissa 2016/2017) — A special case combining Options 2 and 3</h3>
-<p><strong>Causal question:</strong> <em>What if, at the time of initiation, initiators of the study drug had instead continued with the comparator?</em> (Young et al. 2024) — ATT among switchers.</p>
+<div class="callout callout-definition">
+  <div class="callout-label">Causal question</div>
+  <p><em>What if, at the time of initiation, initiators of the study drug had instead continued with the comparator?</em> (Young et al. 2024) — ATT among switchers.</p>
+</div>
 <p>The prevalent new-user design (Suissa 2016; Suissa et al. 2017) was developed specifically for the pharmacoepi scenario where most study drug users are prevalent users of a comparator who switch or augment. It combines elements of both Options 2 and 3.</p>
 <p>First, the time scale is treatment history duration — the axis most related to the outcome in the diabetes context, consistent with the principle that the primary scale should receive nonparametric treatment (Thomas et al. 2020). Exposure sets are organised by time since first comparator prescription (in time-based sets) or by number of prior comparator prescriptions (in prescription-based sets). This is Schaubel’s stratum (Option 2) indexed on a treatment-history axis rather than calendar time.</p>
 <p>Second, within each exposure set, a time-conditional propensity score is computed via conditional logistic regression (equivalently, a time-varying Cox model) to match each switcher to a comparable comparator user. This is Lu’s tvPS (Option 3) applied within each stratum.</p>
@@ -440,7 +452,7 @@
 </ol>
 <p>The move from option 1 to option 2 is the natural, efficient endpoint of the logic.</p>
 <h3 id="the-snt-design-hernán-et-al.-2008-2016">4.2 The SNT design (Hernán et al. 2008, 2016)</h3>
-<div class="callout callout-scenario">
+<div class="callout callout-definition">
   <div class="callout-label">Causal question — SNT</div>
   <p><em>What is the effect of initiating treatment versus not initiating, among all patients eligible at each time point?</em> This is an ATE in the eligible population — the same question as ACNU, but asked repeatedly across follow-up rather than once at first prescription.</p>
 </div>
