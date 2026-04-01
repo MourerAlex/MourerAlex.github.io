@@ -1018,6 +1018,8 @@ footer {
 .post-layout .callout-definition .callout-label { color: #27ae60; }
 .post-layout .callout-assumption { background: var(--tag-bg); border-left: 3px solid var(--border-strong); }
 .post-layout .callout-assumption .callout-label { color: var(--text-muted); }
+.post-layout .callout-warning { background: #fff8e1; border-left: 3px solid #f0a500; }
+.post-layout .callout-warning .callout-label { color: #f0a500; }
 .post-layout table {
   width: 100%; border-collapse: collapse;
   margin: 28px 0; font-size: 17px;

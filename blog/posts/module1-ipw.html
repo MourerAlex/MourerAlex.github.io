@@ -1,262 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Module 1: Inverse Probability Weighting | Causal Inference Methods</title>
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$']],
-                displayMath: [['$$', '$$']],
-                macros: {
-                    E: '\\mathbb{E}',
-                    P: '\\mathbb{P}',
-                    R: '\\mathbb{R}',
-                    ind: '\\perp\\!\\!\\!\\perp'
-                }
-            }
-        };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
-    <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #e74c3c;
-            --accent-light: #fdf0ed;
-            --blue: #2980b9;
-            --blue-light: #eaf2f8;
-            --green: #27ae60;
-            --green-light: #eafaf1;
-            --gray: #7f8c8d;
-            --gray-light: #f8f9fa;
-            --text: #2c3e50;
-            --border: #dee2e6;
-            --max-width: 780px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 1: Inverse Probability Weighting — Causal Inference Methods | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=28">
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: 18px;
-            line-height: 1.75;
-            color: var(--text);
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: 2rem 1.5rem 4rem;
-            background: #fff;
-        }
-
-        /* ── Header ── */
-        .series-label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-        h1 {
-            font-size: 2.4rem;
-            line-height: 1.2;
-            margin-bottom: 0.5rem;
-            color: var(--primary);
-        }
-        .subtitle {
-            font-size: 1.15rem;
-            color: var(--gray);
-            font-style: italic;
-            margin-bottom: 2.5rem;
-        }
-
-        /* ── Sections ── */
-        h2 {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-top: 3rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.3rem;
-            border-bottom: 2px solid var(--accent);
-        }
-        h3 {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 1.15rem;
-            color: var(--primary);
-            margin-top: 2rem;
-            margin-bottom: 0.75rem;
-        }
-
-        p { margin-bottom: 1.2rem; }
-
-        /* ── Special boxes ── */
-        .scenario-box {
-            background: var(--blue-light);
-            border-left: 4px solid var(--blue);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .scenario-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--blue);
-            margin-bottom: 0.5rem;
-        }
-
-        .key-insight {
-            background: var(--accent-light);
-            border-left: 4px solid var(--accent);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .key-insight .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-
-        .definition-box {
-            background: var(--green-light);
-            border-left: 4px solid var(--green);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .definition-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--green);
-            margin-bottom: 0.5rem;
-        }
-
-        .assumption-box {
-            background: var(--gray-light);
-            border-left: 4px solid var(--gray);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .assumption-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--gray);
-            margin-bottom: 0.5rem;
-        }
-
-        /* ── Table ── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            font-size: 0.95rem;
-        }
-        th {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background: var(--primary);
-            color: #fff;
-            padding: 0.6rem 1rem;
-            text-align: left;
-            font-weight: 600;
-        }
-        td {
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        tr:nth-child(even) { background: var(--gray-light); }
-        .table-caption {
-            font-size: 0.9rem;
-            color: var(--gray);
-            font-style: italic;
-            margin-top: -0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* ── DAG ── */
-        .dag-container {
-            text-align: center;
-            margin: 2rem 0;
-        }
-        .dag-container svg {
-            max-width: 420px;
-        }
-        .dag-caption {
-            font-size: 0.9rem;
-            color: var(--gray);
-            font-style: italic;
-            margin-top: 0.5rem;
-        }
-
-        /* ── Math display ── */
-        .math-block {
-            margin: 1.5rem 0;
-            padding: 1rem 1.5rem;
-            background: var(--gray-light);
-            border-radius: 6px;
-            overflow-x: auto;
-        }
-
-        /* ── Notation reference ── */
-        .notation-table {
-            font-size: 0.9rem;
-        }
-        .notation-table td:first-child {
-            font-family: 'Courier New', monospace;
-            white-space: nowrap;
-            width: 120px;
-            text-align: center;
-        }
-
-        /* ── Navigation ── */
-        .module-nav {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 0.9rem;
-        }
-        .module-nav a {
-            color: var(--blue);
-            text-decoration: none;
-        }
-        .module-nav a:hover {
-            text-decoration: underline;
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 600px) {
-            body { font-size: 16px; padding: 1rem; }
-            h1 { font-size: 1.8rem; }
-            h2 { font-size: 1.3rem; }
-        }
-    </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════ -->
-<!-- HEADER                                              -->
-<!-- ════════════════════════════════════════════════════ -->
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
 
-<div class="series-label">Causal Inference Methods &mdash; Module 1 of 6</div>
-<h1>Inverse Probability Weighting</h1>
-<p class="subtitle">When you can't randomize, reweight.</p>
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">← Posts</a>
+
+    <div class="series-label">Causal Inference Methods &mdash; Module 1 of 6</div>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-18</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>Inverse Probability Weighting</h1>
+    <p class="subtitle">When you can't randomize, reweight.</p>
+
+    <hr>
 
 
 <!-- ════════════════════════════════════════════════════ -->
@@ -265,8 +63,8 @@
 
 <h2>1. The Problem</h2>
 
-<div class="scenario-box">
-    <div class="label">Running Example</div>
+<div class="callout callout-scenario">
+    <div class="callout-label">Running Example</div>
     <p style="margin-bottom:0">
         A public health agency wants to know whether a <strong>preventive drug</strong> reduces the risk of a <strong>disease</strong> (binary: yes/no).
         They have observational data from a large cohort. Two variables were measured at baseline:
@@ -324,8 +122,8 @@
     The drug appears to <em>increase</em> disease risk. Should we conclude the drug is harmful?
 </p>
 
-<div class="key-insight">
-    <div class="label">The trap</div>
+<div class="callout callout-insight">
+    <div class="callout-label">The trap</div>
     <p style="margin-bottom:0">
         No. The treated group is older and more male on average. These patients would have had
         higher disease risk <em>regardless</em> of treatment. The crude comparison confounds the
@@ -382,8 +180,8 @@
     the causal estimate depends on correctly specifying how confounders relate to the outcome.
 </p>
 
-<div class="key-insight">
-    <div class="label">A different strategy</div>
+<div class="callout callout-insight">
+    <div class="callout-label">A different strategy</div>
     <p style="margin-bottom:0">
         What if, instead of modeling the outcome, we modeled the <em>treatment assignment</em>?
         That is, instead of asking "how does disease risk depend on age, sex, and treatment?",
@@ -424,8 +222,8 @@
 
 <h3>3.2 The propensity score</h3>
 
-<div class="definition-box">
-    <div class="label">Definition</div>
+<div class="callout callout-definition">
+    <div class="callout-label">Definition</div>
     <p style="margin-bottom:0">
         The <strong>propensity score</strong> is the conditional probability of receiving
         treatment given the observed confounders:
@@ -462,8 +260,8 @@
     $1/0.22 \approx 4.55$&mdash;he is rare and informative.
 </p>
 
-<div class="key-insight">
-    <div class="label">The intuition</div>
+<div class="callout callout-insight">
+    <div class="callout-label">The intuition</div>
     <p style="margin-bottom:0">
         The weights create a <strong>pseudo-population</strong> in which treatment assignment
         is independent of the confounders&mdash;as if the data came from a randomized experiment.
@@ -541,8 +339,8 @@
 
 <h2>4. The Math</h2>
 
-<div class="scenario-box">
-    <div class="label">Prerequisites from <a href="module0-foundations.html">Module 0</a></div>
+<div class="callout callout-scenario">
+    <div class="callout-label">Prerequisites from <a href="module0-foundations.html">Module 0</a></div>
     <p style="margin-bottom:0">
         This section assumes you have read the <a href="module0-foundations.html">Foundations</a> module.
         In particular: notation ($A$, $Y$, $\mathbf{L}$, $Y^a$, $\psi$, $e(\mathbf{L})$),
@@ -692,8 +490,8 @@ $$
     control groups with probabilities that depend on their characteristics.
 </p>
 
-<div class="key-insight">
-    <div class="label">Summary so far</div>
+<div class="callout callout-insight">
+    <div class="callout-label">Summary so far</div>
     <p>
         IPW estimates the causal effect by modeling the <em>treatment assignment mechanism</em>
         rather than the <em>outcome</em>. Under the identification assumptions, the IPW
@@ -748,8 +546,8 @@ $$
     robust estimators (AIPW, TMLE) offered partial protection&mdash;a preview of Module 3.
 </p>
 
-<div class="key-insight">
-    <div class="label">Lesson</div>
+<div class="callout callout-insight">
+    <div class="callout-label">Lesson</div>
     <p style="margin-bottom:0">
         IPW places all its eggs in one basket: the propensity score model.
         If that model is wrong, there is no safety net. The bias is of the same
@@ -974,8 +772,8 @@ print(f"SMD (age) before weighting: {smd_before:.3f}")
 print(f"SMD (age) after weighting:  {smd_after:.3f}")</code>
 </pre>
 
-<div class="scenario-box">
-    <div class="label">Expected output</div>
+<div class="callout callout-scenario">
+    <div class="callout-label">Expected output</div>
     <p style="margin-bottom:0">
         The naive estimate will be positive (around +0.04 to +0.08), wrongly suggesting the
         drug increases disease risk. Both IPW estimators should recover approximately $-0.14$,
@@ -1040,8 +838,8 @@ print(f"SMD (age) after weighting:  {smd_after:.3f}")</code>
 
 <h3>7.3 Bridge to Module 2</h3>
 
-<div class="key-insight">
-    <div class="label">What comes next</div>
+<div class="callout callout-insight">
+    <div class="callout-label">What comes next</div>
     <p style="margin-bottom:0">
         IPW models the treatment. The <strong>G-formula</strong> takes the opposite approach:
         it models the <em>outcome</em> $\E[Y \mid A, \mathbf{L}]$ and uses it to predict
@@ -1054,7 +852,7 @@ print(f"SMD (age) after weighting:  {smd_after:.3f}")</code>
 
 <h3>References</h3>
 
-<p style="font-size: 0.9rem; color: var(--gray); line-height: 1.6;">
+<p style="font-size: 16px; line-height: 1.8;">
     Hernán MA, Robins JM (2020). <em>Causal Inference: What If.</em> Boca Raton: Chapman & Hall/CRC.<br>
     Horvitz DG, Thompson DJ (1952). A generalization of sampling without replacement from a finite universe. <em>JASA</em> 47:663&ndash;685.<br>
     Naimi AI, Cole SR, Kennedy EH (2017). An introduction to g methods. <em>Int J Epidemiol</em> 46:756&ndash;762.<br>
@@ -1065,14 +863,18 @@ print(f"SMD (age) after weighting:  {smd_after:.3f}")</code>
 </p>
 
 
-<!-- ════════════════════════════════════════════════════ -->
-<!-- NAV                                                 -->
-<!-- ════════════════════════════════════════════════════ -->
+    <div class="module-nav">
+      <a href="module0-foundations.html">&larr; Module 0: Foundations</a>
+      <a href="module2-tte.html">Module 2: Target Trial Emulation &rarr;</a>
+    </div>
 
-<div class="module-nav">
-    <a href="module0-foundations.html">&larr; Module 0: Foundations</a>
-    <a href="module2-gformula.html">Module 2: The G-formula &rarr;</a>
-</div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
 
 </body>
 </html>

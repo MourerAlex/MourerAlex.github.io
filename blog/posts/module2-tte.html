@@ -1,277 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Module 2: Target Trial Emulation | Causal Inference Methods</title>
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$']],
-                displayMath: [['$$', '$$']],
-                macros: {
-                    E: '\\mathbb{E}',
-                    P: '\\mathbb{P}',
-                    R: '\\mathbb{R}',
-                    ind: '\\perp\\!\\!\\!\\perp'
-                }
-            }
-        };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
-    <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #e74c3c;
-            --accent-light: #fdf0ed;
-            --blue: #2980b9;
-            --blue-light: #eaf2f8;
-            --green: #27ae60;
-            --green-light: #eafaf1;
-            --gray: #7f8c8d;
-            --gray-light: #f8f9fa;
-            --text: #2c3e50;
-            --border: #dee2e6;
-            --max-width: 780px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 2: Target Trial Emulation — Causal Inference Methods | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=28">
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: 18px;
-            line-height: 1.75;
-            color: var(--text);
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: 2rem 1.5rem 4rem;
-            background: #fff;
-        }
-
-        /* ── Header ── */
-        .series-label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-        h1 {
-            font-size: 2.4rem;
-            line-height: 1.2;
-            margin-bottom: 0.5rem;
-            color: var(--primary);
-        }
-        .subtitle {
-            font-size: 1.15rem;
-            color: var(--gray);
-            font-style: italic;
-            margin-bottom: 2.5rem;
-        }
-
-        /* ── Sections ── */
-        h2 {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-top: 3rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.3rem;
-            border-bottom: 2px solid var(--accent);
-        }
-        h3 {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 1.15rem;
-            color: var(--primary);
-            margin-top: 2rem;
-            margin-bottom: 0.75rem;
-        }
-
-        p { margin-bottom: 1.2rem; }
-
-        /* ── Special boxes ── */
-        .scenario-box {
-            background: var(--blue-light);
-            border-left: 4px solid var(--blue);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .scenario-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--blue);
-            margin-bottom: 0.5rem;
-        }
-
-        .key-insight {
-            background: var(--accent-light);
-            border-left: 4px solid var(--accent);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .key-insight .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-
-        .definition-box {
-            background: var(--green-light);
-            border-left: 4px solid var(--green);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .definition-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--green);
-            margin-bottom: 0.5rem;
-        }
-
-        .assumption-box {
-            background: var(--gray-light);
-            border-left: 4px solid var(--gray);
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .assumption-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--gray);
-            margin-bottom: 0.5rem;
-        }
-
-        /* ── Warning box ── */
-        .warning-box {
-            background: #fff8e1;
-            border-left: 4px solid #f0a500;
-            padding: 1.2rem 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 0 6px 6px 0;
-        }
-        .warning-box .label {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #f0a500;
-            margin-bottom: 0.5rem;
-        }
-
-        /* ── Table ── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            font-size: 0.95rem;
-        }
-        th {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background: var(--primary);
-            color: #fff;
-            padding: 0.6rem 1rem;
-            text-align: left;
-            font-weight: 600;
-        }
-        td {
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        tr:nth-child(even) { background: var(--gray-light); }
-
-        /* ── Math display ── */
-        .math-block {
-            margin: 1.5rem 0;
-            padding: 1rem 1.5rem;
-            background: var(--gray-light);
-            border-radius: 6px;
-            overflow-x: auto;
-        }
-
-        /* ── Figure / diagram ── */
-        .dag-container {
-            text-align: center;
-            margin: 2rem 0;
-        }
-        .dag-container svg {
-            max-width: 520px;
-        }
-        .dag-caption {
-            font-size: 0.9rem;
-            color: var(--gray);
-            font-style: italic;
-            margin-top: 0.5rem;
-        }
-
-        /* ── Flowchart ── */
-        .flow-container {
-            text-align: center;
-            margin: 2rem 0;
-        }
-        .flow-container svg {
-            max-width: 600px;
-        }
-        .flow-caption {
-            font-size: 0.9rem;
-            color: var(--gray);
-            font-style: italic;
-            margin-top: 0.5rem;
-        }
-
-        /* ── Navigation ── */
-        .module-nav {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 0.9rem;
-        }
-        .module-nav a {
-            color: var(--blue);
-            text-decoration: none;
-        }
-        .module-nav a:hover {
-            text-decoration: underline;
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 600px) {
-            body { font-size: 16px; padding: 1rem; }
-            h1 { font-size: 1.8rem; }
-            h2 { font-size: 1.3rem; }
-        }
-    </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════ -->
-<!-- HEADER                                              -->
-<!-- ════════════════════════════════════════════════════ -->
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
 
-<div class="series-label">Causal Inference Methods &mdash; Module 2 of 6</div>
-<h1>Target Trial Emulation</h1>
-<p class="subtitle">Designing observational studies as if they were trials.</p>
+  <div class="post-layout">
+
+    <a href="../index.html" class="back-link">← Posts</a>
+
+    <div class="series-label">Causal Inference Methods &mdash; Module 2 of 6</div>
+
+    <div class="post-meta">
+      <span class="post-date">2025-03-20</span>
+      <span class="post-tag">Causal Inference</span>
+    </div>
+
+    <h1>Target Trial Emulation</h1>
+    <p class="subtitle">Designing observational studies as if they were trials.</p>
+
+    <hr>
 
 
 <!-- ════════════════════════════════════════════════════ -->
@@ -304,15 +87,15 @@
     how treatment groups are defined, who is included, and when.
 </p>
 
-<div class="key-insight">
-    <div class="label">Key insight</div>
+<div class="callout callout-insight">
+    <div class="callout-label">Key insight</div>
     <p style="margin-bottom:0">
         Many flawed observational analyses are not wrong because the data was bad.
         They are wrong because the analyst did not think carefully enough about what
         trial they were trying to emulate. Immortal time bias, selection bias, and
         misclassification of treatment strategies are all consequences of a
         misalignment between the study design and the causal question
-        <span style="font-size:0.85rem; color: var(--gray);">(Hern&aacute;n et al., 2016; Hern&aacute;n et al., 2025)</span>.
+        <span style="color: var(--text-faint);">(Hern&aacute;n et al., 2016; Hern&aacute;n et al., 2025)</span>.
     </p>
 </div>
 
@@ -333,8 +116,8 @@
     explicit ones that can be scrutinized, debated, and improved.
 </p>
 
-<div class="assumption-box">
-    <div class="label">What TTE does not solve</div>
+<div class="callout callout-assumption">
+    <div class="callout-label">What TTE does not solve</div>
     <p style="margin-bottom:0">
         TTE is a design framework, not a statistical method. It prevents
         <em>design-related</em> biases (immortal time, selection at time zero,
@@ -361,8 +144,8 @@
     and cardiovascular-related death compared to Drug&nbsp;B.
 </p>
 
-<div class="scenario-box">
-    <div class="label">Running example (used across this module)</div>
+<div class="callout callout-scenario">
+    <div class="callout-label">Running example (used across this module)</div>
     <p style="margin-bottom:0">
         A clinical team wants to evaluate whether Drug&nbsp;A also benefits a
         <strong>specific subgroup</strong> of patients&mdash;those with moderate
@@ -371,7 +154,7 @@
         The original trial was not powered for this subgroup analysis, and random
         variation is the most probable explanation for any apparent subgroup
         differences, limiting actionable clinical insights
-        <span style="font-size:0.85rem; color: var(--gray);">(ISIS-2 Collaborative Group, 1988)</span>.
+        <span style="color: var(--text-faint);">(ISIS-2 Collaborative Group, 1988)</span>.
     </p>
 </div>
 
@@ -461,8 +244,8 @@
     effects can, under certain conditions, be identified from data.
 </p>
 
-<div class="definition-box">
-    <div class="label">Identifiability conditions</div>
+<div class="callout callout-definition">
+    <div class="callout-label">Identifiability conditions</div>
     <p style="margin-bottom:0">
         Estimating average causal effects from observational data requires three
         core assumptions (see also Module 0): <strong>exchangeability</strong>
@@ -483,7 +266,7 @@
 </p>
 
 <!-- Counterfactual strategies figure -->
-<div class="flow-container">
+<div class="dag-container">
     <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg" style="font-family: Helvetica Neue, Arial, sans-serif;">
         <!-- Title -->
         <text x="260" y="18" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c3e50">Counterfactual treatment strategies for the same patients</text>
@@ -524,7 +307,7 @@
         <line x1="107" y1="120" x2="107" y2="160" stroke="#7f8c8d" stroke-width="1"/>
         <line x1="107" y1="140" x2="115" y2="140" stroke="#7f8c8d" stroke-width="1"/>
     </svg>
-    <p class="flow-caption">
+    <p class="dag-caption">
         Figure 2.1 &mdash; The two treatment strategies of interest applied to the same patients.
         The counterfactual outcome of Patient&nbsp;#1 under Strategy&nbsp;2 represents what
         <em>would</em> have happened had Patient&nbsp;#1 been treated with Drug&nbsp;A instead of Drug&nbsp;B.
@@ -560,8 +343,8 @@
     Hern&aacute;n and Robins, 2024, Sections 22.1&ndash;22.2).
 </p>
 
-<div class="warning-box">
-    <div class="label">A note on hazard ratios</div>
+<div class="callout callout-warning">
+    <div class="callout-label">A note on hazard ratios</div>
     <p style="margin-bottom:0">
         For effect measures, absolute risks, their differences, and their ratios
         are usually preferred for causal interpretation (Murray et al., 2019).
@@ -600,14 +383,14 @@
     defining a <em>pragmatic clinical trial</em>.
 </p>
 
-<div class="definition-box">
-    <div class="label">Pragmatic clinical trial</div>
+<div class="callout callout-definition">
+    <div class="callout-label">Pragmatic clinical trial</div>
     <p style="margin-bottom:0">
         A trial that examines interventions under circumstances that approach
         real-world practice, with more heterogeneous patient populations, possibly
         less-standardised treatment protocols, and delivery in routine clinical
         settings as opposed to a research environment
-        <span style="font-size:0.85rem; color: var(--gray);">(Anes et al., 2024)</span>.
+        <span style="color: var(--text-faint);">(Anes et al., 2024)</span>.
     </p>
 </div>
 
@@ -618,7 +401,7 @@
 </p>
 
 <!-- Three-step flowchart -->
-<div class="flow-container">
+<div class="dag-container">
     <svg viewBox="0 0 560 100" xmlns="http://www.w3.org/2000/svg" style="font-family: Helvetica Neue, Arial, sans-serif;">
         <!-- Design differences bracket -->
         <text x="185" y="14" text-anchor="middle" font-size="11" font-weight="bold" fill="#2c3e50">Design differences</text>
@@ -660,7 +443,7 @@
             </marker>
         </defs>
     </svg>
-    <p class="flow-caption">
+    <p class="dag-caption">
         Figure 2.2 &mdash; The three-step process. The ideal trial is the best version of the trial
         we could envisage. The pragmatic trial is what is feasible given real-world data constraints.
         The emulation maps the pragmatic trial to the observational data.
@@ -792,14 +575,14 @@
     biased effect estimates, as has been widely documented.
 </p>
 
-<div class="key-insight">
-    <div class="label">Key insight</div>
+<div class="callout callout-insight">
+    <div class="callout-label">Key insight</div>
     <p style="margin-bottom:0">
         Individuals are not truly immortal. Rather, the existence of immortal time
         in analyses of observational data results from a failure to correctly emulate
         the target trial. Specifically, it arises when the eligibility criteria and
         treatment assignment are not synchronized at the start of follow-up
-        <span style="font-size:0.85rem; color: var(--gray);">(Hern&aacute;n et al., 2025)</span>.
+        <span style="color: var(--text-faint);">(Hern&aacute;n et al., 2025)</span>.
     </p>
 </div>
 
@@ -912,8 +695,8 @@
     <strong>What to do:</strong> Several approaches prevent this type of immortal time:
 </p>
 
-<div class="assumption-box">
-    <div class="label">Approaches to avoid misclassification-induced immortal time</div>
+<div class="callout callout-assumption">
+    <div class="callout-label">Approaches to avoid misclassification-induced immortal time</div>
     <p><strong>1. Change the causal question</strong> to compare strategies that
     are distinguishable at time zero. For example, instead of comparing "transplant"
     vs. "no transplant," compare "transplant today" vs. "no transplant ever" among
@@ -942,8 +725,8 @@
     typical structure of a research report.
 </p>
 
-<div class="key-insight">
-    <div class="label">TARGET &mdash; the new state of the art for reporting</div>
+<div class="callout callout-insight">
+    <div class="callout-label">TARGET &mdash; the new state of the art for reporting</div>
     <p>
         TARGET is the first formal guideline specifically designed for reporting
         studies that emulate a target trial. It was developed through systematic
@@ -1052,8 +835,8 @@
     Hern&aacute;n and Robins (2024), Chapter 21.
 </p>
 
-<div class="warning-box">
-    <div class="label">Not optional</div>
+<div class="callout callout-warning">
+    <div class="callout-label">Not optional</div>
     <p style="margin-bottom:0">
         Given the untestable nature of treatment-confounder feedback assumptions,
         the use of g-methods is not optional but mandatory when time-varying
@@ -1143,8 +926,8 @@
     aligning individuals at treatment initiation (Lund et al., 2015).
 </p>
 
-<div class="scenario-box">
-    <div class="label">ACNU causal question</div>
+<div class="callout callout-scenario">
+    <div class="callout-label">ACNU causal question</div>
     <p style="margin-bottom:0">
         "What would be the $X$-weeks risk if, at the time of trial start, everybody
         had initiated and always been treated with Drug&nbsp;A?" versus "What would
@@ -1166,8 +949,8 @@
     prevalent users.
 </p>
 
-<div class="assumption-box">
-    <div class="label">Note on statistical efficiency</div>
+<div class="callout callout-assumption">
+    <div class="callout-label">Note on statistical efficiency</div>
     <p style="margin-bottom:0">
         Statistical methods yield reliable estimates only if there is sufficient
         data support. In the ACNU design, if very few patients initiate one of the
@@ -1187,8 +970,8 @@
     Drug&nbsp;B.
 </p>
 
-<div class="scenario-box">
-    <div class="label">CCW causal question</div>
+<div class="callout callout-scenario">
+    <div class="callout-label">CCW causal question</div>
     <p style="margin-bottom:0">
         "What would be the $X$-weeks risk if, at the time of trial start, everybody
         had initiated within $X$ months and thereafter always been treated with
@@ -1237,8 +1020,8 @@
     (Hern&aacute;n and Robins, 2016; Hern&aacute;n and Robins, 2024, Section 22.4).
 </p>
 
-<div class="scenario-box">
-    <div class="label">SNT causal question</div>
+<div class="callout callout-scenario">
+    <div class="callout-label">SNT causal question</div>
     <p style="margin-bottom:0">
         "What would be the $X$-weeks risk if, at the time of trial start, everybody
         had initiated and always been treated with Drug&nbsp;A?" versus "What would
@@ -1254,8 +1037,8 @@
     especially during the early follow-up periods (Keogh et al., 2023).
 </p>
 
-<div class="warning-box">
-    <div class="label">Prevalence-incidence (Neyman) bias</div>
+<div class="callout callout-warning">
+    <div class="callout-label">Prevalence-incidence (Neyman) bias</div>
     <p style="margin-bottom:0">
         Because the SNT includes both prevalent and new users, comparing groups
         with unbalanced drug history may lead to an unfair comparison if drug
@@ -1359,7 +1142,7 @@
 
 <h3>References</h3>
 
-<p style="font-size:0.9rem; line-height:1.6;">
+<p style="font-size: 16px; line-height: 1.8;">
     Anes, A. M., et al. (2024). The ENCEPP guide on methodological standards in pharmacoepidemiology (revision 11).<br>
     Aris, I. M., et al. (2021). Separating algorithms from questions and causal inference with unmeasured exposures. <em>American Journal of Epidemiology</em>, 190(7):1414&ndash;1423.<br>
     Cashin, A. G., et al. (2025). Transparent reporting of observational studies emulating a target trial: the TARGET statement. <em>The BMJ</em>, 390:e087179.<br>
@@ -1396,10 +1179,18 @@
 <!-- NAVIGATION                                          -->
 <!-- ════════════════════════════════════════════════════ -->
 
-<div class="module-nav">
-    <a href="module1-ipw.html">&larr; Module 1: Inverse Probability Weighting</a>
-    <span style="color: var(--gray);">Module 3 coming soon &rarr;</span>
-</div>
+    <div class="module-nav">
+      <a href="module1-ipw.html">&larr; Module 1: Inverse Probability Weighting</a>
+      <span class="nav-prev">Module 3 coming soon &rarr;</span>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">© 2025 Alex Mourer</span>
+    </div>
+  </footer>
 
 </body>
 </html>

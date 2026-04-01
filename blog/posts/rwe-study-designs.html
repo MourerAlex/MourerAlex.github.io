@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>From ACNU to Sequential Nested Trials | Alex Mourer</title>
   <link rel="stylesheet" href="../../css/style.css?v=28">
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
 </head>
 <body>
 
@@ -25,6 +43,8 @@
   <div class="post-layout">
 
     <a href="../index.html" class="back-link">&larr; Posts</a>
+
+    <div class="series-label">Real-World Evidence &mdash; Study Designs</div>
 
     <div class="post-meta">
       <span class="post-date">2025-04-01</span>
@@ -49,7 +69,10 @@
 <li><strong>Immortal time bias:</strong> both groups share a well-defined time zero — there is no gap between becoming eligible and entering the study</li>
 <li><strong>Prevalent user bias:</strong> patients are observed from treatment start, so baseline covariates are not shaped by years of prior drug exposure</li>
 </ul>
-<p><strong>Causal question:</strong> <em>What is the effect of initiating drug A versus drug B, among treatment-naïve patients<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> at first prescription?</em> This targets an ATE in the new-user population — the same estimand a head-to-head RCT would produce.</p>
+<div class="callout callout-scenario">
+  <div class="callout-label">Causal question</div>
+  <p><em>What is the effect of initiating drug A versus drug B, among treatment-naïve patients<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> at first prescription?</em> This targets an ATE in the new-user population — the same estimand a head-to-head RCT would produce.</p>
+</div>
 <p>It is worth noting that ACNU already embodies most of what the target trial emulation (TTE) framework (Hernán &amp; Robins 2016) achieves:</p>
 <ul>
 <li>A clean time zero, an explicit comparator, and new users free of prior treatment influence</li>
@@ -59,7 +82,10 @@
 <h3 id="when-acnu-fails-the-non-user-problem">1.2 When ACNU fails — the non-user problem</h3>
 <p>ACNU works well when most study drug users are genuinely treatment-naïve. But when the newer drug is typically used as second- or third-line therapy, most users will have prior experience with the comparator, and restricting to incident new users discards the majority of the study population.</p>
 <p>This structure generalises well beyond drug switching. Whenever eligibility is defined as being on standard of care and the intervention is offered to some but not all — bariatric surgery among patients with BMI ≥ 35, salvage androgen deprivation therapy among post-radiation patients with rising PSA — the treated group has a natural time zero (the intervention date) and the comparator group does not. It is this asymmetry in how time zero maps to disease trajectory, not any particular “wrong” choice, that creates bias.</p>
-<p><strong>The GLP-1 RA example (Suissa 2016, CPRD):</strong> Of 6,196 GLP-1 analog users in the CPRD, 75% had previously used sulfonylureas. An ACNU restriction would retain only about a quarter of the study drug population, with a massive loss of both power and generalisability. The resulting estimate would describe only the minority who started GLP-1 without prior sulfonylurea experience — a group that may not represent the typical clinical pathway.</p>
+<div class="callout callout-scenario">
+  <div class="callout-label">Running example &mdash; GLP-1 RA vs. sulfonylureas (Suissa 2016, CPRD)</div>
+  <p>Of 6,196 GLP-1 analog users in the CPRD, 75% had previously used sulfonylureas. An ACNU restriction would retain only about a quarter of the study drug population, with a massive loss of both power and generalisability. The resulting estimate would describe only the minority who started GLP-1 without prior sulfonylurea experience — a group that may not represent the typical clinical pathway.</p>
+</div>
 <p>The problem is best understood as a <em>non-user problem</em>. When eligibility means “currently on the comparator” (i.e., the standard of care), patients who never switch are prevalent comparator users going about their treatment. They have no natural time zero for comparison. The switchers, on the other hand, have a clear time zero (the switch date) but are prevalent users of the comparator at that point, so ACNU would exclude them.</p>
 <p>Two naive approaches to this problem fail in important ways:</p>
 <ul>
@@ -69,9 +95,6 @@
 <p>In the language of target trial emulation, this is <strong>emulation failure (iv)</strong> (Hernán et al. 2016): too few individuals initiate the treatment strategy of interest at any single time point. The sequential approach described in Part 2 addresses this directly — by creating multiple pseudo-experiments, each contributing a small number of initiators, and pooling across them.</p>
 <div class="figure-block">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
-  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } .f1-takeaway-box { background: #2a2a2a; } .f1-legend { color: #999; } .f1-takeaway-label { color: #999; } .f1-takeaway-val { color: #e8e8e8; } }
   .f1-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #000; color: #fff; margin-bottom: 12px; }
   .f1-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1rem; font-size: 11px; color: #666; }
   .f1-legend-item { display: flex; align-items: center; gap: 4px; }
@@ -152,7 +175,7 @@
     <div class="f1-takeaway-val">Massively imbalanced arms, GLP-1 effect buried in SU follow-up</div>
   </div>
 </div>
-<p class="fig-caption"><strong>Figure 1.</strong> The ACNU design applied to GLP-1 RA vs. sulfonylureas. Only patient A starts GLP-1 as their first antidiabetic (the GLP-1 arm). All others start SU and enter the SU arm — including those who later switch to GLP-1, whose treatment effect is buried in the SU arm under ITT.</p>
+<p class="dag-caption"><strong>Figure 1.</strong> The ACNU design applied to GLP-1 RA vs. sulfonylureas. Only patient A starts GLP-1 as their first antidiabetic (the GLP-1 arm). All others start SU and enter the SU arm — including those who later switch to GLP-1, whose treatment effect is buried in the SU arm under ITT.</p>
 </div>
 
 <hr />
@@ -173,9 +196,6 @@
 <p>One critical point: the framework does not prescribe how confounding is handled within each experiment. You could match treated patients to controls, weight the entire eligible population, use regression, or combine approaches. The framework provides the scaffold; the methods differ in the finishing. Parts 3 and 4 trace the two major families of implementations.</p>
 <div class="figure-block">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
-  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } .f2-exp-box { background: #2a2a2a; } .f2-legend { color: #999; } .f2-exp-label { color: #999; } .f2-exp-val { color: #e8e8e8; } }
   .f2-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #f5f5f5; color: #1a1a1a; border: 0.5px solid #ddd; margin-bottom: 12px; }
   .f2-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1rem; font-size: 11px; color: #666; }
   .f2-legend-item { display: flex; align-items: center; gap: 4px; }
@@ -284,7 +304,7 @@
     <div class="f2-exp-val">Overall effect estimated by combining all pseudo-experiments</div>
   </div>
 </div>
-<p class="fig-caption"><strong>Figure 2.</strong> Sequential pseudo-experiments. At each switch time, a new experiment is triggered. The treated patient is matched against possible controls drawn from the risk set. How controls are selected — by matching, weighting, stratification, or including all — distinguishes the methods in Part 3.</p>
+<p class="dag-caption"><strong>Figure 2.</strong> Sequential pseudo-experiments. At each switch time, a new experiment is triggered. The treated patient is matched against possible controls drawn from the risk set. How controls are selected — by matching, weighting, stratification, or including all — distinguishes the methods in Part 3.</p>
 </div>
 
 <h3 id="the-first-design-choice-the-target-estimand">2.3 The first design choice: the target estimand</h3>
@@ -322,9 +342,6 @@
 <p>The exposure sets enforce exact matching on time since initiation — a deliberate design-level decision to structurally ensure comparability on what the investigator judges to be the single most important confounder. This can be extended to continuous use, prescription count, or other criteria. Prescription-based exposure sets often produce tighter covariate balance than time-based sets (Suissa 2016; Wang et al. 2024). Positivity regarding treatment history is verified within each exposure set.</p>
 <div class="figure-block">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
-  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } }
   .f3-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #D55E00; color: #fff; margin-bottom: 10px; }
   .f3-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 0.75rem; font-size: 11px; color: #666; }
   .f3-legend-item { display: flex; align-items: center; gap: 4px; }
@@ -400,7 +417,7 @@
 </svg>
 
 <div class="f3-note">Time scale: time since first SU prescription. Exposure sets group patients with similar SU duration at the switch point. Within each set, matching on time-conditional propensity score selects the best comparator.</div>
-<p class="fig-caption"><strong>Figure 3.</strong> PNUD design. Exposure sets group patients with similar SU duration at the switch point. Within each set, the switcher is matched to the best comparator via time-conditional propensity scores. Patients F (censored) and H (no match) are excluded.</p>
+<p class="dag-caption"><strong>Figure 3.</strong> PNUD design. Exposure sets group patients with similar SU duration at the switch point. Within each set, the switcher is matched to the best comparator via time-conditional propensity scores. Patients F (censored) and H (no match) are excluded.</p>
 </div>
 
 <h3 id="common-limitations-and-the-path-forward">3.5 Common limitations and the path forward</h3>
@@ -423,7 +440,10 @@
 </ol>
 <p>The move from option 1 to option 2 is the natural, efficient endpoint of the logic.</p>
 <h3 id="the-snt-design-hernán-et-al.-2008-2016">4.2 The SNT design (Hernán et al. 2008, 2016)</h3>
-<p><strong>Causal question:</strong> <em>What is the effect of initiating treatment versus not initiating, among all patients eligible at each time point?</em> This is an ATE in the eligible population — the same question as ACNU, but asked repeatedly across follow-up rather than once at first prescription.</p>
+<div class="callout callout-scenario">
+  <div class="callout-label">Causal question — SNT</div>
+  <p><em>What is the effect of initiating treatment versus not initiating, among all patients eligible at each time point?</em> This is an ATE in the eligible population — the same question as ACNU, but asked repeatedly across follow-up rather than once at first prescription.</p>
+</div>
 <p>At each time point on a chosen schedule, a new trial begins among all currently eligible patients. Those who initiate the study drug are assigned to the treatment arm; those who do not are assigned to the control arm. Follow-up begins from that trial-specific time zero. The same patient can enter multiple nested trials — as a control in earlier trials and potentially as treated in a later one.</p>
 <p>Under an intention-to-treat framework, analysis is straightforward: once assigned to an arm, a patient stays in that arm regardless of subsequent behaviour. There is no censoring at treatment switch and no need for inverse probability of censoring weights. Confounding is addressed through any appropriate causal method — pooled logistic regression, IPTW, g-methods, or doubly robust approaches — with trial-specific baseline covariates. Robust variance estimation or bootstrapping accounts for within-patient correlation across trials.</p>
 <p>Because every eligible patient enters every trial they qualify for, there is no matching, no exclusion of patients who cannot find a match, and no curse of dimensionality. The explicit trial protocol — eligibility, treatment strategies, assignment, follow-up, outcome, causal contrast, analysis plan (Hernán &amp; Robins 2016) — forces every design choice into the open, where it can be scrutinised.</p>
@@ -437,9 +457,6 @@
 </ul>
 <div class="figure-block">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1.5rem; background: #fff; color: #1a1a1a; }
-  @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #e8e8e8; } }
   .f4-fig-design { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #F0E442; color: #000; margin-bottom: 10px; }
   .f4-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 0.75rem; font-size: 11px; color: #666; }
   .f4-legend-item { display: flex; align-items: center; gap: 4px; }
@@ -553,7 +570,7 @@
 </svg>
 
 <div class="f4-note">Time scale shown as time since first SU for consistency across figures. SNT can also be organised on calendar time. Under ITT: once assigned, patients stay in their arm regardless of subsequent changes. Confounding addressed by any causal method (IPTW, pooled logistic regression, doubly robust).</div>
-<p class="fig-caption"><strong>Figure 4.</strong> SNT design under ITT. Nested trials are initiated at regular intervals. All eligible patients enter every trial — as treated (if they initiate GLP-1 at that time) or as controls. Trial 4 has no treated patients (a positivity subtlety). All 8 patients contribute.</p>
+<p class="dag-caption"><strong>Figure 4.</strong> SNT design under ITT. Nested trials are initiated at regular intervals. All eligible patients enter every trial — as treated (if they initiate GLP-1 at that time) or as controls. Trial 4 has no treated patients (a positivity subtlety). All 8 patients contribute.</p>
 </div>
 <p>
 </ul>
@@ -638,9 +655,13 @@
 <h3 id="conclusion">5.3 Conclusion</h3>
 <p>The field has converged on the sequential pseudo-experiment as the organising principle for studies of time-varying treatments in observational data. Thomas et al. (2020) unified 14 named methods under a single framework, showing that the differences lie in implementation choices — how much work is given to matching versus regression, which time scale organises the experiments, and which estimand is targeted.</p>
 <p>Within this framework, sequential nested trials represent current best practice when the ATE is a meaningful and estimable question. They keep all eligible patients, require an explicit trial protocol, and produce an estimate that maps directly onto what a randomised trial would yield. Matching-based methods remain a useful path to evidence when positivity violations make the ATE unanswerable, but the trade-off in estimand interpretability should be acknowledged.</p>
-<p><strong>Forward look:</strong> per-protocol estimation and IPCW (future post), cloning-censoring-weighting (Hernán 2018, future post), and the estimand framework of Deschênes et al. (2025) for sequential trial designs.</p>
+<div class="callout callout-insight">
+  <div class="callout-label">Looking ahead</div>
+  <p>Per-protocol estimation and IPCW (future post), cloning-censoring-weighting (Hernán 2018, future post), and the estimand framework of Deschênes et al. (2025) for sequential trial designs.</p>
+</div>
 <hr />
 <h2 id="references">References</h2>
+<div style="font-size: 16px; line-height: 1.8;">
 <p>Arterburn DE, et al. Association between bariatric surgery and long-term survival. <em>JAMA</em>. 2015;313(1):62–70.</p>
 <p>Danaei G, et al. Observational data for comparative effectiveness research: an emulation of randomised trials of statins. <em>Stat Methods Med Res</em>. 2013;22:70–96.</p>
 <p>Filion KB, Yu YH. Invited commentary: The prevalent new-user design in pharmacoepidemiology. <em>Am J Epidemiol</em>. 2021;190(7):1349–1352.</p>
@@ -663,6 +684,7 @@
 <p>Wang et al. The prevalent new-user design to study drug-drug interactions. <em>Pharmacoepidemiol Drug Saf</em>. 2024.</p>
 <p>Webster-Clark M, et al. [Treatment history in the prevalent new-user design]. <em>Am J Epidemiol</em>. 2021;190(7):1341–1348.</p>
 <p>Young JC, et al. Clarifying the causal contrast: an empirical example applying the prevalent new user study design. <em>Pharmacoepidemiol Drug Saf</em>. 2024;33:e5790.</p>
+</div>
 <aside id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
