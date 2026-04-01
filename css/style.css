@@ -985,6 +985,23 @@ footer {
   font-weight: 300;
 }
 .post-layout p strong { color: var(--text); font-weight: 500; }
+.post-layout ul, .post-layout ol {
+  font-size: 19px; line-height: 1.85;
+  color: var(--text-muted); font-weight: 300;
+  margin: 32px 0; padding-left: 1.6em;
+}
+.post-layout li {
+  margin-bottom: 12px;
+}
+.post-layout li strong { color: var(--text); font-weight: 500; }
+.post-layout .references {
+  font-size: 14px; line-height: 1.5;
+  color: var(--text-faint);
+}
+.post-layout .references p {
+  font-size: 14px; line-height: 1.5;
+  margin-bottom: 4px;
+}
 .post-layout hr {
   border: none; border-top: 1px solid var(--border);
   margin: 48px 0;
