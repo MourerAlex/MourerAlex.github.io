@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Competing Events and Causal Inference — Estimands | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=29">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Competing Events &amp; Causal Inference</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-02</span>
+      <span class="post-tag">Causal Inference</span>
+      <span class="post-tag">Competing Risks</span>
+      <span class="post-tag">Estimands</span>
+    </div>
+    <h1>Competing Events and Causal Inference</h1>
+    <p class="subtitle">What your competing risks analysis is actually estimating &mdash; and why the answer depends on a question you may not have asked.</p>
+    <hr>
+    <div class="callout callout-scenario">
+      <div class="callout-label">The problem</div>
+      <p style="margin-bottom: 0;">Competing risks &mdash; especially terminal events such as death &mdash; interfere with our interpretation of treatment effects. A treatment appears to reduce prostate cancer death. But the same treatment increases death from cardiovascular disease. Is the treatment beneficial for prostate cancer, or does it merely kill patients from another cause before they can die of cancer? This is not a hypothetical edge case. In oncology, cardiology, geriatrics, and critical care, competing events are the rule rather than the exception. And whenever they are present, they change what your analysis is estimating &mdash; often in ways that are invisible if you stay within the classical statistical vocabulary.</p>
+    </div>
+    <div class="callout callout-assumption" style="margin-top: 1em;">
+      <div class="callout-label">The question</div>
+      <p style="margin-bottom: 0;">Given that competing events exist in my study, what analysis can I give &mdash; what effect definition, what assumptions, what effect measure &mdash; that maximises clarity about the treatment effect on the event of interest and minimises the risk of misleading interpretation?</p>
+    </div>
+    <ul style="margin-top: 1.5em; line-height: 1.9;">
+      <li><strong>What we want</strong> &mdash; clarity on how the competing event shapes, and potentially distorts, the meaning of the treatment effect we are reporting. Not just a number, but understanding of what that number can and cannot tell us.</li>
+      <li><strong>What we have</strong> &mdash; a literature built on statistical estimands &mdash; cause-specific hazards, subdistribution hazards, cumulative incidence functions &mdash; accompanied by conflicting recommendations. These estimands do not map transparently to causal effects. Their assumptions are rarely stated explicitly. The field has debated whether competing events are censoring events without first agreeing on what the target estimand is.</li>
+      <li><strong>What we do</strong> &mdash; Young, Stensrud, Tchetgen Tchetgen and Hern&aacute;n (2020) proposed to define each of these classical estimands explicitly in counterfactual terms. This forces three things into the open: what exactly you are estimating, what assumptions you need, and what causal interpretation &mdash; if any &mdash; your estimate supports. The answers depend on a choice the investigator must make, and that this paper makes unavoidable.</li>
+    </ul>
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#s1">Risk and hazard without competing events</a></li>
+        <li><a href="#s2">The competing event enters</a>
+          <ol style="margin: 0.2em 0 0 0; padding-left: 1.2em; line-height: 1.9;">
+            <li><a href="#s21">Two counterfactual outcomes, two questions</a></li>
+            <li><a href="#s22">The competing event as a mediator</a></li>
+            <li><a href="#s23">Total effect and direct effect</a></li>
+            <li><a href="#s24">The Rosetta stone</a></li>
+          </ol>
+        </li>
+        <li><a href="#s3">Three hazards, zero causal effects</a></li>
+        <li><a href="#s4">Is the competing event a censoring event?</a></li>
+        <li><a href="#s5">Identification: from counterfactual to observed data</a></li>
+        <li><a href="#s6">The limits of this framework</a></li>
+      </ol>
+    </div>
+    <h2 id="s1">1. Risk and hazard without competing events</h2>
+    <p>Before introducing competing events, we need two building blocks: the counterfactual risk and the counterfactual hazard. Both are familiar quantities, but stating them in counterfactual language reveals a distinction between them that will matter throughout.</p>
+    <p>Consider a trial where each individual is assigned to treatment $A = 1$ or $A = 0$. Let $Y^a_{k+1}$ denote the indicator of the event of interest by interval $k+1$ if, possibly contrary to fact, the individual had received treatment $a$. The <strong>counterfactual risk</strong> by $k+1$ under treatment $a$ is</p>
+    $$\P[Y^a_{k+1} = 1]$$
+    <p>and the average causal effect of treatment on the event of interest by $k+1$ is the contrast</p>
+    $$\P[Y^{a=1}_{k+1} = 1] - \P[Y^{a=0}_{k+1} = 1].$$
+    <p>This is a marginal, population-level quantity defined at a fixed time. It does not condition on anything that happens after treatment is assigned.</p>
+    <p>The <strong>counterfactual hazard</strong> at $k+1$ under treatment $a$ is different:</p>
+    $$\P[Y^a_{k+1} = 1 \mid Y^a_k = 0]$$
+    <p>&mdash; the probability of the event in the next interval among those who have survived to $k$ under treatment $a$. Unlike the risk, the hazard conditions on a post-treatment event: being alive at $k$. If treatment affects who survives to $k$, then the survivors under $a = 1$ and $a = 0$ are different people with different risk profiles. A contrast of counterfactual hazards at $k+1$ may therefore differ across treatment arms even if treatment has no effect at $k+1$ &mdash; not because of any causal mechanism, but because of selection bias built into the definition.</p>
+    <div class="dag-container" style="margin: 2em 0;">
+      <svg viewBox="0 0 520 175" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif; max-width:580px; width:100%;">
+        <text x="60" y="62" text-anchor="middle" font-size="30" font-weight="700" fill="#1a1916">A</text>
+        <text x="60" y="80" text-anchor="middle" font-size="10" fill="#555" font-style="italic">treatment</text>
+        <text x="260" y="62" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">Y<tspan font-size="16" dy="6">k</tspan></text>
+        <text x="260" y="86" text-anchor="middle" font-size="10" fill="#555" font-style="italic">event at k</text>
+        <text x="460" y="62" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">Y<tspan font-size="16" dy="6">k+1</tspan></text>
+        <text x="460" y="86" text-anchor="middle" font-size="10" fill="#555" font-style="italic">event at k+1</text>
+        <text x="360" y="155" text-anchor="middle" font-size="26" font-weight="700" fill="#aaa">U</text>
+        <text x="360" y="172" text-anchor="middle" font-size="9" fill="#bbb" font-style="italic">unmeasured</text>
+        <line x1="85" y1="55" x2="228" y2="55" stroke="#1a1916" stroke-width="1.8" marker-end="url(#a1)"/>
+        <path d="M85,48 Q260,8 428,48" fill="none" stroke="#1a1916" stroke-width="1.4" marker-end="url(#a2)"/>
+        <line x1="290" y1="55" x2="428" y2="55" stroke="#1a1916" stroke-width="1.8" marker-end="url(#a3)"/>
+        <line x1="340" y1="142" x2="270" y2="92" stroke="#ccc" stroke-width="1.3" marker-end="url(#a4)"/>
+        <line x1="375" y1="142" x2="450" y2="92" stroke="#ccc" stroke-width="1.3" marker-end="url(#a5)"/>
+        <rect x="232" y="38" width="56" height="36" rx="2" fill="none" stroke="#b35900" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <defs>
+          <marker id="a1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="a2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="a3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="a4" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+          <marker id="a5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">Figure 1 &mdash; The hazard at $k+1$ conditions on $Y_k = 0$ (dashed box). This conditioning on a common effect of treatment $A$ and the unmeasured variable $U$ opens the non-causal path $A \to Y_k \leftarrow U \to Y_{k+1}$. A hazard ratio at $k+1$ therefore reflects both the causal effect of $A$ and selection bias from conditioning on survival.</p>
+    </div>
+    <p>This is the same logic Hern&aacute;n and Robins describe in <em>Causal Inference: What If</em>: conditioning on the collider "alive at $k$" opens non-causal paths through unmeasured common causes of early and late failure.</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">The baseline lesson</div>
+      <p style="margin-bottom: 0;"><strong>Risks</strong>: contrasts of counterfactual risks are causal effects.<br><strong>Hazards</strong>: useful computational building blocks &mdash; you can reconstruct risks from hazards &mdash; but their contrasts are not themselves causal effects.<br>This holds before any competing event enters the picture.</p>
+    </div>
+    <h2 id="s2">2. The competing event enters</h2>
+    <p>Now suppose that, in addition to the event of interest $Y_k$ (death from prostate cancer), a competing event $D_k$ can occur (death from cardiovascular disease). A competing event is any event that makes the event of interest impossible to subsequently occur. If an individual dies of cardiovascular disease at $k$ without prior prostate cancer death ($D_{k+1} = 1$, $Y_k = 0$), then all future prostate cancer death indicators are deterministically zero. Not missing, not undefined &mdash; zero. This is a structural consequence of how the world works, not a data-handling decision.</p>
+    <h3 id="s21">2.1 Two counterfactual outcomes, two questions</h3>
+    <p>The presence of the competing event means that the counterfactual outcome &mdash; and therefore the risk and the causal effect &mdash; can now be defined in two fundamentally different ways.</p>
+    <div class="callout callout-definition">
+      <div class="callout-label">Risk under elimination of competing events</div>
+      <p style="margin-bottom: 0;">$\P[Y^{a,\, d=0}_{k+1} = 1]$ &mdash; the risk of the event of interest by $k+1$ if all individuals had been assigned treatment $a$ and we had <em>somehow eliminated</em> the competing event. In the classical literature: <strong>marginal cumulative incidence</strong> or <strong>net risk</strong>.</p>
+    </div>
+    <div class="callout callout-definition" style="margin-top: 1em;">
+      <div class="callout-label">Risk without elimination of competing events</div>
+      <p style="margin-bottom: 0;">$\P[Y^{a}_{k+1} = 1]$ &mdash; the risk of the event of interest by $k+1$ if all individuals had been assigned treatment $a$, letting competing events occur naturally. In the classical literature: <strong>cause-specific cumulative incidence</strong>, <strong>subdistribution function</strong>, or <strong>crude risk</strong>.</p>
+    </div>
+    <p>These are different counterfactual quantities. They answer different questions. They are not different estimators of the same thing.</p>
+    <h3 id="s22">2.2 The competing event as a mediator</h3>
+    <p>Why does this distinction exist? Because the competing event sits on a causal pathway between treatment and the event of interest. On a causal diagram: $A \to D_k \to Y_k$. Treatment may affect whether the competing event occurs, and the occurrence of the competing event determines whether the event of interest can happen. This is mediation. The arrow from $D_k$ to $Y_k$ must exist &mdash; it is a structural consequence of the definition: if $D_k = 1$, then $Y_k = 0$.</p>
+    <div class="dag-container" style="margin: 2em 0;">
+      <svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif; max-width:580px; width:100%;">
+        <text x="60" y="82" text-anchor="middle" font-size="30" font-weight="700" fill="#1a1916">A</text>
+        <text x="60" y="100" text-anchor="middle" font-size="10" fill="#555" font-style="italic">treatment</text>
+        <text x="260" y="82" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">D<tspan font-size="16" dy="6">k</tspan></text>
+        <text x="260" y="106" text-anchor="middle" font-size="10" fill="#555" font-style="italic">competing event</text>
+        <text x="460" y="82" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">Y<tspan font-size="16" dy="6">k</tspan></text>
+        <text x="460" y="106" text-anchor="middle" font-size="10" fill="#555" font-style="italic">event of interest</text>
+        <line x1="85" y1="75" x2="225" y2="75" stroke="#1a1916" stroke-width="1.8" marker-end="url(#arr1)"/>
+        <line x1="290" y1="75" x2="430" y2="75" stroke="#1a1916" stroke-width="1.8" marker-end="url(#arr2)"/>
+        <path d="M85,68 Q260,18 430,68" fill="none" stroke="#2a5f4f" stroke-width="1.4" stroke-dasharray="6,3" marker-end="url(#arr3)"/>
+        <text x="260" y="28" text-anchor="middle" font-size="10" fill="#2a5f4f" font-style="italic">direct pathway</text>
+        <defs>
+          <marker id="arr1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2a5f4f"/></marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">Figure 2 &mdash; The competing event $D_k$ mediates the effect of treatment $A$ on the event of interest $Y_k$. The solid path $A \to D_k \to Y_k$ is the indirect pathway. The dashed path is the direct pathway. The total effect captures both; the direct effect attempts to isolate the dashed path.</p>
+    </div>
+    <h3 id="s23">2.3 Total effect and direct effect</h3>
+    <p>The two counterfactual outcomes produce two families of causal effects.</p>
+    <p>The <strong>total effect</strong> of treatment on the event of interest by $k+1$:</p>
+    $$\P[Y^{a=1}_{k+1} = 1] - \P[Y^{a=0}_{k+1} = 1]$$
+    <p>captures all causal pathways between treatment and the event of interest, including those mediated by the competing event. It asks: what happens in the world as it is, competing events and all?</p>
+    <p>The <strong>direct effect</strong> (a controlled direct effect) of treatment on the event of interest by $k+1$:</p>
+    $$\P[Y^{a=1,\, d=0}_{k+1} = 1] - \P[Y^{a=0,\, d=0}_{k+1} = 1]$$
+    <p>quantifies the treatment's effect not mediated through the competing event. It asks: what would happen if we could block the pathway through the competing event?</p>
+    <p>The classical competing risks literature has used both quantities for decades. The contribution of Young et al. is to make explicit that these are not two estimators of the same effect. They are estimators of different effects, defined by different counterfactual interventions, requiring different assumptions, and answering different scientific questions.</p>
+    <h3 id="s24">2.4 The Rosetta stone</h3>
+    <p>The following two tables map every quantity and every effect discussed above from plain language to counterfactual notation to the classical statistical name.</p>
+    <p><strong>Table 1 &mdash; Quantities under a single treatment value $a$</strong></p>
+    <table>
+      <tr><th>Plain English</th><th>Counterfactual quantity</th><th>Classical name</th><th>Simple estimator&thinsp;*</th></tr>
+      <tr><td>Risk of event of interest, <em>eliminating</em> CE</td><td>$\P[Y^{a,\,d=0}_{k+1} = 1]$</td><td>Marginal cumulative incidence; net risk</td><td>$1 - \hat S^{\text{KM}}_a(k\!+\!1)$, treating CE as censoring&thinsp;&dagger;</td></tr>
+      <tr><td>Risk of event of interest, <em>keeping</em> CE</td><td>$\P[Y^{a}_{k+1} = 1]$</td><td>Cause-specific cumulative incidence; subdistribution function; crude risk</td><td>$n^{Y}_{a,k+1}\, /\, n_a$ &ensp;(Aalen&ndash;Johansen)</td></tr>
+      <tr><td>Risk of competing event</td><td>$\P[D^{a}_{k+1} = 1]$</td><td>Cause-specific cumulative incidence for $J = 2$</td><td>$n^{D}_{a,k+1}\, /\, n_a$ &ensp;(Aalen&ndash;Johansen)</td></tr>
+      <tr><td>Hazard, <em>eliminating</em> CE</td><td>$\P[Y^{a,\,d=0}_{k+1} = 1 \mid Y^{a,\,d=0}_{k} = 0]$</td><td>Marginal hazard</td><td>Weighted cause-specific hazard&thinsp;&dagger;</td></tr>
+      <tr><td>Hazard, <em>keeping</em> CE (CE stays in risk set)</td><td>$\P[Y^{a}_{k+1} = 1 \mid Y^{a}_{k} = 0]$</td><td>Subdistribution hazard</td><td>Fine&ndash;Gray model</td></tr>
+      <tr><td>Hazard, <em>conditioning</em> on no CE</td><td>$\P[Y^{a}_{k+1} = 1 \mid D^{a}_{k+1} = Y^{a}_{k} = 0]$</td><td>Cause-specific hazard</td><td>$d^{Y}_{k}\, /\, n^{\text{at risk}}_{k}$ &ensp;(events / at risk)</td></tr>
+    </table>
+    <p style="font-size: 0.85em; color: #6b6967; margin-top: 0.3em;">* In a randomised trial with no loss to follow-up and no covariate adjustment. &ensp;&dagger; Requires additional untestable assumptions beyond randomisation (see Section 5).</p>
+    <p style="margin-top: 2em;"><strong>Table 2 &mdash; Causal effects (contrasts under $a = 1$ vs $a = 0$)</strong></p>
+    <table>
+      <tr><th>Plain English</th><th>Causal estimand</th><th>Classical estimand</th><th>Simple estimator&thinsp;*</th></tr>
+      <tr><td>Total effect on event of interest (all pathways, including via CE)</td><td>$\P[Y^{a=1}_{k+1}\!=\!1] - \P[Y^{a=0}_{k+1}\!=\!1]$</td><td>Difference in cause-specific cumulative incidences</td><td>Aalen&ndash;Johansen difference&thinsp;**</td></tr>
+      <tr><td>Direct effect on event of interest (not via CE)</td><td>$\P[Y^{a=1,\,d=0}_{k+1}\!=\!1] - \P[Y^{a=0,\,d=0}_{k+1}\!=\!1]$</td><td>Difference in marginal cumulative incidences (net risks)</td><td>Kaplan&ndash;Meier complement difference, CE censored&thinsp;&dagger;</td></tr>
+      <tr><td>Total effect on competing event</td><td>$\P[D^{a=1}_{k+1}\!=\!1] - \P[D^{a=0}_{k+1}\!=\!1]$</td><td>Difference in cause-specific cumulative incidences for $J = 2$</td><td>Aalen&ndash;Johansen difference&thinsp;**</td></tr>
+      <tr><td>Composite outcome effect (event of interest or CE)</td><td>$\P[Y^{a=1}_{k+1}\!=\!1 \text{ or } D^{a=1}_{k+1}\!=\!1] - \ldots$</td><td>Difference in overall cumulative incidences</td><td>Kaplan&ndash;Meier complement difference (no CE exists)</td></tr>
+      <tr style="background: #fdf6f0;"><td>Marginal hazard ratio</td><td colspan="2" style="text-align: center; color: #b35900;"><em>Not generally a causal effect</em> &mdash; conditioning on survival opens non-causal paths</td><td>&mdash;</td></tr>
+      <tr style="background: #fdf6f0;"><td>Subdistribution hazard ratio</td><td colspan="2" style="text-align: center; color: #b35900;"><em>Not generally a causal effect</em></td><td>&mdash;</td></tr>
+      <tr style="background: #fdf6f0;"><td>Cause-specific hazard ratio</td><td colspan="2" style="text-align: center; color: #b35900;"><em>Not generally a causal effect</em></td><td>&mdash;</td></tr>
+    </table>
+    <p style="font-size: 0.85em; color: #6b6967; margin-top: 0.3em;">* In a randomised trial with no loss to follow-up. &ensp;** In this setting, reduces to the simple difference in observed proportions: $n^{Y}_{1,k+1}/n_1 - n^{Y}_{0,k+1}/n_0$. &ensp;&dagger; Requires additional untestable assumptions beyond randomisation (see Section 5).</p>
+    <h2 id="s3">3. Three hazards, zero causal effects</h2>
+    <p>When competing events exist, three distinct counterfactual hazards can be defined. The <strong>marginal hazard</strong> conditions on survival under elimination of competing events. The <strong>subdistribution hazard</strong> conditions on survival from the event of interest but keeps individuals who experienced the competing event in the risk set. The <strong>cause-specific hazard</strong> conditions on being free of both the event of interest and the competing event. Each corresponds to a named quantity in the classical statistical literature.</p>
+    <p>None of them is a causal effect.</p>
+    <p>The reason is the same as in Section 1: all three condition on a post-treatment event &mdash; surviving the event of interest to time $k$ &mdash; and this conditioning opens non-causal paths through unmeasured common causes of early and late failure. The selection bias that afflicts hazard contrasts in ordinary survival settings is not resolved, and is in fact compounded, by the presence of competing events. This holds even under the restrictive assumptions that would allow identification of the direct effect on the risk scale.</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">A correction to published guidance</div>
+      <p style="margin-bottom: 0;">Several influential reviews have recommended reporting cause-specific hazard ratios when the scientific interest is "etiological." Young et al. show this recommendation is not causally grounded. Contrasts in any of the three counterfactual hazards &mdash; including the cause-specific hazard ratio &mdash; do not generally have a causal interpretation, even when the conditions for their identification hold.</p>
+    </div>
+    <p>This does not mean hazards are useless. They remain essential computational building blocks: you estimate risks by first estimating hazards and then combining them. And there is a technical result worth noting: the observed cause-specific hazard, when appropriately weighted, can identify the counterfactual hazard under elimination of competing events. This is why methods based on cause-specific hazards &mdash; such as Cox regression &mdash; can be used to target estimands that implicitly treat competing events as censored. The choice between cause-specific and subdistribution hazard methods is therefore a choice between estimation strategies for a causal effect defined on the risk scale, not a choice between causal effects themselves.</p>
+    <h2 id="s4">4. Is the competing event a censoring event?</h2>
+    <p>This is the central conceptual insight of the paper, and it is worth stating carefully.</p>
+    <div class="callout callout-definition">
+      <div class="callout-label">Censoring event (Young et al., Definition 19)</div>
+      <p style="margin-bottom: 0;">A censoring event is any event occurring in the study by $k+1$ that ensures the values of all future counterfactual outcomes of interest under $a$ are <strong>unknown</strong>, even for an individual receiving the intervention $a$.</p>
+    </div>
+    <p>Loss to follow-up is always a censoring event by this definition: if you stop observing someone, their future outcomes are unknown regardless of the estimand. But the competing event may or may not be censoring, and the answer depends entirely on which counterfactual outcome you have chosen as your target.</p>
+    <p><strong>When your estimand is the direct effect</strong>, your target is $Y^{a,\, d=0}_{k+1}$ &mdash; the outcome under treatment and elimination of competing events. An individual who dies of cardiovascular disease at $k$: what would have happened to their prostate cancer status had we also prevented their cardiovascular death? We do not know. The future counterfactual outcomes of interest are unknown. The competing event is a censoring event, and it must be handled accordingly &mdash; the same way you would handle loss to follow-up.</p>
+    <p><strong>When your estimand is the total effect</strong>, your target is $Y^a_{k+1}$ &mdash; the outcome under treatment, letting competing events occur naturally. An individual who dies of cardiovascular disease under treatment $a$: their prostate cancer status at all future times is known &mdash; it is deterministically zero, because they are dead. The future counterfactual outcomes of interest are known. The competing event is not a censoring event. It is a time-varying covariate. And once someone experiences the competing event without prior loss to follow-up, they cannot subsequently be censored &mdash; there is nothing left to observe.</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">The reversal</div>
+      <p style="margin-bottom: 0;">The standard applied workflow runs: choose an analysis method, then interpret the result. This paper demands the reverse: state your estimand first. The estimand determines whether the competing event is censoring. This determines your identifying assumptions. This determines your analysis. "Is the competing event a censoring event?" has no answer until you have stated your question.</p>
+    </div>
+    <h2 id="s5">5. Identification: from counterfactual to observed data</h2>
+    <p>Identification bridges the gap between counterfactual estimands and observed data. Three standard conditions are required: <strong>exchangeability</strong> (conditional on measured covariates, treatment and censoring are "as if random"); <strong>positivity</strong> (for every covariate pattern, some individuals remain uncensored and at risk); and <strong>consistency</strong> (if an individual's data are compatible with the intervention, their observed outcome equals their counterfactual outcome).</p>
+    <p>For the <strong>total effect</strong>, only loss to follow-up is censoring. In a randomised trial with no loss to follow-up, all conditions hold by design &mdash; the total effect is identified simply by the observed cumulative incidence in each arm: number who experienced the event, divided by number randomised. No modelling, no weighting.</p>
+    <p>For the <strong>direct effect</strong>, the competing event is also censoring. Exchangeability must now hold for censoring by the competing event: who dies of cardiovascular disease must be "as if random" given measured history. But you cannot randomise who dies &mdash; even in a trial where $A$ is randomised, this condition does not hold by design. It requires measured covariates sufficient to explain the competing event, a strong and often implausible assumption. The consistency assumption poses a separate problem: it requires a well-defined intervention to "eliminate death from other causes," and for a terminal event, no such intervention exists.</p>
+    <div class="callout callout-assumption">
+      <div class="callout-label">The asymmetry</div>
+      <p style="margin-bottom: 0;"><strong>Total effect</strong>: identifiable by design in a randomised trial with no loss to follow-up. Minimal assumptions. But potentially misleading when treatment affects the competing event.<br><br><strong>Direct effect</strong>: requires untestable assumptions even in a perfect trial, and an impossible intervention on the competing event. But answers the question we actually want to answer.</p>
+    </div>
+    <h2 id="s6">6. The limits of this framework</h2>
+    <p>The total effect is identifiable in the cleanest possible setting: a randomised trial with complete follow-up. It requires no modelling. But when treatment affects the competing event, its interpretation is uncertain. Young et al. illustrate this with an extreme case. Suppose estrogen therapy kills all patients immediately from cardiovascular disease. None can subsequently die of prostate cancer. The total effect on prostate cancer death is "protective" &mdash; risk difference is negative &mdash; even though the treatment helped no one's prostate cancer. The protection is an artefact of the treatment's lethal effect on another cause of death.</p>
+    <p>Reporting the total effect on both the event of interest and the competing event can signal this problem. In the estrogen therapy trial, the total effect on prostate cancer death is protective and the total effect on death from other causes is harmful &mdash; opposite signs, suggesting the protective appearance may be mediated. But this signal does not resolve the ambiguity. It only raises the question.</p>
+    <p>One might try to escape by redefining the outcome as a composite &mdash; all-cause mortality instead of prostate cancer death. This eliminates the competing event problem because the competing event is now part of the outcome. But it changes the question entirely. If you wanted to know about prostate cancer death, all-cause mortality does not answer that. And when the total effects on the event of interest and the competing event have opposite signs, the composite effect approaches the null &mdash; hiding both.</p>
+    <p>The direct effect answers the question we actually want: what is the treatment's effect on prostate cancer death that is not merely a consequence of its effect on death from other causes? But it requires eliminating the competing event, and when that event is death, no intervention exists or has been specified to do so. The consistency assumption fails. The estimates, as Young et al. write, "cannot be confirmed in any real-world study."</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">What is missing</div>
+      <p style="margin-bottom: 0;">An effect definition that isolates the treatment's biological effect on the event of interest &mdash; without requiring the impossible elimination of a terminal event, and without the interpretive ambiguity of the total effect. This is the gap that Stensrud et al. (2020, 2021) filled with the <em>separable effects</em>, the subject of the next part.</p>
+    </div>
+    <hr>
+    <h3>References</h3>
+    <p class="references">
+      Young JG, Stensrud MJ, Tchetgen Tchetgen EJ, Hern&aacute;n MA (2020). A causal framework for classical statistical estimands in failure time settings with competing events. <em>Statistics in Medicine</em> 39(8):1199&ndash;1236.<br>
+      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2020). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
+      Stensrud MJ, Hern&aacute;n MA, Tchetgen Tchetgen EJ, Robins JM, Didelez V, Young JG (2021). A generalized theory of separable effects in competing event settings. <em>Lifetime Data Analysis</em> 27:588&ndash;631.<br>
+      Hern&aacute;n MA, Robins JM (2020). <em>Causal Inference: What If</em>. Boca Raton: Chapman &amp; Hall/CRC.<br>
+      Robins JM (1986). A new approach to causal inference in mortality studies with a sustained exposure period. <em>Mathematical Modelling</em> 7:1393&ndash;1512.
+    </p>
+    <div class="module-nav">
+      <span class="nav-prev">&larr; Posts</span>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>
