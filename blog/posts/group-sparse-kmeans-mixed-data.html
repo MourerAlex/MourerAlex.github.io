@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sparse Clustering with Grouped Variables and Mixed Data | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=29">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          norm: ['\\left\\lVert #1 \\right\\rVert', 1]
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Variable Selection &amp; Clustering</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-03</span>
+      <span class="post-tag">Sparse Clustering</span>
+      <span class="post-tag">Mixed Data</span>
+      <span class="post-tag">Group Lasso</span>
+    </div>
+    <h1>Sparse Clustering with Grouped Variables and Mixed Data</h1>
+    <p class="subtitle">When your variables come in groups and mix numbers with categories &mdash; why standard sparse K-means breaks, how a group lasso penalty fixes it, and what the recoding of categorical variables actually does to the geometry of your clustering problem.</p>
+    <hr>
+
+    <div class="callout callout-scenario">
+      <div class="callout-label">The problem</div>
+      <p style="margin-bottom: 0;">Clustering partitions observations into homogeneous groups without a target variable. But in real datasets, the cluster structure is usually visible in only a handful of variables. The rest is noise &mdash; and including noise variables actively degrades clustering by diluting the signal. This is not an edge case: in genomics, industrial production data, or census surveys, noise variables routinely outnumber informative ones. On top of this, real variables often come in groups. Genes are organised into pathways. Production measurements are repeated at several thrust levels. Categorical variables expand into sets of indicator columns. A method that selects variables one by one can break these groups apart &mdash; keeping some indicators of a categorical variable while discarding others, a result with no coherent interpretation. We need a clustering method that simultaneously finds groups of observations, selects the variables that matter, and respects the group structure among those variables.</p>
+    </div>
+
+    <div class="callout callout-assumption" style="margin-top: 1em;">
+      <div class="callout-label">The question</div>
+      <p style="margin-bottom: 0;">Can we perform clustering while simultaneously selecting the variables that drive the cluster structure, respecting a known group structure among variables &mdash; selecting or discarding entire groups rather than individual columns &mdash; and in particular, can we use this group structure to handle mixed data (numerical and categorical) in a principled way?</p>
+    </div>
+
+    <ul style="margin-top: 1.5em; line-height: 1.9;">
+      <li><strong>What we want</strong> &mdash; a sparse clustering algorithm that: (i) selects groups of variables rather than individual variables, preserving interpretability when variables have a natural group structure; (ii) handles mixed data without requiring the user to tune a relative weighting between numerical and categorical variables; and (iii) retains the computational simplicity and optimisation clarity of the K-means framework.</li>
+      <li><strong>What we have</strong> &mdash; the WT-K-means algorithm of Witten and Tibshirani (2010), which applies an $\ell_1$ penalty to variable weights within a K-means objective. It is computationally efficient, interpretable, and the standard benchmark in sparse clustering. But it selects individual variables, blind to group structure. Extensions exist for overlapping groups (Huo and Tseng, 2017), but the optimisation procedure is complex. For mixed data, the model-based method VarSelLCM (Marbac and Sedki, 2017) can select variables natively, but there is no K-means-based sparse method designed for this case.</li>
+      <li><strong>What we do</strong> &mdash; introduce the <strong>Group-Sparse K-means</strong>, an extension of WT-K-means that replaces the $\ell_1$ penalty with a group lasso penalty (Yuan and Lin, 2006), forcing the algorithm to select or discard entire groups of variables simultaneously. For mixed data, we define a specific recoding of categorical variables &mdash; based on centred and frequency-normalised indicators &mdash; that creates natural groups and places both variable types on an equal geometric footing. The method is implemented in the R package <strong>vimpclust</strong>, published on CRAN.</li>
+    </ul>
+
+    <h2 id="s1">1. Why group structure matters for sparse clustering</h2>
+
+    <p>Sparse clustering emerged from a straightforward observation: in high-dimensional data, many variables are noise. Including them degrades clustering performance. The idea is to assign a weight to each variable and penalise the weight vector so that irrelevant variables receive weight zero. The surviving variables define a lower-dimensional subspace in which the cluster structure becomes visible.</p>
+
+    <p>The WT-K-means algorithm (Witten and Tibshirani, 2010) formalises this idea cleanly. Given a data matrix $X \in \R^{n \times p}$, the algorithm seeks clusters $C_1, \ldots, C_K$ and a weight vector $w \in \R^p$ that jointly maximise the penalised weighted between-cluster variance:</p>
+
+    $$\max_{C_1,\ldots,C_K,\, w} \; w^\top b - \lambda \|w\|_1 \quad \text{s.t.} \quad \|w\|_2^2 \leq 1, \; w_j \geq 0 \;\forall j,$$
+
+    <p>where $b = (b_1, \ldots, b_p)^\top$ is the vector of per-variable between-cluster variances for the current partition, and $\lambda \geq 0$ controls the intensity of the $\ell_1$ penalty. The constraint $\|w\|_2^2 \leq 1$ prevents unbounded weights. The penalty $\lambda \|w\|_1$ induces sparsity: variables whose between-cluster variance $b_j$ falls below the threshold $\lambda$ receive weight zero and are effectively removed.</p>
+
+    <p>This works well when each variable is an independent unit. But many real datasets have a natural group structure. Gene expression variables are organised by cytogenetic position into gene sets (Simon et al., 2013; Burczynski et al., 2006). In protein expression data, proteins form functional modules (Higuera et al., 2015). Industrial production test data measure the same physical quantity at multiple thrust levels, forming groups. Census data divide into personal, educational, and socioeconomic blocks. Longitudinal data are structured by time point.</p>
+
+    <p>In all these cases, the $\ell_1$ penalty is the wrong tool. It selects individual variables, not groups. If one group of ten variables carries the clustering signal, but each individual variable's between-cluster variance $b_j$ is modest (because the signal is distributed), the penalty may discard all ten. Conversely, it may keep three out of ten indicators of a categorical variable, leaving the analyst unable to interpret what the categorical variable contributes to the cluster structure.</p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">The group penalty principle</div>
+      <p style="margin-bottom: 0;">In supervised learning, the group lasso penalty (Yuan and Lin, 2006) solved this problem for regression: it replaces the $\ell_1$ norm with a sum of $\ell_2$ norms over groups, $\sum_{l=1}^{L} \sqrt{p_l} \|w_l\|_2$, where $w_l$ is the weight sub-vector for group $l$ and $p_l$ is the group size. This penalty drives entire groups to zero simultaneously. The same principle transfers to clustering &mdash; but the optimisation is non-convex and the solution requires careful derivation.</p>
+    </div>
+
+    <h2 id="s2">2. The Group-Sparse K-means</h2>
+
+    <p>Suppose the $p$ variables are divided into $L$ known groups, so that $X = [X_1 | \ldots | X_L]$ with $X_l \in \R^{n \times p_l}$ and $p_1 + \ldots + p_L = p$. The between-cluster variance vector and the weight vector decompose accordingly: $b^\top = (b_1, \ldots, b_L)$ and $w^\top = (w_1, \ldots, w_L)$. The Group-Sparse K-means replaces the $\ell_1$ penalty with the group lasso penalty:</p>
+
+    $$\max_{C_1,\ldots,C_K,\, w} \; w^\top b - \lambda \sum_{l=1}^{L} \sqrt{p_l} \|w_l\|_2 \quad \text{s.t.} \quad \|w\|_2 \leq 1, \; w_j \geq 0 \;\forall j. \tag{GS}$$
+
+    <p>Here $\sqrt{p_l}$ normalises by group size, penalising larger groups proportionally so that a group of twenty indicators is not automatically favoured over a group of two. This is the standard choice in the group lasso literature.</p>
+
+    <p>The optimisation is non-convex (as in the original WT-K-means), and is solved by the same alternating strategy: initialise all weights equally at $w_j = 1/\sqrt{p}$, then iterate between (1) finding clusters by running K-means on the weighted data, and (2) finding weights given fixed clusters. The algorithm stops when the relative change in the weight vector falls below $10^{-4}$.</p>
+
+    <p>The key novelty lies in the weight update step. For fixed clusters, the optimal weights are given by:</p>
+
+    $$w_l^\star = \begin{cases} 0 & \text{if } \|b_l\|_2 \leq \sqrt{p_l}\,\lambda, \\ \displaystyle\frac{S_g(b_l,\, \sqrt{p_l}\,\lambda)}{\|S_g(b_l,\, \sqrt{p_l}\,\lambda)\|_2} & \text{otherwise}, \end{cases}$$
+
+    <p>where $S_g$ is the <em>group soft-thresholding operator</em>:</p>
+
+    $$S_g(b_l,\, \sqrt{p_l}\,\lambda) = \frac{b_l}{\|b_l\|_2} \left(\|b_l\|_2 - \sqrt{p_l}\,\lambda\right)_+.$$
+
+    <p>The interpretation is direct. A group $l$ is eliminated from the model if and only if the $\ell_2$ norm of its between-cluster variance vector $\|b_l\|_2$ falls below the threshold $\sqrt{p_l}\,\lambda$. All variables in a group are selected together or discarded together. This is the essential behavioural difference from the $\ell_1$ penalty, which applies thresholding variable by variable.</p>
+
+    <p>This solution is derived by writing the Karush-Kuhn-Tucker conditions for the constrained optimisation and using the sub-differential of the $\ell_2$ norm, which accounts for the non-differentiability at zero. The derivation parallels the group lasso in regression (Yuan and Lin, 2006), adapted to the constraint $\|w\|_2^2 \leq 1$ instead of the Lagrangian formulation used in supervised settings.</p>
+
+    <h2 id="s3">3. A more general formulation: the Sparse-Group-Sparse K-means</h2>
+
+    <p>For completeness, the Group-Sparse K-means sits within a more general family. The Sparse-Group-Sparse K-means (SGS K-means) combines the $\ell_1$ and group $\ell_2$ penalties with a mixing parameter $\alpha \in [0, 1]$:</p>
+
+    $$\max_{C_1,\ldots,C_K,\, w} \; w^\top b - \lambda \left[(1-\alpha)\sum_{l=1}^{L}\sqrt{p_l}\|w_l\|_2 + \alpha\|w\|_1\right] \quad \text{s.t.} \quad \|w\|_2 \leq 1, \; w_j \geq 0 \;\forall j.$$
+
+    <p>When $\alpha = 0$, this reduces to the Group-Sparse K-means &mdash; selection operates between groups only. When $\alpha = 1$, it reduces to the original WT-K-means &mdash; selection operates variable by variable. Intermediate values allow sparsity both <em>between</em> and <em>within</em> groups: the algorithm can discard an entire group, and can also zero out individual variables within a surviving group. This mirrors the sparse group lasso in regression (Simon et al., 2013).</p>
+
+    <p>The closed-form solution for the weight update under the SGS penalty generalises both special cases. Its derivation uses the same KKT machinery, now with the sub-differential of the combined penalty. The practical difficulty is that $\alpha$ introduces a second hyperparameter alongside $\lambda$, and tuning both in an unsupervised setting &mdash; where no held-out objective exists &mdash; is delicate. For this reason, the remainder of the chapter and the implementation in vimpclust focus on the $\alpha = 0$ case: pure group selection.</p>
+
+    <h2 id="s4">4. The mixed data problem</h2>
+
+    <p>The most important application of the group penalty is not genomics or engineering per se. It is mixed data &mdash; datasets that combine numerical and categorical variables. This is arguably the most common data structure in applied work, from clinical trials to customer analytics to industrial quality control, and yet sparse K-means methods have not addressed it.</p>
+
+    <p>Why is mixed data hard for K-means-based methods? The difficulty is geometric. K-means relies on the Euclidean distance. Numerical variables, after standardisation, sit naturally in Euclidean space. Categorical variables do not. A categorical variable $x_j$ with $c_j$ categories must be expanded into $c_j$ indicator columns, but the scale of these indicators relative to the numerical variables is arbitrary. Fix it wrong, and the algorithm will either ignore the categorical variables entirely or let them dominate the clustering.</p>
+
+    <p>The literature offers several approaches, none fully satisfactory. The K-prototypes algorithm (Huang, 1998) uses Euclidean distance for numerical variables and a simple matching distance for categorical ones, combined via a user-specified weighting constant. The Modha-Spangler algorithm (Modha and Spangler, 2003) mixes Euclidean distance with cosine distance for categorical indicators, with the weighting found by brute-force search. Gower distance (Gower, 1971) handles mixed data natively but requires user-specified variable weights and is not directly compatible with the K-means optimisation framework. In every case, the analyst must choose how much weight to give categorical variables relative to numerical ones &mdash; a choice for which there is no principled default.</p>
+
+    <div class="callout callout-definition">
+      <div class="callout-label">Why factorial methods do not solve this</div>
+      <p style="margin-bottom: 0;">Mixed factorial analysis methods (Chavent et al., 2012) handle the heterogeneity of variable types by constructing linear combinations that capture variance across both types. But factorial methods create <em>new</em> variables &mdash; principal components or factors &mdash; and sparse clustering aims to select among <em>original</em> variables, not among linear combinations. Sparse factorial methods (Witten et al., 2009) face the same issue: the sparse components they produce may not correspond to an optimal subspace for clustering, and they introduce additional hyperparameters (sparsity level <em>and</em> number of dimensions).</p>
+    </div>
+
+    <h2 id="s5">5. Recoding categorical variables: a $\chi^2$-distance geometry</h2>
+
+    <p>The approach taken here sidesteps the weighting problem by transforming the data before clustering, so that the Euclidean distance on the transformed data has a coherent interpretation for both variable types. The recoding, following Chavent et al. (2007), proceeds in three steps.</p>
+
+    <p>Let $X_1 \in \R^{n \times p_1}$ be the numerical variables (centred and standardised to unit variance) and $X_2$ the $p_2$ categorical variables, where variable $x_j$ in $X_2$ has $c_j$ categories and the total number of indicator columns is $c = \sum_{j=1}^{p_2} c_j$.</p>
+
+    <p><strong>Step 1 &mdash; Indicator expansion.</strong> Each categorical variable $x_j$ is replaced by its $c_j$ binary indicators, collected into a matrix $G_j \in \{0,1\}^{n \times c_j}$. The full indicator matrix is $G = (G_1 | \ldots | G_{p_2}) \in \{0,1\}^{n \times c}$.</p>
+
+    <p><strong>Step 2 &mdash; Frequency computation.</strong> Let $D_j = \mathrm{diag}(n_{j,1}/n, \ldots, n_{j,c_j}/n)$ be the diagonal matrix of category frequencies for variable $x_j$, where $n_{j,l}$ is the count of observations in category $l$.</p>
+
+    <p><strong>Step 3 &mdash; Normalisation.</strong> The recoded matrix for the categorical variables is:</p>
+
+    $$\tilde{X}_2 = \frac{1}{\sqrt{n}} \, J \, G \, D^{-1/2},$$
+
+    <p>where $J = I_n - \frac{1}{n}\mathbf{1}_n\mathbf{1}_n^\top$ is the centring operator and $D = \mathrm{diag}(D_1, \ldots, D_{p_2})$. The final data matrix is $[X_1, \tilde{X}_2]$.</p>
+
+    <p>What does this transformation achieve? Each indicator column is centred (by $J$) and scaled by the inverse square root of its frequency ($D^{-1/2}$). This means that a rare category &mdash; say, one that applies to 5% of the data &mdash; receives a larger scaling than a common one. The effect is geometric: applying the Euclidean distance to $\tilde{X}_2$ is equivalent to applying a $\chi^2$-type distance to the original indicator matrix. For the numerical variables, the Euclidean distance on standardised data is used directly. The two distance types are placed on a comparable footing without any user-specified relative weighting.</p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">The group structure falls out naturally</div>
+      <p style="margin-bottom: 0;">After recoding, the data matrix $[X_1, \tilde{X}_2]$ has a natural group structure. Each numerical variable forms a group of size 1. Each categorical variable $x_j$ with $c_j$ categories forms a group of size $c_j$, corresponding to its $c_j$ indicator columns. This is exactly the structure the Group-Sparse K-means was built to exploit. Applying the group lasso penalty ensures that a categorical variable is either fully selected (all its indicators enter the model) or fully discarded. The group penalty for this mixed structure takes the form: $$\lambda \left(\sum_{l=1}^{p_1} \|w_l\|_2 + \sum_{l=1}^{p_2} \sqrt{c_l} \|w_l\|_2\right),$$ where numerical groups have $p_l = 1$ (and $\|w_l\|_2 = |w_l|$, reducing to the standard $\ell_1$ penalty for individual numerical variables) while categorical groups are penalised proportionally to $\sqrt{c_l}$.</p>
+    </div>
+
+    <h2 id="s6">6. Choosing $\lambda$ and the regularisation path</h2>
+
+    <p>The penalty parameter $\lambda$ controls the degree of sparsity. At $\lambda = 0$, all variables are retained. As $\lambda$ increases, groups whose between-cluster variance norm falls below the threshold are eliminated. At $\lambda_{\max} = \max_l \|b_l\|_2 / \sqrt{p_l}$, all groups are penalised to zero &mdash; no variables survive.</p>
+
+    <p>Between these extremes, the <strong>regularisation path</strong> traces how variable weights evolve as $\lambda$ varies. This path is computed by evaluating the algorithm over a grid of $\lambda$ values and recording the weight vector at each point. For numerical variables, the individual weight $w_j$ is plotted. For categorical variables, the group norm $\|w_l\|_2$ is plotted, providing a single summary of the group's contribution.</p>
+
+    <p>Alongside the regularisation path, the <strong>explained variance path</strong> traces the between-cluster variance of the <em>unweighted</em> data as a function of $\lambda$. This path typically rises as $\lambda$ increases from zero (because removing noise variables improves the K-means solution), reaches a maximum (the optimal sparsity level), and then drops as informative variables are removed.</p>
+
+    <p>The choice of $\lambda$ is made by a <strong>change-point detection</strong> method applied to the explained variance path: the selected $\lambda$ corresponds to the point where the path transitions from the rising regime to the plateau or declining regime. This avoids the need for cross-validation (which is problematic in unsupervised settings) and has been shown to perform well in the simulations of the preceding chapter.</p>
+
+    <h2 id="s7">7. Implementation: the vimpclust package</h2>
+
+    <p>The Group-Sparse K-means is implemented in the R package vimpclust (Chavent et al., 2020), available on CRAN. The package provides two main functions. The function <code>sparsewkm</code> performs sparse clustering of numerical and/or categorical data: if categorical variables are present, it applies the recoding of Section 5 and uses the group penalty automatically. The function <code>groupsparsewkm</code> handles the general case of grouped numerical variables without the categorical recoding.</p>
+
+    <p>The only required arguments are the data matrix <code>X</code> (as a data frame, with categorical variables declared as factors) and the number of clusters <code>centers</code>. The regularisation path, the change-point selection of $\lambda$, and the normalisation of mixed data are handled internally.</p>
+
+    <p>To illustrate: on the Heart Disease dataset (270 patients, 6 numerical and 8 categorical variables), the regularisation path reveals that the numerical variables <em>maxhr</em> (maximum heart rate) and <em>oldpeak</em> (ST depression) and the categorical variables <em>slope</em> and <em>exang</em> (exercise-induced angina) are the most discriminant for separating the two clusters. As $\lambda$ increases, only <em>maxhr</em> survives &mdash; it is the single strongest discriminator. The change-point method selects an intermediate $\lambda$ that retains a handful of informative variables, trading off parsimony against cluster quality.</p>
+
+    <p>Two implementation details deserve mention. First, normalisation: the recoding handles the scale of mixed data automatically, so no manual standardisation is needed when categorical variables are present. For purely numerical grouped variables (used via <code>groupsparsewkm</code>), variables must be standardised to zero mean and unit variance. Second, initialisation: the package supports multiple restarts of the K-means step (as in the original K-means algorithm) and a beta implementation of K-means++ initialisation. Initialisation has a substantial impact on sparse K-means results, more so than on standard K-means, because the sparsity mechanism amplifies the effect of a bad starting partition.</p>
+
+    <h2 id="s8">8. Simulation study: Group-Sparse K-means versus VarSelLCM on mixed data</h2>
+
+    <p>To evaluate the method on mixed data, a simulation study compares the Group-Sparse K-means (via <code>sparsewkm</code>) to VarSelLCM (Marbac and Sedki, 2017), a model-based sparse clustering method that selects variables by maximising an integrated complete-data likelihood. Both methods handle mixed data; VarSelLCM does so natively through a mixture model, while <code>sparsewkm</code> does so through the recoding and group penalty described above.</p>
+
+    <p>The simulation follows the framework of the preceding chapter. Data are generated with $K = 2$ clusters, $p_K$ informative variables and $d$ noise variables, with signal strength $m$ controlling the separation between clusters. To create mixed data, half the informative variables and half the noise variables are discretised into binary categories (by thresholding at the median).</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>$p_K$</th>
+          <th>$d$</th>
+          <th>$m$</th>
+          <th>ARI</th>
+          <th>Ratio V.Imp</th>
+          <th>Ratio V.Noise</th>
+          <th>Time (s)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>VarSelLCM</td><td>2</td><td>20</td><td>1.5</td><td>0.92 &plusmn; 0.06</td><td>1.00 &plusmn; 0.00</td><td>0.02 &plusmn; 0.03</td><td>1.06</td></tr>
+        <tr><td>sparsewkm</td><td>2</td><td>20</td><td>1.5</td><td>0.84 &plusmn; 0.09</td><td>0.50 &plusmn; 0.00</td><td>0.03 &plusmn; 0.02</td><td>0.42</td></tr>
+        <tr style="border-top: 1px solid #ddd;"><td>VarSelLCM</td><td>10</td><td>100</td><td>0.7</td><td>0.77 &plusmn; 0.28</td><td>0.99 &plusmn; 0.03</td><td>0.02 &plusmn; 0.02</td><td>3.92</td></tr>
+        <tr><td>sparsewkm</td><td>10</td><td>100</td><td>0.7</td><td>0.57 &plusmn; 0.15</td><td>0.35 &plusmn; 0.14</td><td>0.01 &plusmn; 0.02</td><td>1.95</td></tr>
+        <tr style="border-top: 1px solid #ddd;"><td>VarSelLCM</td><td>10</td><td>100</td><td>1.0</td><td>0.98 &plusmn; 0.04</td><td>1.00 &plusmn; 0.00</td><td>0.03 &plusmn; 0.01</td><td>3.16</td></tr>
+        <tr><td>sparsewkm</td><td>10</td><td>100</td><td>1.0</td><td>0.88 &plusmn; 0.17</td><td>0.41 &plusmn; 0.15</td><td>0.01 &plusmn; 0.02</td><td>1.51</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size: 0.85em; color: #6b6967; margin-top: 0.3em;">Mean &plusmn; SD over 20 simulations. ARI = Adjusted Rand Index (clustering quality). Ratio V.Imp = proportion of informative variables selected. Ratio V.Noise = proportion of noise variables selected. Selected scenarios from the full Table 3.1.</p>
+
+    <p>The results tell a nuanced story. In terms of clustering quality (ARI), both methods perform well when the signal is strong ($m \geq 1.0$), with VarSelLCM holding a consistent edge. The gap widens at weaker signals. However, the most striking difference is in variable selection: VarSelLCM recovers nearly 100% of the informative variables across all scenarios, while <code>sparsewkm</code> selects only 30&ndash;50% of them, systematically missing the categorical informative variables.</p>
+
+    <p>Why does <code>sparsewkm</code> struggle with categorical variables? Two mechanisms are at work. First, after the $\chi^2$ recoding, the between-cluster variance of categorical indicators tends to be smaller than that of numerical variables with equivalent discriminative power. The group penalty threshold $\sqrt{c_l}\,\lambda$ can therefore eliminate categorical groups that carry real signal. Second, because the change-point method for selecting $\lambda$ is driven primarily by the numerical variables' contribution to the explained variance path, it may choose a $\lambda$ that is too aggressive for the categorical variables.</p>
+
+    <p>On the other hand, <code>sparsewkm</code> is roughly twice as fast as VarSelLCM across all scenarios &mdash; a non-trivial advantage when the analysis must be repeated many times (e.g. for different values of $K$) or when the dataset is large.</p>
+
+    <h2 id="s9">9. Why WT-K-means?</h2>
+
+    <p>The optimisation problem is interpretable. The objective maximises the weighted between-cluster variance, and the weights $w_j$ have a direct interpretation as the contribution of each variable to the clustering criterion. This transparency is valuable in applied settings where the analyst needs to explain why certain variables were selected.</p>
+
+    <p>K-means is computationally cheap. Model-based alternatives (Gaussian mixture models with variable selection) often make similar assumptions &mdash; spherical or diagonal covariance structures &mdash; while being more expensive. In high-dimensional industrial data, the speed difference matters.</p>
+
+    <p>The $\ell_1$ penalty has a direct group extension. The group lasso is not an ad hoc modification; it is the natural group-structured generalisation of the lasso, with well-studied theoretical properties in the supervised setting (Yuan and Lin, 2006). The solution retains a closed form (the group soft-thresholding operator), so the computational cost per iteration does not increase.</p>
+
+    <p>WT-K-means is the standard benchmark in the sparse clustering literature. No other method has consistently demonstrated superiority across diverse settings. When variables have no group structure, the Group-Sparse K-means with singleton groups reduces exactly to the WT-K-means &mdash; backward compatibility is guaranteed.</p>
+
+    <p>Finally, the success of penalised methods in supervised learning &mdash; where they are known to be more stable than stepwise selection procedures (Friedman et al., 2001) &mdash; suggests that penalty-based approaches should also be preferred in the unsupervised setting, where stability is even more critical because there is no target variable to anchor the solution.</p>
+
+    <h2 id="s10">10. Limitations and open questions</h2>
+
+    <p>The method has at least three honest limitations that are worth stating explicitly.</p>
+
+    <p>The first concerns the recoding of mixed data. The $\chi^2$-normalised indicator expansion is a modelling assumption, not a universal solution. Consider a dataset with one numerical variable that has a clear cluster structure (a mixture of two Gaussians) and one binary variable. If the binary variable is strongly associated with the numerical one, it carries cluster information and should be selected. If it is independent, it is noise. But the recoding treats the binary variable identically in both cases &mdash; it creates the same indicator columns with the same frequency normalisation. Whether the variable is informative must be determined entirely by the between-cluster variance, which may be attenuated by the recoding. The simulation results confirm this: categorical variables receive systematically lower weights, which translates into lower selection rates.</p>
+
+    <p>The second limitation is the sensitivity to initialisation. Sparse K-means amplifies the effect of a bad starting partition, because the sparsity mechanism can lock in early mistakes: if the initial K-means assigns observations poorly, the resulting between-cluster variances will be misleading, wrong variables will be selected, and the algorithm may converge to a local optimum that is far from the global one. Multiple restarts mitigate this, but do not eliminate it.</p>
+
+    <p>The third limitation is shared with all unsupervised variable selection methods: there is no ground truth against which to evaluate $\lambda$. The change-point method for selecting $\lambda$ is heuristic. It works well in the simulations of the thesis, but it provides no guarantee. In supervised learning, cross-validation provides an objective criterion for hyperparameter selection. In clustering, the explained variance path is the best proxy available, but it conflates variable quality with cluster separability.</p>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">What this leaves open</div>
+      <p style="margin-bottom: 0;">The Group-Sparse K-means provides a clean solution for grouped numerical variables and a working solution for mixed data, but the mixed-data case remains, as the thesis honestly acknowledges, an open question. The interaction between the recoding, the group penalty, and the $\lambda$ selection mechanism needs further theoretical and empirical study. A more adaptive recoding &mdash; one that adjusts the scaling of categorical indicators based on their discriminative power rather than their frequency alone &mdash; might close the gap with model-based methods. For now, the method is best understood as a principled baseline: fast, interpretable, and available as open-source software, with known limitations that can guide future work.</p>
+    </div>
+
+    <hr>
+    <h3>References</h3>
+    <p class="references">
+      Witten DM, Tibshirani R (2010). A framework for feature selection in clustering. <em>Journal of the American Statistical Association</em> 105(490):713&ndash;726.<br>
+      Yuan M, Lin Y (2006). Model selection and estimation in regression with grouped variables. <em>Journal of the Royal Statistical Society: Series B</em> 68(1):49&ndash;67.<br>
+      Simon N, Friedman J, Hastie T, Tibshirani R (2013). A sparse-group lasso. <em>Journal of Computational and Graphical Statistics</em> 22(2):231&ndash;245.<br>
+      Marbac M, Sedki M (2017). Variable selection for model-based clustering using the integrated complete-data likelihood. <em>Statistics and Computing</em> 27(4):1049&ndash;1063.<br>
+      Huo X, Tseng GC (2017). Integrative sparse K-means with overlapping group lasso in genomic applications. <em>Biostatistics</em> 18(1):12&ndash;28.<br>
+      Chavent M, Kuentz-Simonet V, Labenne A, Saracco J (2012). Orthogonal rotation in PCAMIX. <em>Advances in Data Analysis and Classification</em> 6(2):131&ndash;159.<br>
+      Chavent M, Lacaille J, Mourer A, Olteanu M (2020). Sparse K-means for mixed data via group-sparse clustering. In: <em>ESANN 2020 Proceedings</em>.<br>
+      Chavent M, Chavent J (2017). Group-sparse block PCA and explained variance. Preprint.<br>
+      Huang Z (1998). Extensions to the K-means algorithm for clustering large data sets with categorical values. <em>Data Mining and Knowledge Discovery</em> 2(3):283&ndash;304.<br>
+      Modha DS, Spangler WS (2003). Feature weighting in K-means clustering. <em>Machine Learning</em> 52(3):217&ndash;237.<br>
+      Gower JC (1971). A general coefficient of similarity and some of its properties. <em>Biometrics</em> 27(4):857&ndash;871.<br>
+      Burczynski ME et al. (2006). Molecular classification of Crohn's disease and ulcerative colitis patients using transcriptional profiles in peripheral blood mononuclear cells. <em>The Journal of Molecular Diagnostics</em> 8(1):51&ndash;61.<br>
+      Higuera C, Gardiner KJ, Cios KJ (2015). Self-organizing feature maps identify proteins critical to learning in a mouse model of Down syndrome. <em>PLoS ONE</em> 10(6):e0129126.<br>
+      Friedman J, Hastie T, Tibshirani R (2001). <em>The Elements of Statistical Learning</em>. New York: Springer.<br>
+      Foss A, Markatou M, Ray B, Heching A (2016). A semiparametric method for clustering mixed data. <em>Machine Learning</em> 105(3):419&ndash;458.<br>
+      Boyd S, Vandenberghe L (2004). <em>Convex Optimization</em>. Cambridge University Press.
+    </p>
+
+    <div class="module-nav">
+      <span class="nav-prev">&larr; Posts</span>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>
