@@ -1056,6 +1056,7 @@ footer {
   background: var(--text); color: var(--bg);
   padding: 10px 16px; text-align: left; font-weight: 400;
 }
+.post-layout th, .post-layout th * { color: var(--bg) !important; fill: var(--bg) !important; }
 .post-layout td {
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
