@@ -56,7 +56,7 @@
 
     <div class="callout callout-scenario">
       <div class="callout-label">The problem</div>
-      <p style="margin-bottom: 0;">Clustering partitions observations into homogeneous groups without a target variable. But in real datasets, the cluster structure is usually visible in only a handful of variables. The rest is noise &mdash; and including noise variables actively degrades clustering by diluting the signal. This is not an edge case: in genomics, industrial production data, or census surveys, noise variables routinely outnumber informative ones. On top of this, real variables often come in groups. Genes are organised into pathways. Production measurements are repeated at several thrust levels. Categorical variables expand into sets of indicator columns. A method that selects variables one by one can break these groups apart &mdash; keeping some indicators of a categorical variable while discarding others, a result with no coherent interpretation. We need a clustering method that simultaneously finds groups of observations, selects the variables that matter, and respects the group structure among those variables.</p>
+      <p style="margin-bottom: 0;">Clustering finds groups of observations without a target variable, but the signal usually lives in a handful of variables while noise dilutes it. Real variables also come in groups &mdash; genes in pathways, categorical variables as sets of indicators &mdash; and a method that selects variables one by one can split these groups apart incoherently. We need a clustering method that finds groups of observations, selects informative variables, and respects the group structure among them.</p>
     </div>
 
     <div class="callout callout-assumption" style="margin-top: 1em;">
