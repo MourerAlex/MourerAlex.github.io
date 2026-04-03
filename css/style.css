@@ -993,6 +993,8 @@ footer {
   font-weight: 300;
 }
 .post-layout p strong { color: var(--text); font-weight: 500; }
+.post-layout a:not(.back-link) { color: #2563eb; text-decoration: underline; text-decoration-color: rgba(37,99,235,0.3); }
+.post-layout a:not(.back-link):hover { color: #1d4ed8; text-decoration-color: rgba(37,99,235,0.6); }
 .post-layout ul, .post-layout ol {
   font-size: 19px; line-height: 1.85;
   color: var(--text-muted); font-weight: 300;
