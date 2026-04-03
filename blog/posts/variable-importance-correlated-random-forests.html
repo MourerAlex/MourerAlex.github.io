@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Variable Importance in Random Forests with Correlated Variables | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=29">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Variable Importance &amp; Correlated Data</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-03</span>
+      <span class="post-tag">Random Forests</span>
+      <span class="post-tag">Variable Importance</span>
+      <span class="post-tag">Interpretability</span>
+    </div>
+    <h1>Variable Importance in Random Forests When Your Variables Are Correlated</h1>
+    <p class="subtitle">How correlation among input variables silently corrupts the importance rankings you rely on &mdash; and a variable-clustering approach that fixes it.</p>
+    <hr>
+    <div class="callout callout-scenario">
+      <div class="callout-label">The problem</div>
+      <p style="margin-bottom: 0;">We want to assess the exploratory &mdash; non-causal &mdash; impact of an input variable on an output. In principle, this requires modelling the relationships between the output and all input variables, defining a measure of each variable&rsquo;s contribution, and evaluating it. In linear models, these relationships appear directly readable through coefficients &mdash; but linear models are prone to misspecification. If the true data-generating process involves nonlinearities, interactions, or complex dependency structures, the coefficients may not reflect genuine relationships, and any importance assessment built on them is compromised. Black-box models &mdash; neural networks, gradient boosting, random forests &mdash; tackle misspecification by learning flexible representations. But they introduce a different problem: opacity. The relationships they capture are no longer directly readable, and each model family has its own internal structure, making a general-purpose importance measure difficult to define.</p>
+    </div>
+    <div class="callout callout-assumption" style="margin-top: 1em;">
+      <div class="callout-label">The question</div>
+      <p style="margin-bottom: 0;">Can we find a good machine learning model where we can define a variable importance measure that reliably assesses the exploratory relationships between inputs and output &mdash; even when the input variables are correlated?</p>
+    </div>
+    <ul style="margin-top: 1.5em; line-height: 1.9;">
+      <li><strong>What we want</strong> &mdash; a variable importance measure that correctly recovers the dependency structure between inputs and output, without relying on a model that might be misspecified, and without sacrificing interpretability to flexibility. Not just predictive contribution, but a faithful picture of which variables are genuinely related to the output &mdash; and by how much.</li>
+      <li><strong>What we have</strong> &mdash; random forests offer a compelling starting point: strong empirical performance with minimal tuning, robustness to misspecification, and &mdash; crucially &mdash; a built-in importance infrastructure. Breiman (2001) defined two measures, MDA (permutation importance) and MDI (impurity importance), that are computed essentially for free as a byproduct of the forest&rsquo;s construction. More recent alternatives exist: the Conditional MDA (Strobl et al., 2008) and the Sobol-MDA (B&eacute;nard et al., 2021). But all of these measures were designed &mdash; or at least analysed &mdash; under the assumption that input variables are independent. When variables are correlated, which is essentially always the case in real data, these measures suffer from multiple distinct biases that corrupt the ranking.</li>
+      <li><strong>What we do</strong> &mdash; introduce the <strong>Synthetic-MDA (SMDA)</strong>: cluster the input variables by their correlation structure (using ClustOfVar), summarise each cluster by a synthetic variable (first principal component), train the random forest on these synthetic variables, and redistribute importance back to the original variables. This extends the methodology of Chavent et al. (2021) by defining a new measure that translates synthetic-variable importance into original-variable importance, and by providing a graphical method for choosing the number of clusters that balances performance and interpretability.</li>
+    </ul>
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#s1">Two goals of variable importance, and why they conflict</a></li>
+        <li><a href="#s2">How random forests compute importance</a></li>
+        <li><a href="#s3">Four biases: a taxonomy</a></li>
+        <li><a href="#s4">Existing alternatives and why they fall short</a></li>
+        <li><a href="#s5">The proposed solution: Synthetic-MDA</a></li>
+        <li><a href="#s6">Simulation results</a></li>
+        <li><a href="#s7">Industrial application: fan flutter in jet engines</a></li>
+        <li><a href="#s8">What this leaves open</a></li>
+      </ol>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s1">1. Two goals of variable importance, and why they conflict</h2>
+    <p>Before going further, we need to separate two objectives that the phrase &ldquo;variable importance&rdquo; conflates. From a statistical point of view, computing variable importance in supervised learning aims at two distinct goals:</p>
+    <p><strong>Objective (i)</strong> &mdash; estimate the contribution of each input variable to the prediction. This is the question a model builder asks: &ldquo;if I remove this variable, how much does my model degrade?&rdquo; It is inherently conditional on the other variables in the model. A variable that is perfectly correlated with another one already in the model contributes nothing &mdash; it is redundant &mdash; and its importance under this objective should be zero.</p>
+    <p><strong>Objective (ii)</strong> &mdash; measure the dependency between each input variable and the output. This is the question a data analyst or a domain expert asks: &ldquo;is this variable related to the phenomenon I am studying?&rdquo; It is not conditional on the model or on the other variables. A variable that is strongly correlated with both the output and another input variable is genuinely informative &mdash; its importance under this objective should be high.</p>
+    <p>When input variables are independent, both objectives coincide. A variable that contributes to prediction is necessarily related to the output, and vice versa. But when input variables are correlated &mdash; and in practice, they almost always are &mdash; the two objectives diverge. Two strongly correlated discriminant variables share information about the output. Under objective (i), one of them can be discarded without hurting predictions. Under objective (ii), both should be flagged as important, because both are genuinely related to the output.</p>
+    <p>This distinction is especially sharp when the goal is not to build a deployable predictive system, but to understand a physical phenomenon. Consider an engineer studying what drives the vibration margin of a turbofan blade. There may be dozens of geometric measurements that are mechanically linked &mdash; blade length, tip clearance at various angular positions, leading-edge shape. They are highly correlated by construction. The engineer does not want to know which single variable gives the best marginal improvement to prediction. They want to know which physical quantities are related to the flutter margin. That is objective (ii), and it is the focus of this work.</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">The contradiction in a sentence</div>
+      <p style="margin-bottom: 0;">All standard variable importance measures for random forests are designed to answer objective (i). When the input variables are correlated, objective (i) and objective (ii) give different answers. If you use an objective-(i) measure to answer an objective-(ii) question, the ranking will be wrong.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s2">2. How random forests compute importance</h2>
+    <p>Random forests, introduced by Breiman (2001), are ensembles of modified CART trees. Each tree is grown on a bootstrap sample of the data (the <em>in-the-bag</em> sample), and at each node, only a random subset of the $p$ input variables is considered for splitting. The observations not used for a given tree form its <em>out-of-bag</em> (OOB) sample. The forest&rsquo;s prediction is the average of the individual tree predictions.</p>
+    <p>Two importance measures were introduced alongside the algorithm.</p>
+    <p><strong>MDA &mdash; Mean Decrease Accuracy (permutation importance).</strong> The intuition: if a variable is important, permuting its values should degrade the model&rsquo;s accuracy. For each tree $t$ and each variable $x^j$, the OOB observations are taken, the values of $x^j$ are randomly permuted, and the increase in prediction error is recorded. The MDA of variable $x^j$ is the average of these increases across all trees:</p>
+    $$\text{MDA}(x^j) = \frac{1}{T}\sum_{t=1}^{T}\left[\mathcal{E}(\text{OOB}^j_t, t) - \mathcal{E}(\text{OOB}_t, t)\right],$$
+    <p>where $\mathcal{E}(\text{OOB}_t, t)$ is the prediction error of tree $t$ on its OOB sample. A variable is more important when MDA is larger.</p>
+    <p><strong>MDI &mdash; Mean Decrease Impurity (Gini importance).</strong> At each split in a tree, the chosen variable reduces the impurity (variance, in regression) of the node. The MDI of a variable is the total impurity reduction across all nodes, in all trees, where that variable was used for splitting:</p>
+    $$\text{MDI}(x^j) = \sum_{t=1}^{T}\sum_{A \in \mathcal{A}^j_t} G(x^j, A, t),$$
+    <p>where $G(x^j, A, t)$ is the variance reduction at node $A$ when splitting on $x^j$ in tree $t$, and $\mathcal{A}^j_t$ is the set of all such nodes.</p>
+    <p>Both measures are computed essentially for free during the construction of the forest. Both are well-understood when input variables are independent. When they are not, both suffer from biases &mdash; and the biases are different in nature, which the literature has not always made clear.</p>
+
+    <!-- ============================================================ -->
+    <h2 id="s3">3. Four biases: a taxonomy</h2>
+    <p>When input variables are correlated, the importance measures described above become unreliable. The literature has documented this extensively (Strobl et al., 2007; Genuer et al., 2010; Tolo&#x15F;i and Lengauer, 2011; Gregorutti et al., 2017; Hooker and Mentch, 2019; B&eacute;nard et al., 2021), but the nature of the bias is often left imprecise. In this work, four distinct mechanisms are identified. Disentangling them matters, because each existing correction addresses only a subset.</p>
+
+    <div class="callout callout-definition">
+      <div class="callout-label">Bias 1 &mdash; Selection bias</div>
+      <p style="margin-bottom: 0;">When two correlated discriminant variables compete at a tree node, the tree must choose one. The other receives zero credit (zero gain for MDI, no permuted observations for MDA) at that node. Over many trees, the importance of each variable is diluted: each gets roughly half the credit it would have received alone. The effect scales with both the strength of the correlation and the size of the correlated group. With $m$ identical copies of a variable, each one&rsquo;s importance is divided by approximately $m$.</p>
+    </div>
+    <div class="callout callout-definition" style="margin-top: 1em;">
+      <div class="callout-label">Bias 2 &mdash; Preference bias</div>
+      <p style="margin-bottom: 0;">Correlated discriminant variables are more likely to be selected at early splits, where the impurity reduction is largest. Scornet (2020) proved theoretically, for MDI under a linear model, that positive correlation between two discriminant variables increases the probability of splitting on either one &mdash; and therefore increases the total importance of the correlated group beyond what a single variable would achieve. The group&rsquo;s aggregate importance is inflated, even as each individual variable&rsquo;s importance is deflated by the selection bias. When the correlation is negative, the effect reverses.</p>
+    </div>
+    <div class="callout callout-definition" style="margin-top: 1em;">
+      <div class="callout-label">Bias 3 &mdash; Sampling (permutation) bias</div>
+      <p style="margin-bottom: 0;">This bias affects the MDA specifically. When a variable is permuted while its correlated partners are left intact, the joint distribution of the data changes: the permuted observations fall into regions of low density that the forest has never seen. The model is forced to extrapolate, which inflates the prediction error and therefore inflates the importance of correlated variables. Hooker and Mentch (2019) explained the mechanism; B&eacute;nard et al. (2021) formalised it by decomposing the MDA into three terms, one of which corresponds exactly to this extrapolation effect and grows with the strength of the correlation.</p>
+    </div>
+    <div class="callout callout-definition" style="margin-top: 1em;">
+      <div class="callout-label">Bias 4 &mdash; Masking bias</div>
+      <p style="margin-bottom: 0;">At each node, only a random subset of variables is considered for splitting. In high-dimensional settings ($n \ll p$), an important variable may simply never be drawn. This is not caused by correlation per se, but it is exacerbated in correlated, high-dimensional data: when there are many variables and few observations, the trees are shallow, the number of splits is small, and the chance that a given variable is never sampled increases.</p>
+    </div>
+    <p>These four biases operate at different levels of the algorithm. The selection and preference biases are properties of <strong>tree construction</strong>: they arise from the way CART trees choose splitting variables. The masking bias is a property of the <strong>forest construction</strong>: it arises from the random subspace mechanism applied at each node. The sampling bias is a property of the <strong>permutation procedure</strong>: it arises from the way MDA computes importance after the forest has been built.</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">Why this matters</div>
+      <p style="margin-bottom: 0;">No existing alternative importance measure addresses all four biases simultaneously. The Conditional MDA (Strobl et al., 2008) was designed to fix the sampling bias. The MDI with knockoffs (Sandri and Zuccolotto, 2008) was designed to fix the preference bias. The Sobol-MDA (B&eacute;nard et al., 2021) estimates the Sobol index, which is well-defined under dependence, but it still operates on the original correlated variables and remains subject to the selection and preference biases at the tree level. Any solution that fixes only the importance formula without addressing the data that the forest sees will leave at least one bias unresolved.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s4">4. Existing alternatives and why they fall short</h2>
+    <p><strong>MDI with knockoffs.</strong> Sandri and Zuccolotto (2008) decomposed the MDI into a genuine gain and a positive bias term. To estimate the bias, pseudo-variables (knockoffs) are created by simultaneously permuting all variables, preserving the marginal distributions but breaking the link with the output. A forest is trained on both real and pseudo-variables, and the pseudo-variables&rsquo; MDI is subtracted as an estimate of the bias. Nembrini et al. (2018) improved the computational cost but the approach remains expensive and does not address the selection or sampling biases.</p>
+    <p><strong>Conditional MDA (CMDA).</strong> Strobl et al. (2008) modified the permutation scheme of the MDA to preserve the correlation structure. Instead of a free permutation, the variable is permuted only within blocks defined by the split points of the tree. This should neutralise the sampling bias by preventing the model from extrapolating into low-density regions. However, the CMDA does not address the selection, preference, or masking biases. Empirically, it tends to strongly underestimate the importance of correlated variables &mdash; because it faithfully reflects the tree&rsquo;s internal accounting (objective i), which is distorted by the selection bias.</p>
+    <p><strong>Sobol-MDA.</strong> B&eacute;nard et al. (2021) proposed to estimate the total Sobol index &mdash; the proportion of output variance lost when a variable is removed &mdash; within the random forest framework. The Sobol-MDA is theoretically well-grounded and handles dependence at the definition level. In practice, however, it assigns near-zero or negative importance to correlated variables that are genuinely related to the output, because it still trains the forest on the original correlated data and is subject to the selection bias at the tree level.</p>
+    <p>To see the problem concretely, consider a simple simulation. A linear model $y = x_1 + \tfrac{2}{3}x_2 + \tfrac{1}{3}x_3 + \tfrac{1}{2}q_1 + \varepsilon$ is defined with three independent important variables $[x_1, x_2, x_3]$, three correlated important variables $[q_1, q_2, q_3]$ (pairwise correlation 0.9, only $q_1$ enters the model), and two independent noise variables $[z_1, z_2]$. The true importance ranking is given by $\text{cor}(y, x^j)^2$. All three correlated variables $q_1, q_2, q_3$ should be ranked as important under objective (ii), because all three are strongly correlated with the output.</p>
+    <p><strong>Table 1</strong> &mdash; Average importance over 100 simulated samples ($n = 500$). Standard deviations below $10^{-3}$.</p>
+    <table>
+      <tr><th></th><th>$x_1$</th><th>$x_2$</th><th>$x_3$</th><th>$q_1$</th><th>$q_2$</th><th>$q_3$</th><th>$z_1$</th><th>$z_2$</th></tr>
+      <tr><td>MDA</td><td>0.690</td><td>0.269</td><td>0.063</td><td>0.128</td><td>0.061</td><td>0.074</td><td>0.000</td><td>&minus;0.001</td></tr>
+      <tr><td>Sobol-MDA</td><td>0.482</td><td>0.179</td><td>0.027</td><td>&minus;0.002</td><td>&minus;0.014</td><td>&minus;0.015</td><td>&minus;0.011</td><td>&minus;0.011</td></tr>
+      <tr><td>CMDA</td><td>1.076</td><td>0.423</td><td>0.095</td><td>0.011</td><td>0.000</td><td>0.001</td><td>&minus;0.001</td><td>&minus;0.001</td></tr>
+      <tr style="background: #f0f7f4;"><td><strong>SMDA</strong></td><td><strong>0.802</strong></td><td><strong>0.311</strong></td><td><strong>0.064</strong></td><td><strong>0.151</strong></td><td><strong>0.151</strong></td><td><strong>0.150</strong></td><td><strong>0.001</strong></td><td><strong>0.001</strong></td></tr>
+      <tr style="color: #6b6967;"><td>$\text{cor}(y, x^j)^2$</td><td>0.56</td><td>0.24</td><td>0.06</td><td>0.14</td><td>0.11</td><td>0.11</td><td>0.00</td><td>0.00</td></tr>
+    </table>
+    <p style="font-size: 0.85em; color: #6b6967; margin-top: 0.3em;">The MDA ranks $x_3$ above $q_2$ &mdash; incorrect. The CMDA crushes all three correlated variables to near zero. The Sobol-MDA assigns them negative values, suggesting the model would improve by removing $q_1$. Only the SMDA recovers the correct ranking.</p>
+
+    <!-- ============================================================ -->
+    <h2 id="s5">5. The proposed solution: Synthetic-MDA</h2>
+    <p>The approach starts from a simple observation. If correlation among input variables is the source of the biases, then the biases can be removed by feeding the forest with uncorrelated inputs. But we cannot simply decorrelate the data (say, by PCA) because we want the importance to remain interpretable in terms of the <em>original</em> variables. The solution is to do both: train the forest on uncorrelated synthetic variables, then propagate the importance back to the original variables through the correlation structure.</p>
+    <p>The methodology has four steps, the first three of which were introduced by Chavent et al. (2021). The fourth step &mdash; the SMDA formula itself &mdash; and the graphical method for choosing $K$ are the contributions of this work.</p>
+
+    <h3>Step 1 &mdash; Variable clustering</h3>
+    <p>The $p$ input variables are clustered using ClustOfVar (Chavent et al., 2011), a hierarchical clustering algorithm designed for variables rather than observations. At each step of the agglomeration, the two clusters whose merger causes the smallest loss of homogeneity are merged. The homogeneity of a cluster $C_k$ is defined as the sum of squared correlations between its variables and its first principal component $f_k$:</p>
+    $$H(C_k) = \sum_{x^j \in C_k} \text{cor}(f_k, x^j)^2 = \lambda_k^1,$$
+    <p>where $\lambda_k^1$ is the first eigenvalue of the PCA restricted to the variables in $C_k$. The dissimilarity between two clusters is the homogeneity lost by merging them:</p>
+    $$d(C_k, C_{k'}) = H(C_k) + H(C_{k'}) - H(C_k \cup C_{k'}).$$
+    <p>Each cluster is then summarised by its first principal component $f_k$ &mdash; the <em>synthetic variable</em>. If the cluster is highly homogeneous, $f_k$ captures most of the information contained in the original variables of the cluster.</p>
+
+    <h3>Step 2 &mdash; Choosing the number of clusters $K$</h3>
+    <p>The hierarchical procedure produces $p$ nested partitions, from $K = 1$ (one cluster) to $K = p$ (each variable is its own cluster, recovering the original data). The choice of $K$ determines the trade-off between two things: performance (the forest needs enough information to predict well) and decorrelation (the synthetic variables should be as uncorrelated as possible).</p>
+    <p>The automatic approach, used in Chavent et al. (2021), selects the $K$ that minimises the OOB error of the forest trained on the $K$ synthetic variables. This work adds a complementary graphical approach: jointly analyse the <strong>error path</strong> and the <strong>homogeneity path</strong> as functions of $K$.</p>
+    <p>The homogeneity of a partition $P_K = \{C_1, \ldots, C_K\}$ is:</p>
+    $$H(P_K) = \sum_{k=1}^{K} H(C_k) = \sum_{k=1}^{K} \lambda_k^1 \leq p.$$
+    <p>Normalised by $p$, it ranges from some minimal value (one cluster containing all variables, poorly summarised) to 1 (each variable is its own cluster, perfectly summarised). The error path traces the OOB error of the forest as a function of $K$. The two paths are interpreted jointly: the error should be minimised (a poor model gives a poor importance assessment) and the homogeneity should be maximised (high homogeneity means little information is lost in the summarisation). One looks for the smallest $K$ at which both objectives are approximately satisfied. This graphical analysis can be especially useful on real data with complex correlation structures, where the error path may not have a clear minimum.</p>
+
+    <h3>Step 3 &mdash; Train the forest on synthetic variables</h3>
+    <p>A random forest is trained using the $K^\star$ synthetic variables $f_1, \ldots, f_{K^\star}$ as inputs. The MDA of each synthetic variable is computed as usual. Because the synthetic variables are constructed to have low mutual correlation, the biases described in Section 3 are substantially reduced: there is little selection bias (no redundant inputs competing), little preference bias (no inflated splitting probabilities), and little sampling bias (permuting a weakly correlated synthetic variable does not move the data far from its training distribution).</p>
+
+    <h3>Step 4 &mdash; The SMDA formula</h3>
+    <p>The MDA of the synthetic variables tells us which clusters are important, but not which original variables within each cluster are important. To bridge this gap, the <strong>Synthetic-MDA</strong> (SMDA) is defined as:</p>
+    $$\text{SMDA}_{K^\star}(x^j) = \text{MDA}(f_{k(j)}) \times \text{cor}(f_{k(j)}, x^j)^2,$$
+    <p>where $k(j)$ is the cluster to which $x^j$ belongs and $f_{k(j)}$ is its synthetic variable. The formula is a product of two terms. The first, $\text{MDA}(f_{k(j)})$, measures the importance of the cluster as a whole. The second, $\text{cor}(f_{k(j)}, x^j)^2$, measures how well the synthetic variable represents the original variable. If the cluster is important and the variable is well-represented by the cluster&rsquo;s summary, the variable is important. If the cluster is unimportant, or if the variable is poorly represented (low loading on the first principal component), the variable is ranked low.</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">Why it works</div>
+      <p style="margin-bottom: 0;">The SMDA shifts the locus of importance computation from the original (correlated) variables to the synthetic (approximately uncorrelated) variables. This neutralises the selection, preference, and sampling biases at the tree level. The correlation-weighting $\text{cor}(f_k, x^j)^2$ then distributes the cluster&rsquo;s importance back to the original variables in proportion to their contribution to the cluster&rsquo;s information content. Variables that are strongly correlated with the output and with each other all receive high importance, because they all load heavily on the same synthetic variable &mdash; which is itself important.</p>
+    </div>
+    <p><strong>Honest limitations.</strong> The method has shortcomings that are worth stating clearly. The hierarchical clustering has quadratic complexity in the number of variables, which can be expensive for very high-dimensional data. The clustering is performed independently of the prediction task &mdash; it uses only the correlation structure of the inputs, not their relationship with the output. And all variables in a cluster that have equal loadings on the synthetic variable will receive equal SMDA values, even if their individual relationships with the output differ. This last point is an inherent consequence of the dimension reduction: some information is lost. However, if a variable is genuinely important, the variables it is highly correlated with are also important (they share the same information about the output), and the loss is more apparent than real.</p>
+
+    <!-- ============================================================ -->
+    <h2 id="s6">6. Simulation results</h2>
+    <p>To evaluate the SMDA against the existing measures, a broader simulation is conducted. The data-generating model is linear: $y = \sum_{j=1}^{p_1} \beta_j x_j + \tfrac{1}{2} q_1 + \varepsilon$, with $\beta_j = (p_1 - j + 1)/p_1$, and the input matrix contains four groups of variables: $p_1 = 10$ independent important variables, $p_2$ correlated important variables (pairwise correlation 0.9), $d_1 = 25$ independent noise variables, and $d_2$ correlated noise variables. Three scenarios vary $p_2$ and $d_2$ to test increasingly difficult settings.</p>
+    <p>Two metrics are reported: the Spearman correlation between the true ranking (given by $\text{cor}(y, x^j)^2$) and the estimated ranking, and the percentage of truly important variables among the $p_1 + p_2$ top-ranked variables.</p>
+    <p><strong>Table 2</strong> &mdash; Spearman correlation (Sp) and selection percentage (%sel). Averages over 100 samples. Standard deviations in parentheses.</p>
+    <table>
+      <tr><th></th><th colspan="2">$p_2 = 1$, $d_2 = 50$</th><th colspan="2">$p_2 = 50$, $d_2 = 0$</th><th colspan="2">$p_2 = 50$, $d_2 = 50$</th></tr>
+      <tr><th></th><th>Sp</th><th>%sel</th><th>Sp</th><th>%sel</th><th>Sp</th><th>%sel</th></tr>
+      <tr><td>MDICor</td><td>0.41</td><td>86</td><td>0.64</td><td>91</td><td>0.68</td><td>87</td></tr>
+      <tr><td>MDI</td><td>0.42</td><td>87</td><td>0.13</td><td>61</td><td>0.59</td><td>65</td></tr>
+      <tr><td>MDA</td><td>0.27</td><td>73</td><td>0.75</td><td>98</td><td>0.69</td><td>88</td></tr>
+      <tr><td>CMDA</td><td>0.21</td><td>81</td><td>0.15</td><td>81</td><td>0.16</td><td>43</td></tr>
+      <tr><td>Sobol-MDA</td><td>0.27</td><td>82</td><td>0.11</td><td>67</td><td>0.25</td><td>31</td></tr>
+      <tr style="background: #f0f7f4;"><td><strong>SMDA</strong></td><td><strong>0.42</strong></td><td><strong>89</strong></td><td><strong>0.77</strong></td><td><strong>98</strong></td><td><strong>0.81</strong></td><td><strong>98</strong></td></tr>
+    </table>
+    <p>The first scenario ($p_2 = 1$, $d_2 = 50$) is the easiest: all important variables are independent, and the noise contains a large correlated block. Most measures perform reasonably well, because the biases (selection, preference) work in favour of important variables here. Even so, the MDA and Sobol-MDA are dragged down by the sampling bias, which inflates the importance of the correlated noise block.</p>
+    <p>The second scenario ($p_2 = 50$, $d_2 = 0$) introduces a large block of correlated important variables. The CMDA and Sobol-MDA collapse: both assign near-zero importance to the correlated block, because they faithfully reflect the tree&rsquo;s internal accounting, which is dominated by the selection bias. The MDA does better here, because the sampling bias happens to counteract the selection bias for important variables. But this is an accidental cancellation, not a principled correction.</p>
+    <p>The third scenario ($p_2 = 50$, $d_2 = 50$) is the hardest: correlated important variables and correlated noise variables coexist. The sampling bias now inflates both, and the accidental cancellation no longer helps. The MDA drops to 0.69 and 88%. The CMDA and Sobol-MDA perform poorly (Sp = 0.16 and 0.25, %sel = 43% and 31%). The SMDA achieves a Spearman correlation of 0.81 and selects 98% of the truly important variables in the top ranks.</p>
+    <p>Across all three scenarios, the SMDA selects on average $K^\star \approx 37$ clusters (standard deviation 5), consistent with 35 independent variables and 2 correlated groups. Uncorrelated variables are rarely merged, and correlated groups are occasionally split into two sub-clusters.</p>
+
+    <!-- ============================================================ -->
+    <h2 id="s7">7. Industrial application: fan flutter in jet engines</h2>
+    <p>The method was applied to a real engineering problem at Safran Aircraft Engines. Fan blades in turbofan engines are subject to aeroelastic instabilities &mdash; a phenomenon called <em>flutter</em>. The flutter margin quantifies, at a given fuel flow rate, the pressure gap between the flutter onset line and the operating line. A margin that is too small poses a safety risk; a margin that is too large wastes design space. Engine tests conducted in 2019&ndash;2020 suggested that the radial tip clearance of the fan blades had a significant impact on the flutter margin. The question is: is this impact significant relative to other variables, especially those related to engine thrust?</p>
+    <p>The data consists of $n = 121$ engines described by $p = 1{,}284$ variables &mdash; measurements taken on the engine or describing its geometry. Among these, 200 describe blade clearances, 30 describe radial clearance specifically, and 7 describe the radial clearance at the blade tip. The output is the flutter margin. This is a textbook case of $n \ll p$ with heavily correlated inputs: geometric measurements on the same engine are structurally linked.</p>
+    <p>The full CoV/VSURF pipeline was applied: variable clustering via ClustOfVar, summarisation by synthetic variables, selection of $K^\star$ by OOB error minimisation, and application of the VSURF procedure (Genuer et al., 2015) for recursive feature elimination. The SMDA was then computed on the selected synthetic variables.</p>
+    <p>Three groups of variables were selected by the model. The first is the Variable Fan Nozzle (VFN) position, a single variable that defines the operating point of the fan and is, by definition, strongly related to the flutter margin &mdash; its selection is expected. The second group contains thrust-related variables: pressure ratios, temperatures, air flow rates. The third group contains radial tip clearance variables: TIPGAP measurements at various angular positions and the leading-edge clearance. The SMDA values are consistent across groups: 0.14&ndash;0.15 for thrust variables, 0.11 for tip clearance variables, and 1.0 for the VFN position (relative scale, normalised by the maximum).</p>
+    <div class="callout callout-insight">
+      <div class="callout-label">The engineering answer</div>
+      <p style="margin-bottom: 0;">The model selected a group of radial tip clearance variables as the third most important driver of the flutter margin, after the VFN position and the thrust parameters. Not all tip clearance variables were selected &mdash; the small sample size and the high dimensionality make exhaustive recovery impossible &mdash; but the ones that were selected are exclusively tip-related, confirming the physical hypothesis. The SMDA gave the engineers what they needed: not a single best predictor, but a ranked understanding of which physical quantities are related to the phenomenon, along with a grouping structure that mirrors the underlying physics.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s8">8. What this leaves open</h2>
+    <p>The SMDA is not the final word on variable importance under correlation. The clustering is unsupervised and may not always align with the structure relevant to the output. The hierarchical algorithm has quadratic complexity, which limits scalability. The reduction to a single synthetic variable per cluster discards within-cluster variation that may carry information. And the choice of $K$ remains partly subjective, even with the graphical analysis.</p>
+    <p>But the contribution is less in the specific formula and more in the conceptual shift it embodies. The four-bias taxonomy makes clear that post-hoc corrections to the importance formula cannot fix biases that are baked into the forest&rsquo;s construction. If the trees are built on correlated data, their internal structure is already distorted. To get unbiased importance, you need to change what the forest sees &mdash; not just how you read it afterwards. The SMDA does this by interposing a clustering layer between the data and the model.</p>
+    <p>The approach generalises naturally: the clustering can use $K$-means instead of hierarchical agglomeration (reducing complexity), it can handle mixed data (numerical and categorical variables, as ClustOfVar already supports), and the supervised step can use any model, not just random forests. Extensions to nonlinear dependencies require a different dissimilarity, but the overall architecture &mdash; cluster, summarise, train, redistribute &mdash; remains the same.</p>
+    <p>The R implementation is publicly available in the <a href="https://github.com/MourerAlex/SMDA">SMDA repository</a> and the <a href="https://github.com/robingenuer/CoVVSURF">CoVVSURF repository</a>.</p>
+    <hr>
+    <h3>References</h3>
+    <p class="references">
+      Breiman L (2001). Random forests. <em>Machine Learning</em> 45(1):5&ndash;32.<br>
+      B&eacute;nard C, Da Veiga S, Scornet E (2021). MDA for random forests: inconsistency, and a practical solution via the Sobol-MDA. <em>arXiv:2102.13347</em>.<br>
+      Chavent M, Kuentz-Simonet V, Liquet B, Saracco J (2011). ClustOfVar: An R package for the clustering of variables. <em>Journal of Statistical Software</em> 50(13):1&ndash;16.<br>
+      Chavent M, Genuer R, Saracco J (2021). Combining clustering of variables and feature selection using random forests. <em>Communications in Statistics &mdash; Simulation and Computation</em> 50(2):426&ndash;445.<br>
+      Chavent M, Lacaille J, Mourer A, Olteanu M (2021). Handling correlations in random forests: which impacts on variable importance and model interpretability? <em>Proceedings of ESANN 2021</em>.<br>
+      Genuer R, Poggi J-M, Tuleau-Malot C (2010). Variable selection using random forests. <em>Pattern Recognition Letters</em> 31(14):2225&ndash;2236.<br>
+      Genuer R, Poggi J-M, Tuleau-Malot C (2015). VSURF: An R package for variable selection using random forests. <em>The R Journal</em> 7(2):19&ndash;33.<br>
+      Gregorutti B, Michel B, Saint-Pierre P (2017). Correlation and variable importance in random forests. <em>Statistics and Computing</em> 27(3):659&ndash;678.<br>
+      Hooker G, Mentch L (2019). Please stop permuting features: an explanation and alternatives. <em>arXiv:1905.03151</em>.<br>
+      Hooker G, Mentch L, Zhou S (2021). Unrestricted permutation forces extrapolation: variable importance requires at least one more model, or there is no free variable importance. <em>Statistics and Computing</em> 31(6):1&ndash;16.<br>
+      Nembrini S, K&ouml;nig IR, Wright MN (2018). The revival of the Gini importance? <em>Bioinformatics</em> 34(21):3711&ndash;3718.<br>
+      Park MY, Hastie T, Tibshirani R (2007). Averaged gene expressions for regression. <em>Biostatistics</em> 8(2):212&ndash;227.<br>
+      Sandri M, Zuccolotto P (2008). A bias correction algorithm for the Gini variable importance measure in classification trees. <em>Journal of Computational and Graphical Statistics</em> 17(3):611&ndash;628.<br>
+      Scornet E (2020). Trees, forests, and impurity-based variable importance in regression. <em>Annales de l'Institut Henri Poincar&eacute;</em> 59(1):21&ndash;52.<br>
+      Strobl C, Boulesteix A-L, Zeileis A, Hothorn T (2007). Bias in random forest variable importance measures: illustrations, sources and a solution. <em>BMC Bioinformatics</em> 8(25):1&ndash;21.<br>
+      Strobl C, Boulesteix A-L, Kneib T, Augustin T, Zeileis A (2008). Conditional variable importance for random forests. <em>BMC Bioinformatics</em> 9(307):1&ndash;11.<br>
+      Tolo&#x15F;i L, Lengauer T (2011). Classification with correlated features: unreliability of feature ranking and solutions. <em>Bioinformatics</em> 27(14):1986&ndash;1994.<br>
+      Wright MN, Ziegler A (2017). ranger: A fast implementation of random forests for high dimensional data in C++ and R. <em>Journal of Statistical Software</em> 77(1):1&ndash;17.
+    </p>
+    <div class="module-nav">
+      <span class="nav-prev">&larr; Posts</span>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>
