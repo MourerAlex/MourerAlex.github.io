@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Companion — 2021 Extensions | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=30">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+  <style>
+    details { margin: 1em 0; }
+    details summary {
+      cursor: pointer;
+      color: #2a5f4f;
+      font-size: 0.92em;
+      font-style: italic;
+      padding: 0.3em 0;
+    }
+    details summary:hover { text-decoration: underline; }
+    details[open] > summary { margin-bottom: 0.5em; }
+    details .collapsible-content {
+      border-left: 3px solid #e0ddd5;
+      padding-left: 1.2em;
+      margin-left: 0.2em;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Competing Events &amp; Causal Inference</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-08</span>
+      <span class="post-tag">Causal Inference</span>
+      <span class="post-tag">Competing Risks</span>
+      <span class="post-tag">Technical</span>
+    </div>
+
+    <h1>Technical Companion &mdash; 2021 Extensions</h1>
+    <p class="subtitle">Part 4b: Time-varying covariates, four dismissible conditions, the Bayes&rsquo; rule trick, and the isolation hierarchy for Stensrud et al. (2021).</p>
+
+    <hr>
+
+    <p>
+      This post extends <a href="part4a-technical-2020.html">Part 4a</a> to the 2021 setting: time-varying covariates, a richer g-formula, new IPW weights, and the isolation hierarchy. The proof structure is identical to 2020 &mdash; more terms at every step, no new ideas. Sections that repeat 2020 logic are summarised in the main text with the full derivation available in a collapsible block.
+    </p>
+
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#b1">What changes from 2020</a></li>
+        <li><a href="#b2">The new data structure</a></li>
+        <li><a href="#b3">The four dismissible conditions</a></li>
+        <li><a href="#b4">The generalized g-formula</a></li>
+        <li><a href="#b5">From the g-formula to IPW Rep 1: the new weight $W_{L_D}$</a></li>
+        <li><a href="#b6">IPW Rep 2: the mirror with $W_{L_Y}$</a></li>
+        <li><a href="#b7">Summary: what each estimator needs</a></li>
+        <li><a href="#b8">The isolation hierarchy and the partition</a></li>
+        <li><a href="#b9">Connection to path-specific effects</a></li>
+      </ol>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b1">1. What changes from 2020</h2>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 30%;"><col style="width: 35%;"><col style="width: 35%;">
+      </colgroup>
+      <tr><th></th><th>2020</th><th>2021</th></tr>
+      <tr><td>Covariates</td><td>Baseline $L_0$ only</td><td>Time-varying $\bar{L}_k = (L_{Y,k},\, L_{D,k})$</td></tr>
+      <tr><td>Dismissible conditions</td><td>2: for $Y$ hazard and $D$ hazard</td><td>4: + two new for $f(L_Y)$ and $f(L_D)$</td></tr>
+      <tr><td>G-formula terms per time</td><td>3</td><td>5: + $f(L_{Y,j})$ and $f(L_{D,j})$</td></tr>
+      <tr><td>G-formula sum over</td><td>$l_0$ (baseline)</td><td>$\bar{l}_K$ (full covariate histories)</td></tr>
+      <tr><td>IPW weights</td><td>$W_C$, $W_D$</td><td>$W_C$, $W_D$, $W_{L_D}$ (or $W_{L_Y}$)</td></tr>
+      <tr><td>Proof structure</td><td colspan="2" style="text-align:center;">Identical &mdash; more terms at every step, no new ideas</td></tr>
+    </table>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b2">2. The new data structure</h2>
+
+    <p>Within each time interval $k > 0$, the paper assumes a temporal order:</p>
+
+    $$(C_k, \quad D_k, \quad Y_k, \quad L_{D,k}, \quad L_{Y,k})$$
+
+    <p>
+      $L_{D,k}$ is realised <strong>before</strong> $L_{Y,k}$. This is a modelling choice, not a property of the data. In DES: blood pressure ($L_{D,k}$, affected by the coagulation component, predicts cardiovascular death) is measured before PSA ($L_{Y,k}$, affected by the testosterone component, predicts prostate cancer).
+    </p>
+
+    <p>
+      The partition $L_k = (L_{Y,k},\, L_{D,k})$ is also a modelling choice. The investigator decides which covariates belong to the $D$-pathway and which to the $Y$-pathway. This choice determines which level of the isolation hierarchy is assumed (Section <a href="#b8">8</a>).
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b3">3. The four dismissible conditions</h2>
+
+    <p>
+      The 2020 paper had two dismissible conditions. Written as hazard equalities, they said:
+    </p>
+
+    <p>$\Delta 1$: $\P(Y^{\color{teal}{a_Y},\, \color{orange}{a_D}=1}_{k+1} = 1 \mid \ldots) = \P(Y^{\color{teal}{a_Y},\, \color{orange}{a_D}=0}_{k+1} = 1 \mid \ldots)$ &mdash; the $Y$ hazard does not depend on $\color{orange}{a_D}$.</p>
+
+    <p>$\Delta 2$: $\P(D^{\color{teal}{a_Y}=1,\, \color{orange}{a_D}}_{k+1} = 1 \mid \ldots) = \P(D^{\color{teal}{a_Y}=0,\, \color{orange}{a_D}}_{k+1} = 1 \mid \ldots)$ &mdash; the $D$ hazard does not depend on $\color{teal}{a_Y}$.</p>
+
+    <p>
+      The 2021 paper restates these as conditional independencies and adds two more for the covariate densities. The notation changes but the content of $\Delta 1$ and $\Delta 2$ is the same.
+    </p>
+
+    <p>
+      <strong>The trial $G$.</strong> In the real 2-arm trial, DES is one pill: everyone who gets it receives both testosterone suppression and coagulation ($A_Y = A_D = 1$), and everyone on placebo receives neither ($A_Y = A_D = 0$). The combinations $(A_Y = 1, A_D = 0)$ and $(A_Y = 0, A_D = 1)$ never happen. Trial $G$ is the imagined 4-arm trial where $A_Y$ and $A_D$ are separately and independently randomised &mdash; all four combinations exist. The $(G)$ label on each variable (e.g., $Y_{k+1}(G)$) is bookkeeping: it says "this quantity belongs to the imagined trial, not the real data." The $(G)$ disappears when the proof shows only 2-arm data is needed.
+    </p>
+
+    <h3>3.1 &mdash; Condition (34): Y hazard</h3>
+
+    $$Y^{\bar{c}=0}_{k+1}(G) \;\ind\; A_D(G) \;\mid\; A_Y(G),\; D^{\bar{c}=0}_{k+1}(G) = Y^{\bar{c}=0}_k(G) = 0,\; \bar{L}^{\bar{c}=0}_k(G)$$
+
+    <p>
+      The cause-specific hazard of $Y$ among event-free individuals does not depend on $\color{orange}{a_D}$, conditional on the full covariate history $\bar{L}_k$. Same as the 2020 condition, now conditioning on time-varying covariates instead of baseline only.
+    </p>
+
+    <details>
+      <summary>Full explanation (same logic as Part 4a Section 3.6)</summary>
+      <div class="collapsible-content">
+        <p>In DES: among individuals who are alive and prostate-cancer-free at time $k$, with the same covariate history (blood pressure, PSA, etc.), the risk of prostate cancer at $k+1$ does not depend on whether the coagulation component was active ($\color{orange}{a_D} = 1$) or not ($\color{orange}{a_D} = 0$). The coagulation effect of DES does not change the prostate cancer hazard. This is a biological claim, not testable in a two-arm trial.</p>
+      </div>
+    </details>
+
+    <h3>3.2 &mdash; Condition (35): D hazard</h3>
+
+    $$D^{\bar{c}=0}_{k+1}(G) \;\ind\; A_Y(G) \;\mid\; A_D(G),\; D^{\bar{c}=0}_k(G) = Y^{\bar{c}=0}_k(G) = 0,\; \bar{L}^{\bar{c}=0}_k(G)$$
+
+    <p>
+      The cause-specific hazard of $D$ among event-free individuals does not depend on $\color{teal}{a_Y}$. The testosterone suppression of DES does not change the cardiovascular death hazard. Same logic as (34) with roles swapped.
+    </p>
+
+    <h3>3.3 &mdash; Condition (36): $L_Y$ density &mdash; new</h3>
+
+    $$L^{\bar{c}=0}_{Y,k}(G) \;\ind\; A_D(G) \;\mid\; A_Y(G),\; Y^{\bar{c}=0}_k(G) = D^{\bar{c}=0}_k(G) = 0,\; \bar{L}^{\bar{c}=0}_{k-1}(G),\; L^{\bar{c}=0}_{D,k}(G)$$
+
+    <p>
+      The density of $L_{Y,k}$ among event-free individuals does not depend on $\color{orange}{a_D}$, given $\color{teal}{a_Y}$, the past covariate history, <strong>and $L_{D,k}$ at the same time</strong>. In DES: PSA level at time $k$ does not depend on whether the coagulation component was active, once testosterone suppression status, the past, and current blood pressure are known. The coagulation pathway does not affect PSA.
+    </p>
+
+    <p>
+      $L_{D,k}$ appears in the conditioning because it is realised before $L_{Y,k}$ in the temporal order &mdash; it is already known when $L_{Y,k}$ is determined.
+    </p>
+
+    <h3>3.4 &mdash; Condition (37): $L_D$ density &mdash; new</h3>
+
+    $$L^{\bar{c}=0}_{D,k}(G) \;\ind\; A_Y(G) \;\mid\; A_D(G),\; D^{\bar{c}=0}_k(G) = Y^{\bar{c}=0}_k(G) = 0,\; \bar{L}^{\bar{c}=0}_{k-1}(G)$$
+
+    <p>
+      The density of $L_{D,k}$ among event-free individuals does not depend on $\color{teal}{a_Y}$, given $\color{orange}{a_D}$ and the past covariate history. In DES: blood pressure at time $k$ does not depend on whether the testosterone suppression component was active, once coagulation status and the past are known. The testosterone pathway does not affect blood pressure.
+    </p>
+
+    <p>
+      Note: $L_{Y,k}$ does <strong>not</strong> appear in the conditioning &mdash; unlike condition (36), which conditions on $L_{D,k}$. This asymmetry reflects the temporal order: $L_{D,k}$ is realised before $L_{Y,k}$, so at the moment $L_{D,k}$ is determined, $L_{Y,k}$ does not yet exist. All past $L_Y$ values (times $1, \ldots, k-1$) are in the conditioning through $\bar{L}_{k-1}$. Only the current $L_{Y,k}$ is excluded.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b4">4. The generalized g-formula</h2>
+
+    <p>
+      The derivation follows the same structure as Part 4a Section 4: law of total probability &rarr; partition over first-event time &rarr; chain rule &rarr; dismissible conditions separate the components &rarr; decomposition collapses to single-world &rarr; exchangeability and consistency convert to observed data. The chain rule now produces <strong>five</strong> terms per time step instead of three, and the four dismissible conditions separate all five. The iterative peeling (Part 4a Section 8) now converts four counterfactuals per round ($Y_{k+1}$, $D_{k+1}$, $L_{Y,k+1}$, $L_{D,k+1}$) instead of two.
+    </p>
+
+    <details>
+      <summary>Full derivation from the target (click to expand)</summary>
+      <div class="collapsible-content">
+
+        <p><strong>Step 1 &mdash; Target:</strong></p>
+
+        $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1)$$
+
+        <p>The risk of $Y$ by $K+1$ had $A_Y$ been set to $a_Y$, $A_D$ been set to $a_D$, and nobody been censored.</p>
+
+        <p><strong>Step 2 &mdash; Law of total probability over $\bar{L}_K$:</strong> standardise over all possible covariate histories. Unlike 2020, the sum is over the full history $\bar{l}_K$, not just baseline $l_0$:</p>
+
+        $$= \sum_{\bar{l}_K} \P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1 \mid \bar{L}^{a_Y,\, a_D,\, \bar{c}=0}_K = \bar{l}_K)\; \P(\bar{L}^{a_Y,\, a_D,\, \bar{c}=0}_K = \bar{l}_K)$$
+
+        <p>By the definition of total probability, $\P(B) = \sum_{\bar{l}} \P(B \mid \bar{L} = \bar{l})\P(\bar{L} = \bar{l})$. This sums over every possible trajectory of covariates through time.</p>
+
+        <p><strong>Step 3 &mdash; Partition over first-event time:</strong> if $Y$ occurs by $K+1$, it occurs at some specific first time $s+1$. Sum over all possibilities:</p>
+
+        $$= \sum_{\bar{l}_K} \sum_{s=0}^{K} \P(Y^{a_Y,a_D,\bar{c}=0}_{s+1} = 1,\; D^{a_Y,a_D,\bar{c}=0}_{s+1} = 0,\; Y^{a_Y,a_D,\bar{c}=0}_s = 0 \mid \bar{L}^{a_Y,a_D,\bar{c}=0}_s = \bar{l}_s)\; \P(\bar{L}^{a_Y,a_D,\bar{c}=0}_K = \bar{l}_K)$$
+
+        <p><strong>Step 4 &mdash; Chain rule:</strong> factor into five components per time step. At each time $j$, peel off: event-free from $D$ at $j+1$, event-free from $Y$ at $j$, the density of $L_{Y,j}$, the density of $L_{D,j}$. At time $s+1$, the hazard of $Y$. All carry two-world counterfactual superscripts $(a_Y, a_D)$.</p>
+
+        <p><strong>Step 5 &mdash; Apply the four dismissible conditions:</strong></p>
+
+        <p>Condition (34): the $Y$ hazard does not depend on $\color{orange}{a_D}$. In the hazard term $\P(Y^{a_Y, a_D, \bar{c}=0}_{s+1} = 1 \mid \ldots)$, replace $\color{orange}{a_D}$ with $\color{teal}{a_Y}$. Same for the $Y$ event-free terms.</p>
+
+        <p>Condition (35): the $D$ event-free terms do not depend on $\color{teal}{a_Y}$. Replace $\color{teal}{a_Y}$ with $\color{orange}{a_D}$.</p>
+
+        <p>Condition (36): $f(L_{Y,k})$ does not depend on $\color{orange}{a_D}$. Replace $\color{orange}{a_D}$ with $\color{teal}{a_Y}$.</p>
+
+        <p>Condition (37): $f(L_{D,k})$ does not depend on $\color{teal}{a_Y}$. Replace $\color{teal}{a_Y}$ with $\color{orange}{a_D}$.</p>
+
+        <p><strong>Step 6 &mdash; Decomposition:</strong> every term now has both components set to the same value.</p>
+        <p>$Y$ terms, $Y$ event-free, $f(L_Y)$: $a_Y$ and $a_D = a_Y$ &rarr; $Y^{a = a_Y}$. Single-world under $a = \color{teal}{a_Y}$.</p>
+        <p>$D$ event-free, $f(L_D)$: $a_Y = a_D$ and $a_D$ &rarr; $D^{a = a_D}$. Single-world under $a = \color{orange}{a_D}$.</p>
+
+        <p><strong>Step 7 &mdash; Exchangeability and consistency (iterative peeling):</strong></p>
+
+        <p>Same ratio trick as Part 4a Section 8. Write each counterfactual conditional probability as a ratio with observed baseline in the conditioning. Then iterate from $k = 0$:</p>
+
+        <p><strong>At each round $k$:</strong></p>
+        <p>Sub-step 1: E2 at $k$ (now conditioning on $\bar{L}_k$) &mdash; add $C_{k+1} = 0$.</p>
+        <p>Sub-step 2: Consistency at $k+1$ &mdash; convert $Y^{a,\bar{c}=0}_{k+1} = Y_{k+1}$, $D^{a,\bar{c}=0}_{k+1} = D_{k+1}$, $L^{a,\bar{c}=0}_{Y,k+1} = L_{Y,k+1}$, $L^{a,\bar{c}=0}_{D,k+1} = L_{D,k+1}$. Four conversions per round instead of two.</p>
+        <p>Sub-step 3: Move observed values into conditioning. Conditioning now observed through $k+1$.</p>
+
+        <p>Tracking table:</p>
+        <table style="table-layout: fixed; margin: 1em 0;">
+          <colgroup><col style="width: 20%;"><col style="width: 45%;"><col style="width: 35%;"></colgroup>
+          <tr><th>After round</th><th>Counterfactuals remaining</th><th>Observed conditioning through</th></tr>
+          <tr><td>Ratio</td><td>$Y, D, L_Y, L_D$ at times $1 \ldots s+1$</td><td>time $0$</td></tr>
+          <tr><td>$k = 0$</td><td>$Y, D, L_Y, L_D$ at times $2 \ldots s+1$</td><td>time $1$</td></tr>
+          <tr><td>$\vdots$</td><td>$\vdots$</td><td>$\vdots$</td></tr>
+          <tr><td>$k = s$</td><td>$\emptyset$</td><td>time $s+1$</td></tr>
+        </table>
+
+        <p>After all rounds, reconstitute as observed-data conditional probabilities. Each $Y$ term at $A = \color{teal}{a_Y}$, each $D$ and $L_D$ term at $A = \color{orange}{a_D}$, each $L_Y$ term at $A = \color{teal}{a_Y}$.</p>
+
+      </div>
+    </details>
+
+    <p>The result &mdash; the generalized g-formula:</p>
+
+    $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1) = \sum_{\bar{l}_K} \sum_{s=0}^{K} \underbrace{\P(Y_{s+1} = 1 \mid C_{s+1} = D_{s+1} = Y_s = 0,\; \bar{L}_s = \bar{l}_s,\; A = \color{teal}{a_Y})}_{\text{Block A: CS hazard of } Y \text{ from } \color{teal}{a_Y} \text{ arm}}$$
+
+    $$\times \prod_{j=0}^{s} \Big\{ \underbrace{\P(D_{j+1} = 0 \mid C_{j+1} = D_j = Y_j = 0,\; \bar{L}_j = \bar{l}_j,\; A = \color{orange}{a_D})}_{\text{Block B: event-free from } D \text{ from } \color{orange}{a_D} \text{ arm}}$$
+
+    $$\times \underbrace{\P(Y_j = 0 \mid C_j = D_j = Y_{j-1} = 0,\; \bar{L}_{j-1} = \bar{l}_{j-1},\; A = \color{teal}{a_Y})}_{\text{Block C: event-free from } Y \text{ from } \color{teal}{a_Y} \text{ arm}}$$
+
+    $$\times \underbrace{f(L_{Y,j} = l_{Y,j} \mid C_j = Y_j = D_j = 0,\; \bar{L}_{j-1} = \bar{l}_{j-1},\; L_{D,j} = l_{D,j},\; A = \color{teal}{a_Y})}_{\text{Block D: density of } L_Y \text{ from } \color{teal}{a_Y} \text{ arm}}$$
+
+    $$\times \underbrace{f(L_{D,j} = l_{D,j} \mid C_j = Y_j = D_j = 0,\; \bar{L}_{j-1} = \bar{l}_{j-1},\; A = \color{orange}{a_D})}_{\text{Block E: density of } L_D \text{ from } \color{orange}{a_D} \text{ arm}} \Big\}$$
+
+    <p>
+      Blocks A, C, D come from the $A = \color{teal}{a_Y}$ arm. Blocks B, E come from the $A = \color{orange}{a_D}$ arm. Block D conditions on $L_{D,j}$ (temporal order: $L_D$ before $L_Y$). Block E does not condition on $L_{Y,j}$ (not yet realised).
+    </p>
+
+    <p>
+      When $\bar{L}_k = L_0$ for all $k$, Blocks D and E do not depend on $A$ (Lemma 8 of Appendix C) and the sum collapses to baseline only &mdash; recovering the 2020 g-formula from Part 4a.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b5">5. From the g-formula to IPW Representation 1: the new weight $W_{L_D}$</h2>
+
+    <h3>5.1 &mdash; What the $\color{teal}{a_Y}$ arm gives</h3>
+
+    <p>
+      Standing in the $A = \color{teal}{a_Y}$ arm, Blocks A ($Y$ hazard), C ($Y$ event-free), and D ($f(L_Y)$) are already at the correct value $\color{teal}{a_Y}$. But Block B ($D$ event-free) and Block E ($f(L_D)$) are at $\color{teal}{a_Y}$ instead of $\color{orange}{a_D}$. Two things need fixing instead of one.
+    </p>
+
+    <h3>5.2 &mdash; $W_D$ swaps the D event-free</h3>
+
+    <p>Same multiply-and-divide trick as Part 4a Section 5.3:</p>
+
+    $$W_{D,s}(a_Y, a_D) = \prod_{j=0}^{s} \frac{\P(D_{j+1} = 0 \mid C_{j+1} = D_j = Y_j = 0,\; \bar{L}_j,\; A = \color{orange}{a_D})}{\P(D_{j+1} = 0 \mid C_{j+1} = D_j = Y_j = 0,\; \bar{L}_j,\; A = \color{teal}{a_Y})}$$
+
+    <p>The denominator cancels the $D$ event-free distribution present in the $\color{teal}{a_Y}$ arm. The numerator inserts the one from the $\color{orange}{a_D}$ arm.</p>
+
+    <details>
+      <summary>Full derivation of the multiply-and-divide step (same as Part 4a Section 5.3&ndash;5.4)</summary>
+      <div class="collapsible-content">
+        <p>The $D$ event-free term at $\color{orange}{a_D}$ can be written as the $D$ event-free term at $\color{teal}{a_Y}$ times a correction factor:</p>
+
+        $$\P(D_{j+1} = 0 \mid \ldots, A = \color{orange}{a_D}) = \P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y}) \times \frac{\P(D_{j+1} = 0 \mid \ldots, A = \color{orange}{a_D})}{\P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y})}$$
+
+        <p>This is multiplying and dividing by the same quantity &mdash; pure algebra, no assumptions used. Substitute into the g-formula. The $\P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y})$ factor now matches what is observed in the $\color{teal}{a_Y}$ arm. Collecting the ratios into a product gives $W_{D,s}$. After substitution, everything except $W_{D,s}$ and the density terms is the joint probability of "event-free through $s$, $Y$ at $s+1$" in the $\color{teal}{a_Y}$ arm.</p>
+      </div>
+    </details>
+
+    <h3>5.3 &mdash; $W_{L_D}$ swaps the $L_D$ density &mdash; the problem</h3>
+
+    <p>Block E needs $f(L_{D,j})$ at $A = \color{orange}{a_D}$. In the $\color{teal}{a_Y}$ arm, it is at $A = \color{teal}{a_Y}$. The same multiply-and-divide trick gives:</p>
+
+    $$W_{L_D, s} = \prod_{j=0}^{s} \frac{f(L_{D,j} = l_{D,j} \mid C_j = Y_j = D_j = 0,\; \bar{L}_{j-1} = \bar{l}_{j-1},\; A = \color{orange}{a_D})}{f(L_{D,j} = l_{D,j} \mid C_j = Y_j = D_j = 0,\; \bar{L}_{j-1} = \bar{l}_{j-1},\; A = \color{teal}{a_Y})}$$
+
+    <p>
+      This is a ratio of <strong>conditional densities</strong>. If $L_{D,k}$ is continuous (e.g., blood pressure), computing this requires a model for the conditional distribution of blood pressure given history and treatment &mdash; much harder than a logistic regression.
+    </p>
+
+    <h3>5.4 &mdash; The Bayes&rsquo; rule trick: densities to propensity scores</h3>
+
+    <p>Bayes&rsquo; rule says: for any variables $X$, $A$, $B$:</p>
+
+    $$f(X \mid A = a, B) = \frac{\P(A = a \mid X, B) \;\cdot\; f(X \mid B)}{\P(A = a \mid B)}$$
+
+    <p>This is the definition of conditional probability rearranged. $f(X \mid B)$ is the density of $X$ given $B$ but <strong>not</strong> given $A$. $\P(A = a \mid X, B)$ is the probability of treatment given $X$ and $B$ &mdash; a propensity score. $\P(A = a \mid B)$ is the probability of treatment given $B$ alone.</p>
+
+    <p>Apply this to the numerator of one factor of $W_{L_D}$. Let $X = L_{D,j}$, $B = (C_j = Y_j = D_j = 0, \bar{L}_{j-1})$:</p>
+
+    $$f(L_{D,j} \mid \ldots,\; A = \color{orange}{a_D}) = \frac{\P(A = \color{orange}{a_D} \mid L_{D,j},\; \bar{L}_{j-1},\; \ldots) \;\cdot\; f(L_{D,j} \mid \bar{L}_{j-1},\; \ldots)}{\P(A = \color{orange}{a_D} \mid \bar{L}_{j-1},\; \ldots)}$$
+
+    <p>Apply the same to the denominator:</p>
+
+    $$f(L_{D,j} \mid \ldots,\; A = \color{teal}{a_Y}) = \frac{\P(A = \color{teal}{a_Y} \mid L_{D,j},\; \bar{L}_{j-1},\; \ldots) \;\cdot\; f(L_{D,j} \mid \bar{L}_{j-1},\; \ldots)}{\P(A = \color{teal}{a_Y} \mid \bar{L}_{j-1},\; \ldots)}$$
+
+    <p>Take the ratio numerator / denominator. The $f(L_{D,j} \mid \bar{L}_{j-1}, \ldots)$ terms appear in both &mdash; they cancel. This is the density we did not want to model. What remains:</p>
+
+    $$\frac{f(L_{D,j} \mid \ldots, A = \color{orange}{a_D})}{f(L_{D,j} \mid \ldots, A = \color{teal}{a_Y})} = \underbrace{\frac{\P(A = \color{orange}{a_D} \mid C_j = Y_j = D_j = 0,\; L_{D,j},\; \bar{L}_{j-1})}{\P(A = \color{teal}{a_Y} \mid C_j = Y_j = D_j = 0,\; L_{D,j},\; \bar{L}_{j-1})}}_{\text{propensity score ratio \#1: includes } L_{D,j}} \times \underbrace{\frac{\P(A = \color{teal}{a_Y} \mid C_j = Y_j = D_j = 0,\; \bar{L}_{j-1})}{\P(A = \color{orange}{a_D} \mid C_j = Y_j = D_j = 0,\; \bar{L}_{j-1})}}_{\text{propensity score ratio \#2: excludes } L_{D,j}}$$
+
+    <p>
+      The density ratio has been replaced by a product of two propensity score ratios &mdash; the probability of treatment given covariates. This is the point of the Bayes&rsquo; rule trick: modelling a conditional density (the distribution of blood pressure given history and treatment) is hard, especially when $L_{D,k}$ is continuous. Modelling a propensity score (the probability of treatment given blood pressure and history) is a standard logistic regression. The trick trades one hard problem for two easy ones. Part 5 details the implementation.
+    </p>
+
+    <h3>5.5 &mdash; Full IPW Representation 1</h3>
+
+    $$\nu_{a_Y, a_D, k} = \sum_{s=0}^{k} \E\Big[W_{C,s}(a_Y) \cdot W_{D,s}(a_Y, a_D) \cdot W_{L_D, s}(\hat{\beta}_{L1}, \hat{\beta}_{L2}) \cdot Y_{s+1}(1 - Y_s)(1 - D_{s+1}) \;\Big|\; A = \color{teal}{a_Y}\Big]$$
+
+    <p>Three weights: $W_C$ removes censoring. $W_D$ swaps the $D$ distribution from $\color{teal}{a_Y}$ to $\color{orange}{a_D}$. $W_{L_D}$ swaps the $L_D$ density from $\color{teal}{a_Y}$ to $\color{orange}{a_D}$. What remains is the g-formula.</p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b6">6. IPW Representation 2: the mirror with $W_{L_Y}$</h2>
+
+    <p>
+      Stand in the $A = \color{orange}{a_D}$ arm. Blocks B ($D$ event-free) and E ($f(L_D)$) are correct. Blocks A ($Y$ hazard), C ($Y$ event-free), and D ($f(L_Y)$) are wrong &mdash; at $\color{orange}{a_D}$ instead of $\color{teal}{a_Y}$.
+    </p>
+
+    <p>$W_Y$ swaps the $Y$ hazard and $Y$ event-free.</p>
+
+    <details>
+      <summary>$W_Y$ formula (same structure as Part 4a Section 6)</summary>
+      <div class="collapsible-content">
+        $$W_{Y,s}(a_D, a_Y) = \frac{\P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0,\; \bar{L}_s,\; A = \color{teal}{a_Y})}{\P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0,\; \bar{L}_s,\; A = \color{orange}{a_D})} \times \prod_{j=0}^{s-1} \frac{\P(Y_{j+1} = 0 \mid D_{j+1} = Y_j = \bar{C}_{j+1} = 0,\; \bar{L}_j,\; A = \color{teal}{a_Y})}{\P(Y_{j+1} = 0 \mid D_{j+1} = Y_j = \bar{C}_{j+1} = 0,\; \bar{L}_j,\; A = \color{orange}{a_D})}$$
+        <p>The first ratio swaps the $Y$ hazard at $s+1$. The second product swaps the $Y$ event-free at every earlier time $j$. Both are needed because $Y$ appears in two places in the g-formula: once as the hazard (probability of $Y = 1$) and once as the event-free factor (probability of $Y = 0$). These are different quantities &mdash; $\P(Y = 1)/\P(Y = 1)$ is not the same as $\P(Y = 0)/\P(Y = 0)$ &mdash; so they cannot be combined into a single uniform product.</p>
+      </div>
+    </details>
+
+    <p>$W_{L_Y}$ swaps $f(L_Y)$ using the same Bayes&rsquo; rule trick, but the conditioning sets differ because of the temporal order:</p>
+
+    $$W_{L_Y, s} = \prod_{j=0}^{s} \underbrace{\frac{\P(A = \color{teal}{a_Y} \mid C_j = Y_j = D_j = 0,\; \bar{L}_j)}{\P(A = \color{orange}{a_D} \mid C_j = Y_j = D_j = 0,\; \bar{L}_j)}}_{\text{ratio \#1: includes } L_{Y,j} \text{ (via } \bar{L}_j\text{)}} \times \underbrace{\frac{\P(A = \color{orange}{a_D} \mid C_j = Y_j = D_j = 0,\; L_{D,j},\; \bar{L}_{j-1})}{\P(A = \color{teal}{a_Y} \mid C_j = Y_j = D_j = 0,\; L_{D,j},\; \bar{L}_{j-1})}}_{\text{ratio \#2: excludes } L_{Y,j}}$$
+
+    <p>
+      The asymmetry with $W_{L_D}$: $W_{L_D}$&rsquo;s ratios condition on $(L_{D,j}, \bar{L}_{j-1})$ and $\bar{L}_{j-1}$. $W_{L_Y}$&rsquo;s ratios condition on $\bar{L}_j$ and $(L_{D,j}, \bar{L}_{j-1})$. This reflects what each weight swaps. $W_{L_D}$ swaps the density of $L_{D,j}$, so it needs propensity scores with and without $L_{D,j}$. $W_{L_Y}$ swaps the density of $L_{Y,j}$, so it needs propensity scores with and without $L_{Y,j}$. Since $L_{Y,j}$ comes after $L_{D,j}$ in the temporal order, "with $L_{Y,j}$" means conditioning on $\bar{L}_j$ (the full vector including $L_{Y,j}$), and "without $L_{Y,j}$" means conditioning on $(L_{D,j}, \bar{L}_{j-1})$.
+    </p>
+
+    <p>The full IPW Representation 2:</p>
+
+    $$\nu_{a_Y, a_D, k} = \sum_{s=0}^{k} \E\Big[W_{C,s}(a_D) \cdot W_{Y,s}(a_D, a_Y) \cdot W_{L_Y, s}(\hat{\beta}_{L3}, \hat{\beta}_{L4}) \cdot Y_{s+1}(1 - Y_s)(1 - D_{s+1}) \;\Big|\; A = \color{orange}{a_D}\Big]$$
+
+    <p>Only the $Y$ hazard and the censoring probability need to be modelled. The $D$ hazard is observed directly in the $\color{orange}{a_D}$ arm.</p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b7">7. Summary: what each estimator needs</h2>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 14%;"><col style="width: 26%;"><col style="width: 14%;"><col style="width: 16%;"><col style="width: 30%;">
+      </colgroup>
+      <tr><th></th><th>Models needed</th><th>Model fitted on</th><th>Expectation over</th><th>Correct specification required</th></tr>
+      <tr><td>G-formula</td><td>$Y$ haz + $D$ haz + $f(L_Y)$ + $f(L_D)$ + censoring</td><td>Both arms</td><td>Both arms (MC)</td><td>All models</td></tr>
+      <tr><td>IPW Rep. 1</td><td>$D$ haz + censoring + 2 propensity</td><td>Both arms</td><td>$A = \color{teal}{a_Y}$ arm</td><td>$D$ + censoring + propensity models</td></tr>
+      <tr><td>IPW Rep. 2</td><td>$Y$ haz + censoring + 2 propensity</td><td>Both arms</td><td>$A = \color{orange}{a_D}$ arm</td><td>$Y$ + censoring + propensity models</td></tr>
+    </table>
+
+    <p>When $L_{D,k} = \emptyset$ for all $k$ ($A_D$ partial isolation): $W_{L_D} = 1$, propensity models not needed, IPW Rep 1 reduces to the 2020 version. When $L_{Y,k} = \emptyset$: $W_{L_Y} = 1$, IPW Rep 2 reduces to the 2020 version. When both hold: full isolation, 2020 formula suffices entirely.</p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b8">8. The isolation hierarchy and the partition</h2>
+
+    <p>
+      The choice of partition $L_k = (L_{Y,k},\, L_{D,k})$ determines which level of the isolation hierarchy is assumed. Appendix C of the 2021 paper formalises the connections:
+    </p>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 35%;"><col style="width: 30%;"><col style="width: 35%;">
+      </colgroup>
+      <tr><th>Partition choice</th><th>Isolation level</th><th>Practical consequence</th></tr>
+      <tr><td>$L_{Y,k} = \emptyset$, $L_{D,k} = L_k$</td><td>$A_Y$ partial isolation</td><td>$W_{L_D} = 1$, skip propensity models for Rep 1</td></tr>
+      <tr><td>$L_{D,k} = \emptyset$, $L_{Y,k} = L_k$</td><td>$A_D$ partial isolation</td><td>$W_{L_Y} = 1$, skip propensity models for Rep 2</td></tr>
+      <tr><td>Both partitions work</td><td>Full isolation</td><td>$L_k \ind A$ given past; 2020 formula suffices</td></tr>
+      <tr><td>$Z_k$ partition fails</td><td>None</td><td>At least one condition fails for any partition</td></tr>
+    </table>
+
+    <p>
+      $Z_k$ partition fails when at least one of three things holds: $A_Y$ directly causes $D_{k+1}$; $A_D$ directly causes $Y_{k+1}$; or both $A_Y$ and $A_D$ have direct arrows into the same covariate $W$ (the "mixed paint" problem). When any of these holds, no choice of measured covariates and no partition can rescue the dismissible conditions.
+    </p>
+
+    <p>
+      The IPW weights provide a <strong>data-driven check</strong> of the isolation level: if $W_{L_D} \approx 1$ for everyone, $A_D$ partial isolation is consistent with the data. If $W_{L_Y} \approx 1$, $A_Y$ partial isolation is consistent. If both are near 1, full isolation is plausible and the 2020 formula suffices.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="b9">9. Connection to path-specific effects</h2>
+
+    <p>
+      <em>(To be developed.)</em> The g-formula is algebraically identical to formulas for path-specific effects (Shpitser 2013; Robins, Richardson &amp; Shpitser 2020). The difference is interpretive: separable effects are interventions on modified treatments, testable in a future 4-arm trial; path-specific effects are cross-world decompositions that no experiment can observe.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2>Forward</h2>
+
+    <p>
+      Part 5 implements everything: person-time datasets, pooled logistic regressions, the IPW estimator step by step, the ICE g-formula (iterated conditional expectations), Monte Carlo simulation, and bootstrap confidence intervals. It will also cover sensitivity analysis &mdash; both the data-driven comparison of 2020 vs 2021 estimators (checking whether $W_{L_D}$ and $W_{L_Y}$ depart from 1) and the subject-matter-driven sensitivity function $t_k$ for violations of the dismissible conditions. That post bridges from the mathematics here to working code.
+    </p>
+
+    <hr>
+
+    <h3>References</h3>
+    <p class="references">
+      Stensrud MJ, Hern&aacute;n MA, Tchetgen Tchetgen EJ, Robins JM, Didelez V, Young JG (2021). A generalized theory of separable effects in competing event settings. <em>Lifetime Data Analysis</em> 27:588&ndash;631.<br>
+      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2020). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
+      Stensrud MJ, Robins JM, Sarvet A, Tchetgen Tchetgen EJ, Young JG (2023). Conditional separable effects. <em>Journal of the American Statistical Association</em> 118(544):2671&ndash;2683.<br>
+      Shpitser I (2013). Counterfactual graphical models for longitudinal mediation analysis with unobserved confounding. <em>Cognitive Science</em> 37(6):1011&ndash;1035.<br>
+      Robins JM, Richardson TS, Shpitser I (2020). An interventionist approach to mediation analysis. arXiv preprint arXiv:2008.06019.<br>
+      Hern&aacute;n MA, Robins JM (2020). <em>Causal Inference: What If</em>. Chapman &amp; Hall/CRC.
+    </p>
+
+    <div class="module-nav">
+      <a href="part4a-technical-2020.html" class="nav-prev">&larr; Part 4a: 2020 Mathematics</a>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>
