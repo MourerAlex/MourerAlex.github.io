@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Separable Effects — The Solution | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=29">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Competing Events &amp; Causal Inference</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-07</span>
+      <span class="post-tag">Causal Inference</span>
+      <span class="post-tag">Competing Risks</span>
+      <span class="post-tag">Separable Effects</span>
+    </div>
+
+    <h1>Separable Effects &mdash; The Solution</h1>
+    <p class="subtitle">Part 2: Stensrud, Young, Didelez, Robins &amp; Hern&aacute;n (2020) proposed a causal effect that does not require eliminating death.</p>
+
+    <hr>
+
+    <p>
+      This post explains Stensrud, Young, Didelez, Robins and Hern&aacute;n (2020), <em>Separable effects for causal inference in the presence of competing events</em>. It is the second in a series. <a href="competing-events-causal-inference.html">Part 1</a> covered Young et al. (2020), which diagnosed the problem: the total effect is ambiguous when treatment affects the competing event, and the direct effect requires the impossible elimination of a terminal event. This paper fills the gap.
+    </p>
+
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#s1">A different question</a></li>
+        <li><a href="#s2">Why this solves the ambiguity</a></li>
+        <li><a href="#s3">The decomposition assumption</a></li>
+        <li><a href="#s4">The dismissible component conditions</a></li>
+        <li><a href="#s5">How identification works</a></li>
+        <li><a href="#s6">Limitations and forward pointers</a></li>
+      </ol>
+    </div>
+
+    <h2 id="s1">1. A different question</h2>
+
+    <p>
+      The direct effect of Young et al. asks: what would happen if we could eliminate death from other causes? Stensrud et al. ask something different: what would happen if we gave a different drug?
+    </p>
+
+    <p>
+      DES (estrogen therapy) does two things biologically. It suppresses testosterone, which reduces prostate cancer death. And it increases coagulation factors, which increases cardiovascular death. These are distinct biochemical pathways packaged in the same molecule. The paper labels them:
+    </p>
+
+    <ul style="line-height: 1.9;">
+      <li>$\color{teal}{A_Y}$ &mdash; the component that directly affects the event of interest (testosterone suppression)</li>
+      <li>$\color{orange}{A_D}$ &mdash; the component that directly affects the competing event (coagulation effect)</li>
+    </ul>
+
+    <p>
+      The question becomes: what would happen if we gave a drug that has the $\color{teal}{A_Y}$ mechanism (testosterone suppression) but not the $\color{orange}{A_D}$ mechanism (no coagulation harm)? Such drugs exist &mdash; LHRH antagonists suppress testosterone without the cardiovascular toxicity of estrogen. The estimand corresponds to a real intervention.
+    </p>
+
+    <!-- DAG: Treatment decomposition -->
+    <div class="dag-container" style="margin: 2em 0;">
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif; max-width:580px; width:100%;">
+        <!-- A -->
+        <text x="60" y="105" text-anchor="middle" font-size="30" font-weight="700" fill="#1a1916">A</text>
+        <text x="60" y="123" text-anchor="middle" font-size="9" fill="#555" font-style="italic">DES</text>
+
+        <!-- A_Y -->
+        <text x="220" y="52" text-anchor="middle" font-size="24" font-weight="700" fill="#2a5f4f">A<tspan font-size="14" dy="4">Y</tspan></text>
+        <text x="220" y="72" text-anchor="middle" font-size="8" fill="#2a5f4f" font-style="italic">testosterone</text>
+
+        <!-- A_D -->
+        <text x="220" y="160" text-anchor="middle" font-size="24" font-weight="700" fill="#b35900">A<tspan font-size="14" dy="4">D</tspan></text>
+        <text x="220" y="178" text-anchor="middle" font-size="8" fill="#b35900" font-style="italic">coagulation</text>
+
+        <!-- Y -->
+        <text x="420" y="52" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">Y<tspan font-size="14" dy="4">k</tspan></text>
+        <text x="420" y="72" text-anchor="middle" font-size="8" fill="#555" font-style="italic">prostate cancer death</text>
+
+        <!-- D -->
+        <text x="420" y="160" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">D<tspan font-size="14" dy="4">k</tspan></text>
+        <text x="420" y="178" text-anchor="middle" font-size="8" fill="#555" font-style="italic">cardiovascular death</text>
+
+        <!-- A → A_Y -->
+        <line x1="80" y1="95" x2="192" y2="55" stroke="#1a1916" stroke-width="1.5" marker-end="url(#p1)"/>
+        <!-- A → A_D -->
+        <line x1="80" y1="115" x2="192" y2="155" stroke="#1a1916" stroke-width="1.5" marker-end="url(#p2)"/>
+
+        <!-- A_Y → Y -->
+        <line x1="248" y1="46" x2="392" y2="46" stroke="#2a5f4f" stroke-width="2" marker-end="url(#p3)"/>
+        <!-- A_D → D -->
+        <line x1="248" y1="154" x2="392" y2="154" stroke="#b35900" stroke-width="2" marker-end="url(#p4)"/>
+
+        <!-- D → Y -->
+        <line x1="420" y1="138" x2="420" y2="78" stroke="#1a1916" stroke-width="1.5" marker-end="url(#p5)"/>
+
+        <defs>
+          <marker id="p1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="p2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="p3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2a5f4f"/></marker>
+          <marker id="p4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#b35900"/></marker>
+          <marker id="p5" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">Figure 1 &mdash; DES ($A$) is decomposed into $\color{teal}{A_Y}$ (testosterone suppression &rarr; prostate cancer death) and $\color{orange}{A_D}$ (coagulation &rarr; cardiovascular death). The arrow $D_k \to Y_k$ is structural: death from cardiovascular disease precludes prostate cancer death. The separable direct effect isolates $\color{teal}{A_Y} \to Y_k$; the separable indirect effect captures $\color{orange}{A_D} \to D_k \to Y_k$.</p>
+    </div>
+
+    <div class="callout callout-assumption">
+      <div class="callout-label">Setting $A_D = 0$ is not eliminating death</div>
+      <p style="margin-bottom: 0;">
+        Setting $\color{orange}{A_D} = 0$ means setting the competing-event component of treatment to its <strong>placebo value</strong>. People can still die of cardiovascular disease &mdash; they die at the rate they would under placebo. Nobody becomes immortal. The intervention removes the treatment's <em>effect</em> on cardiovascular death, not cardiovascular death itself. This is what distinguishes the separable effect from the direct effect of Young et al., which requires the impossible elimination of a terminal event.
+      </p>
+    </div>
+
+    <h2 id="s2">2. Why this solves the ambiguity</h2>
+
+    <p>
+      The total effect's problem: the competing event rate differs between arms. DES increases cardiovascular death, which mechanically reduces the number of people who can die of prostate cancer. The apparent benefit on prostate cancer might be an artefact.
+    </p>
+
+    <p>
+      The <strong>separable direct effect</strong> compares:
+    </p>
+
+    $$\P[Y^{\color{teal}{a_Y=1},\, \color{orange}{a_D=0}}_{k+1} = 1] \;-\; \P[Y^{\color{teal}{a_Y=0},\, \color{orange}{a_D=0}}_{k+1} = 1]$$
+
+    <p>
+      In <strong>both</strong> worlds, $\color{orange}{a_D = 0}$. The competing event hazard is at placebo rate in both arms of the comparison. The only thing that differs is $\color{teal}{a_Y}$ &mdash; the component that directly affects prostate cancer. Any difference in prostate cancer risk between these two worlds cannot be an artefact of differential cardiovascular mortality, because the cardiovascular mortality is held constant.
+    </p>
+
+    <p>
+      The <strong>separable indirect effect</strong> captures the remainder:
+    </p>
+
+    $$\P[Y^{\color{teal}{a_Y=1},\, \color{orange}{a_D=1}}_{k+1} = 1] \;-\; \P[Y^{\color{teal}{a_Y=1},\, \color{orange}{a_D=0}}_{k+1} = 1]$$
+
+    <p>
+      Here $\color{teal}{a_Y}$ is held fixed while $\color{orange}{a_D}$ varies. This measures how much adding the cardiovascular harm changes the prostate cancer risk &mdash; the mediation pathway through the competing event.
+    </p>
+
+    <p>
+      Together, the two effects decompose the total effect into the part that operates directly on the event of interest and the part that operates through the competing event.
+    </p>
+
+    <h2 id="s3">3. The decomposition assumption</h2>
+
+    <p>
+      In the observed data, every patient receives the whole drug or no drug: $A \equiv \color{teal}{A_Y} \equiv \color{orange}{A_D}$. We only observe $(a_Y = 1, a_D = 1)$ and $(a_Y = 0, a_D = 0)$, never the cross-arms. The decomposition is not a data operation &mdash; it is a claim about the biological structure of the treatment.
+    </p>
+
+    <div class="callout callout-definition">
+      <div class="callout-label">Decomposition assumption (equation 2)</div>
+      <p style="margin-bottom: 0;">
+        The treatment $A$ can be decomposed into components $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ such that $A \equiv \color{teal}{A_Y} \equiv \color{orange}{A_D}$ in the observed data, but in a future study, $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ could in principle be assigned different values. Setting both to the same value recovers the original treatment:
+        $$Y^{\color{teal}{a_Y} = a,\, \color{orange}{a_D} = a} \;=\; Y^{A = a}$$
+      </p>
+    </div>
+
+    <p>
+      The assumption is not testable in our current two-arm trial. But it would be testable in a hypothetical four-arm trial that separately randomises $\color{teal}{A_Y}$ and $\color{orange}{A_D}$. In the DES example, the four arms would be:
+    </p>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 15%;"><col style="width: 15%;"><col style="width: 40%;"><col style="width: 30%;">
+      </colgroup>
+      <tr><th>$\color{teal}{A_Y}$</th><th>$\color{orange}{A_D}$</th><th>Intervention</th><th>Observed?</th></tr>
+      <tr><td>1</td><td>1</td><td>Full DES (testosterone suppression + coagulation)</td><td>Yes &mdash; the DES arm</td></tr>
+      <tr><td>0</td><td>0</td><td>Placebo (no suppression, no coagulation)</td><td>Yes &mdash; the placebo arm</td></tr>
+      <tr><td>1</td><td>0</td><td>Testosterone suppression only (e.g. LHRH antagonist)</td><td>No &mdash; but could exist</td></tr>
+      <tr><td>0</td><td>1</td><td>Coagulation effect only (e.g. DES + exogenous testosterone)</td><td>No &mdash; but could exist</td></tr>
+    </table>
+
+    <p>
+      The paper states this explicitly: "the separable effect estimates obtained from (8) in our current study can be confirmed" in such a trial. The cross-arms ($\color{teal}{a_Y} \neq \color{orange}{a_D}$) correspond to drugs that could, in principle, be manufactured and tested. The decomposition assumption says these interventions are well-defined.
+    </p>
+
+    <h2 id="s4">4. The dismissible component conditions</h2>
+
+    <p>
+      Two conditions are required for <strong>identification</strong> &mdash; the bridge from counterfactual quantities (which we cannot observe) to functions of observed data (which we can estimate). Without identification, the separable effects are well-defined but not computable from a two-arm trial.
+    </p>
+
+    <p>
+      Both conditions are stated in terms of the cause-specific hazard &mdash; the instantaneous risk of an event among individuals who are alive and free of both events at time $k$, conditional on covariates $L$.
+    </p>
+
+    <div class="callout callout-definition">
+      <div class="callout-label">$\Delta_1$: $\color{orange}{A_D}$ is dismissible from the $Y$ hazard</div>
+      <p style="margin-bottom: 0;">
+        $$\P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D=1}}_{k+1} = 1 \mid Y^{\color{teal}{a_Y},\, \color{orange}{a_D=1}}_k = 0,\; D^{\color{teal}{a_Y},\, \color{orange}{a_D=1}}_{k+1} = 0,\; L = l]$$
+        $$= \P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D=0}}_{k+1} = 1 \mid Y^{\color{teal}{a_Y},\, \color{orange}{a_D=0}}_k = 0,\; D^{\color{teal}{a_Y},\, \color{orange}{a_D=0}}_{k+1} = 0,\; L = l]$$
+        Among event-free individuals with covariates $L = l$, the cause-specific hazard of the event of interest does not depend on the value of $\color{orange}{A_D}$. In words: the coagulation effect of DES does not change your prostate cancer risk.
+      </p>
+    </div>
+
+    <div class="callout callout-definition" style="margin-top: 1em;">
+      <div class="callout-label">$\Delta_2$: $\color{teal}{A_Y}$ is dismissible from the $D$ hazard</div>
+      <p style="margin-bottom: 0;">
+        $$\P[D^{\color{teal}{a_Y=1},\, \color{orange}{a_D}}_{k+1} = 1 \mid Y^{\color{teal}{a_Y=1},\, \color{orange}{a_D}}_k = 0,\; D^{\color{teal}{a_Y=1},\, \color{orange}{a_D}}_k = 0,\; L = l]$$
+        $$= \P[D^{\color{teal}{a_Y=0},\, \color{orange}{a_D}}_{k+1} = 1 \mid Y^{\color{teal}{a_Y=0},\, \color{orange}{a_D}}_k = 0,\; D^{\color{teal}{a_Y=0},\, \color{orange}{a_D}}_k = 0,\; L = l]$$
+        Among event-free individuals with covariates $L = l$, the cause-specific hazard of the competing event does not depend on the value of $\color{teal}{A_Y}$. In words: the testosterone suppression of DES does not change your cardiovascular death risk.
+      </p>
+    </div>
+
+    <p>
+      Together: each hazard depends on only one component of treatment. The $Y$ hazard depends on $\color{teal}{A_Y}$ only, the $D$ hazard depends on $\color{orange}{A_D}$ only, conditional on being event-free and on $L$.
+    </p>
+
+    <p>
+      <strong>What violates them.</strong> An unmeasured common cause $U_{YD}$ that affects both prostate cancer risk and cardiovascular death risk. If such a variable exists, conditioning on being event-free ($D_{k+1} = 0$) opens a collider path: $\color{orange}{A_D} \to D_{k+1} \leftarrow U_{YD} \to Y_{k+1}$. This makes $\color{orange}{A_D}$ appear to affect $Y$ even when it does not biologically &mdash; the dismissible condition $\Delta_1$ fails.
+    </p>
+
+    <p>
+      <strong>What does not violate them.</strong> Separate unmeasured causes of $Y$ alone or $D$ alone. A genetic factor $U_Y$ that affects only prostate cancer risk creates no collider path when conditioning on $D_{k+1} = 0$, because $U_Y$ does not cause $D$.
+    </p>
+
+    <p>
+      These conditions are claims about biology, not statistical properties of the data. They are untestable in a two-arm trial but would be testable in a four-arm trial where $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ are separately randomised.
+    </p>
+
+    <h2 id="s5">5. How identification works</h2>
+
+    <p>
+      Starting from the target quantity, each line follows from the one above.
+    </p>
+
+    <!-- Line 1: target -->
+    $$\P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{K+1} = 1] \qquad \small{\text{target}}$$
+
+    <!-- Line 2: partition + total probability -->
+    $$= \sum_l \sum_{s=0}^{K} \P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{s+1} = 1,\; D^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{s+1} = 0,\; Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_s = 0 \mid L = l]\; \P[L = l] \qquad \small{\text{sum over first-event time}}$$
+
+    <p>
+      Every term depends on <strong>both</strong> $\color{teal}{a_Y}$ and $\color{orange}{a_D}$ &mdash; unobservable when $\color{teal}{a_Y} \neq \color{orange}{a_D}$. The intermediate steps below use the chain rule and the dismissible conditions to separate the two components.
+    </p>
+
+    <details style="background: #f7f6f3; border-left: 3px solid #b35900; padding: 1em 1.4em; margin: 1.5em 0; font-size: 0.95em;">
+      <summary style="cursor: pointer; font-weight: 600; color: #1a1916;">Show intermediate steps (chain rule &rarr; dismissible conditions &rarr; decomposition)</summary>
+
+      <p style="margin-top: 1em;">Apply the chain rule to factor "event at $s+1$ and event-free through $s$" into a hazard times a product of event-free probabilities:</p>
+
+      $$= \sum_l \sum_{s=0}^{K} \P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{s+1} = 1 \mid D^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{s+1} = 0,\; Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_s = 0,\; L = l] \times \prod_{j=0}^{s} \left( \P[D^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{j+1} = 0 \mid \ldots] \times \P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_j = 0 \mid \ldots] \right) \P[L = l] \qquad \small{\text{chain rule}}$$
+
+      <p>Apply $\Delta_1$: the $Y$ hazard and $Y$ event-free terms do not depend on $\color{orange}{a_D}$, so set $\color{orange}{a_D} = \color{teal}{a_Y}$. Apply $\Delta_2$: the $D$ event-free term does not depend on $\color{teal}{a_Y}$, so set $\color{teal}{a_Y} = \color{orange}{a_D}$:</p>
+
+      $$= \sum_l \sum_{s=0}^{K} \P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D = a_Y}}_{s+1} = 1 \mid \ldots] \times \prod_{j=0}^{s} \left( \P[D^{\color{teal}{a_Y = a_D},\, \color{orange}{a_D}}_{j+1} = 0 \mid \ldots] \times \P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D = a_Y}}_j = 0 \mid \ldots] \right) \P[L = l] \qquad \small{\Delta_1, \Delta_2}$$
+
+      <p>By the decomposition assumption, setting both components to the same value recovers a single-world counterfactual: $Y^{\color{teal}{a_Y}, \color{orange}{a_D} = \color{teal}{a_Y}} = Y^{a = \color{teal}{a_Y}}$ and $D^{\color{teal}{a_Y} = \color{orange}{a_D}, \color{orange}{a_D}} = D^{a = \color{orange}{a_D}}$:</p>
+
+      $$= \sum_l \sum_{s=0}^{K} \P[Y^{a = \color{teal}{a_Y}}_{s+1} = 1 \mid \ldots] \times \prod_{j=0}^{s} \left( \P[D^{a = \color{orange}{a_D}}_{j+1} = 0 \mid \ldots] \times \P[Y^{a = \color{teal}{a_Y}}_j = 0 \mid \ldots] \right) \P[L = l] \qquad \small{\text{decomposition}}$$
+    </details>
+
+    <p>
+      Now, with the help of the dismissible component conditions, every term is a <strong>single-world</strong> counterfactual &mdash; under $A = \color{teal}{a_Y}$ or $A = \color{orange}{a_D}$, never both. Exchangeability and consistency replace them with observed data:
+    </p>
+
+    <!-- Final: the g-formula -->
+    $$= \sum_l \sum_{s=0}^{K} \underbrace{\P[Y_{s+1} = 1 \mid D_{s+1} = Y_s = 0,\; A = \color{teal}{a_Y},\; L = l]}_{\text{CS hazard of } Y \text{ from } \color{teal}{a_Y} \text{ arm}} \prod_{j=0}^{s} \left( \underbrace{\P[D_{j+1} = 0 \mid D_j = Y_j = 0,\; A = \color{orange}{a_D},\; L = l]}_{\text{event-free from } D \text{ from } \color{orange}{a_D} \text{ arm}} \times \underbrace{\P[Y_j = 0 \mid D_j = Y_{j-1} = 0,\; A = \color{teal}{a_Y},\; L = l]}_{\text{event-free from } Y \text{ from } \color{teal}{a_Y} \text{ arm}} \right) \P[L = l] \qquad \small{\text{exchangeability + consistency}}$$
+
+    <p>
+      This is the g-formula (equation 8). Everything related to $Y$ comes from the $A = \color{teal}{a_Y}$ arm. The event-free probability from $D$ comes from the $A = \color{orange}{a_D}$ arm. When $\color{teal}{a_Y} = \color{orange}{a_D}$, all terms come from the same arm &mdash; the standard g-formula for the total effect. When $\color{teal}{a_Y} \neq \color{orange}{a_D}$, the formula constructs a quantity that never appears in either arm of the trial.
+    </p>
+
+    <p>
+      A technical companion post will walk through the IPW representations and their implementation.
+    </p>
+
+    <h2 id="s6">6. Limitations and forward pointers</h2>
+
+    <p>
+      <strong>Full isolation assumed.</strong> The 2020 paper assumes that $\color{teal}{A_Y}$ does not affect any intermediate variable that also causes $D$, and vice versa. When treatment operates through shared intermediate variables &mdash; for example, a blood-pressure-lowering drug where blood pressure affects both the event of interest and the competing event &mdash; this assumption fails. Stensrud et al. (2021) generalise the framework to handle time-varying covariates, partial isolation, and shared intermediates. Part 3 covers this.
+    </p>
+
+    <p>
+      <strong>Baseline covariates only.</strong> The identification formula above conditions on baseline $L$ only. When time-varying confounders are affected by treatment, the g-formula must account for their evolving distribution &mdash; requiring additional models and Monte Carlo simulation. This is also addressed in the 2021 generalisation.
+    </p>
+
+    <p>
+      <strong>Estimation details deferred.</strong> The technical companion post will walk through the estimators (g-formula, IPW).
+    </p>
+
+    <p>
+      <strong>The dismissible conditions are untestable</strong> in a two-arm trial. They are biological claims about how the treatment operates, not statistical properties that can be checked against data. The 2021 paper provides a sensitivity analysis framework for investigating the consequences of their violation.
+    </p>
+
+    <hr>
+
+    <h3>References</h3>
+    <p class="references">
+      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2020). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
+      Young JG, Stensrud MJ, Tchetgen Tchetgen EJ, Hern&aacute;n MA (2020). A causal framework for classical statistical estimands in failure time settings with competing events. <em>Statistics in Medicine</em> 39(8):1199&ndash;1236.<br>
+      Stensrud MJ, Hern&aacute;n MA, Tchetgen Tchetgen EJ, Robins JM, Didelez V, Young JG (2021). A generalized theory of separable effects in competing event settings. <em>Lifetime Data Analysis</em> 27:588&ndash;631.<br>
+      Stensrud MJ, Robins JM, Sarvet A, Tchetgen Tchetgen EJ, Young JG (2023). Conditional separable effects. <em>Journal of the American Statistical Association</em> 118(544):2671&ndash;2683.
+    </p>
+
+    <div class="module-nav">
+      <a href="competing-events-causal-inference.html" class="nav-prev">&larr; Part 1: Estimands</a>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>

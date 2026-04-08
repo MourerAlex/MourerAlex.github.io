@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Companion — 2020 Mathematics | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=29">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Competing Events &amp; Causal Inference</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-08</span>
+      <span class="post-tag">Causal Inference</span>
+      <span class="post-tag">Competing Risks</span>
+      <span class="post-tag">Technical</span>
+    </div>
+
+    <h1>Technical Companion &mdash; 2020 Mathematics</h1>
+    <p class="subtitle">Part 4a: Every step of the identification proof, the IPW representations, and the g-formula for Stensrud et al. (2020).</p>
+
+    <hr>
+
+    <p>
+      This is the technical companion to <a href="part2-separable-effects-2020.html">Part 2</a>. It walks through every mathematical step of the identification proof, derives the estimators, and explains where the assumptions come from and when they fail. The reader should have read Parts 2 and 3 for intuition and assumptions. This post provides the machinery.
+    </p>
+
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#a1">The problem</a></li>
+        <li><a href="#a2">The target quantity</a></li>
+        <li><a href="#a3">The assumptions</a></li>
+        <li><a href="#a4">From the target to the g-formula</a></li>
+        <li><a href="#a5">From the g-formula to IPW Representation 1</a></li>
+        <li><a href="#a6">IPW Representation 2</a></li>
+        <li><a href="#a7">Summary: what each estimator needs</a></li>
+        <li><a href="#a8">The deep proof: counterfactuals to observed data</a></li>
+        <li><a href="#a9">Where the dismissible conditions come from</a></li>
+        <li><a href="#a10">When the conditions hold and fail</a></li>
+      </ol>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a1">1. The problem</h2>
+
+    <p>
+      We want to compute the risk of the event of interest under a cross-arm intervention &mdash; setting $\color{teal}{A_Y} = a_Y$ and $\color{orange}{A_D} = a_D$ to different values. We have a two-arm trial where $A \equiv A_Y \equiv A_D$: we observe $(a_Y = 1, a_D = 1)$ and $(a_Y = 0, a_D = 0)$, never the cross-arms. The mathematical task: start from a counterfactual quantity and arrive at a formula involving only observed conditional probabilities evaluated at $A = \color{teal}{a_Y}$ or $A = \color{orange}{a_D}$.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a2">2. The target quantity</h2>
+
+    $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1)$$
+
+    <p>
+      $a_Y$ sets the Y-component of treatment. $a_D$ sets the D-component. $\bar{c} = 0$ means "had nobody been censored" &mdash; the counterfactual outcome under elimination of loss to follow-up. The separable direct effect is a contrast varying $a_Y$ with $a_D$ fixed. The separable indirect effect varies $a_D$ with $a_Y$ fixed. Both require identifying this quantity when $a_Y \neq a_D$.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a3">3. The assumptions</h2>
+
+    <h3>3.1 Decomposition (equation 2)</h3>
+
+    $$Y^{\color{teal}{a_Y} = a,\, \color{orange}{a_D} = a} = Y^{A = a}$$
+
+    <p>
+      Setting both components to the same value recovers the original treatment. This is a claim about biological mechanisms &mdash; the drug operates through distinct pathways that could in principle be assigned separately. Needed to collapse two-world counterfactuals to single-world after the dismissible conditions are applied.
+    </p>
+
+    <h3>3.2 Exchangeability for treatment (E1)</h3>
+
+    $$\bar{Y}^{a,\bar{c}=0}_{K+1},\, \bar{D}^{a,\bar{c}=0}_{K+1} \;\ind\; A \;\mid\; L$$
+
+    <p>
+      What would happen to everyone under no censoring is independent of which treatment was received, given covariates $L$. Holds by randomisation. Needed to replace counterfactuals with observed data conditioned on $A = a$. Counterfactuals are on the left because they must be defined for everyone &mdash; including those who received the other treatment.
+    </p>
+
+    <h3>3.3 Exchangeability for censoring (E2)</h3>
+
+    $$(Y^{a,\bar{c}=0}_{k+1},\, D^{a,\bar{c}=0}_{k+1}) \;\ind\; C_{k+1} \;\mid\; Y_k = D_k = \bar{C}_k = 0,\, L,\, A$$
+
+    <p>
+      What would happen at $k+1$ if nobody were censored is independent of whether censoring actually occurs at $k+1$, given observed history. This is an assumption &mdash; not derived, not testable. It is the "ignorable censoring" condition. Counterfactuals are on the left because $Y^{a,\bar{c}=0}_{k+1}$ exists for everyone including censored individuals, for whom $Y_{k+1}$ is missing. The conditioning is observed because that is what can be stratified on in the data. The conditioning grows with $k$ because the surviving uncensored population is progressively selected.
+    </p>
+
+    <h3>3.4 Consistency</h3>
+
+    <p>
+      If $A = a$ and $\bar{C}_k = 0$, then $Y^{a,\bar{c}=0}_k = Y_k$ and $D^{a,\bar{c}=0}_k = D_k$. When the actual treatment and censoring status match the intervention, the counterfactual equals the observed value. Only applies in the observed arms ($a_Y = a_D$) and among individuals who were not censored.
+    </p>
+
+    <h3>3.5 Positivity</h3>
+
+    $$\P(L = l) > 0 \;\Rightarrow\; \P(A = a \mid L = l) > 0 \quad \text{for } a \in \{0, 1\}$$
+
+    $$\P(A = a, Y_k = D_k = \bar{C}_k = 0, L = l) > 0 \;\Rightarrow\; \P(C_{k+1} = 0 \mid Y_k = D_k = \bar{C}_k = 0, L = l, A = a) > 0$$
+
+    <p>
+      For every covariate pattern, both treatments are possible, and among event-free uncensored individuals, some remain under observation. Without positivity, the formulas divide by zero.
+    </p>
+
+    <h3>3.6 Dismissible component conditions</h3>
+
+    <p>$\Delta 1_c$:</p>
+
+    $$\P(Y^{\color{teal}{a_Y},\, \color{orange}{a_D=1},\, \bar{c}=0}_{k+1} = 1 \mid Y^{\color{teal}{a_Y},\, \color{orange}{a_D=1},\, \bar{c}=0}_k = 0,\; D^{\color{teal}{a_Y},\, \color{orange}{a_D=1},\, \bar{c}=0}_{k+1} = 0,\; L = l) = \P(Y^{\color{teal}{a_Y},\, \color{orange}{a_D=0},\, \bar{c}=0}_{k+1} = 1 \mid Y^{\color{teal}{a_Y},\, \color{orange}{a_D=0},\, \bar{c}=0}_k = 0,\; D^{\color{teal}{a_Y},\, \color{orange}{a_D=0},\, \bar{c}=0}_{k+1} = 0,\; L = l)$$
+
+    <p>
+      The cause-specific hazard of $Y$ among event-free individuals does not depend on $\color{orange}{a_D}$, conditional on $L$.
+    </p>
+
+    <p>$\Delta 2_c$: the cause-specific hazard of $D$ among event-free individuals does not depend on $\color{teal}{a_Y}$, conditional on $L$. (Same structure, roles of $Y$ and $D$ swapped.)</p>
+
+    <p>
+      Both are biological claims, not statistical properties of the data. They are not testable in a two-arm trial. Sections <a href="#a9">9</a> and <a href="#a10">10</a> explain where they come from and when they fail.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a4">4. From the target to the g-formula</h2>
+
+    <h3>4.1 &mdash; The target</h3>
+
+    $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1)$$
+
+    <h3>4.2 &mdash; Law of total probability over $L$</h3>
+
+    <p>By the law of total probability, $\P(B) = \sum_l \P(B \mid L = l)\P(L = l)$:</p>
+
+    $$= \sum_l \P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1 \mid L = l)\; \P(L = l) \qquad \small{\text{standardise over covariates}}$$
+
+    <h3>4.3 &mdash; Partition over first-event time</h3>
+
+    <p>
+      If $Y$ occurs by $K+1$, it occurs at some specific first time $s+1 \in \{1, \ldots, K+1\}$. At that time, $Y_{s+1} = 1$ and the individual was event-free through $s$: $D_{s+1} = 0$ and $Y_s = 0$. Sum over all possible first-event times:
+    </p>
+
+    $$= \sum_l \sum_{s=0}^{K} \P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{s+1} = 1,\; D^{a_Y,\, a_D,\, \bar{c}=0}_{s+1} = 0,\; Y^{a_Y,\, a_D,\, \bar{c}=0}_s = 0 \mid L = l)\; \P(L = l) \qquad \small{\text{sum over first-event time}}$$
+
+    <h3>4.4 &mdash; Chain rule</h3>
+
+    <p>
+      The joint probability "event at $s+1$ and event-free through $s$" can be factored using the chain rule: $\P(A, B) = \P(A \mid B) \times \P(B)$, applied iteratively. At each time $j$, peel off two terms: "event-free from $D$ at $j+1$" and "event-free from $Y$ at $j$":
+    </p>
+
+    $$= \sum_l \sum_{s=0}^{K} \P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{s+1} = 1 \mid D^{a_Y,\, a_D,\, \bar{c}=0}_{s+1} = 0,\; Y^{a_Y,\, a_D,\, \bar{c}=0}_s = 0,\; L = l)$$
+
+    $$\times \prod_{j=0}^{s} \Big( \P(D^{a_Y,\, a_D,\, \bar{c}=0}_{j+1} = 0 \mid D^{a_Y,\, a_D,\, \bar{c}=0}_j = Y^{a_Y,\, a_D,\, \bar{c}=0}_j = 0,\; L = l) \times \P(Y^{a_Y,\, a_D,\, \bar{c}=0}_j = 0 \mid D^{a_Y,\, a_D,\, \bar{c}=0}_j = Y^{a_Y,\, a_D,\, \bar{c}=0}_{j-1} = 0,\; L = l) \Big)$$
+
+    $$\times\; \P(L = l) \qquad \small{\text{chain rule}}$$
+
+    <h3>4.5 &mdash; Separating the components</h3>
+
+    <p>
+      Every term depends on both $\color{teal}{a_Y}$ and $\color{orange}{a_D}$ jointly &mdash; two-world counterfactuals. When $\color{teal}{a_Y} \neq \color{orange}{a_D}$, these are never observed. No assumptions have been used yet. The dismissible conditions resolve this:
+    </p>
+
+    <p>
+      <strong>4.5.1 &mdash; Apply $\Delta 1_c$:</strong> the $Y$ hazard and $Y$ event-free terms do not depend on $\color{orange}{a_D}$. In each such term, replace $\color{orange}{a_D}$ with $\color{teal}{a_Y}$:
+    </p>
+
+    $$\P(Y^{\color{teal}{a_Y},\, \color{orange}{a_D},\, \bar{c}=0}_{s+1} = 1 \mid \ldots) = \P(Y^{\color{teal}{a_Y},\, \color{orange}{a_D = a_Y},\, \bar{c}=0}_{s+1} = 1 \mid \ldots) \qquad \small{\Delta 1_c}$$
+
+    <p>
+      <strong>4.5.2 &mdash; Apply $\Delta 2_c$:</strong> the $D$ event-free terms do not depend on $\color{teal}{a_Y}$. Replace $\color{teal}{a_Y}$ with $\color{orange}{a_D}$:
+    </p>
+
+    $$\P(D^{\color{teal}{a_Y},\, \color{orange}{a_D},\, \bar{c}=0}_{j+1} = 0 \mid \ldots) = \P(D^{\color{teal}{a_Y = a_D},\, \color{orange}{a_D},\, \bar{c}=0}_{j+1} = 0 \mid \ldots) \qquad \small{\Delta 2_c}$$
+
+    <h3>4.6 &mdash; Decomposition: collapse to single-world</h3>
+
+    <p>$Y$ terms now have $\color{teal}{a_Y}$ and $\color{orange}{a_D} = \color{teal}{a_Y}$ &mdash; both components equal. By the decomposition assumption:</p>
+
+    $$Y^{\color{teal}{a_Y},\, \color{orange}{a_D} = \color{teal}{a_Y},\, \bar{c}=0} = Y^{a = \color{teal}{a_Y},\, \bar{c}=0}$$
+
+    <p>$D$ terms have $\color{teal}{a_Y} = \color{orange}{a_D}$ and $\color{orange}{a_D}$:</p>
+
+    $$D^{\color{teal}{a_Y} = \color{orange}{a_D},\, \color{orange}{a_D},\, \bar{c}=0} = D^{a = \color{orange}{a_D},\, \bar{c}=0}$$
+
+    <p>Every term is now a single-world counterfactual. $Y$ terms live under $a = \color{teal}{a_Y}$. $D$ terms live under $a = \color{orange}{a_D}$. Both exist in the two-arm trial.</p>
+
+    <h3>4.7 &mdash; Exchangeability and consistency</h3>
+
+    <p>
+      Replace each single-world counterfactual with observed data. For the $Y$ terms: $\P(Y^{a = \color{teal}{a_Y},\, \bar{c}=0}_{s+1} = 1 \mid \ldots, L = l) = \P(Y_{s+1} = 1 \mid \ldots, A = \color{teal}{a_Y}, L = l)$ by E1 and consistency. For the $D$ terms: same with $A = \color{orange}{a_D}$. The full argument handling censoring is in <a href="#a8">Section 8</a>.
+    </p>
+
+    <h3>4.8 &mdash; The g-formula</h3>
+
+    $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1) = \sum_l \sum_{s=0}^{K} \underbrace{\P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0,\; A = \color{teal}{a_Y},\; L = l)}_{\text{Block A: CS hazard of } Y \text{ from } \color{teal}{a_Y} \text{ arm}}$$
+
+    $$\times \prod_{j=0}^{s} \Big( \underbrace{\P(D_{j+1} = 0 \mid D_j = Y_j = \bar{C}_{j+1} = 0,\; A = \color{orange}{a_D},\; L = l)}_{\text{Block B: event-free from } D \text{ from } \color{orange}{a_D} \text{ arm}} \times \underbrace{\P(Y_j = 0 \mid D_j = Y_{j-1} = \bar{C}_j = 0,\; A = \color{teal}{a_Y},\; L = l)}_{\text{Block C: event-free from } Y \text{ from } \color{teal}{a_Y} \text{ arm}} \Big)$$
+
+    $$\times\; \underbrace{\P(L = l)}_{\text{Block D}}$$
+
+    <p>
+      Everything related to $Y$ comes from the $A = \color{teal}{a_Y}$ arm. The $D$ event-free probability comes from the $A = \color{orange}{a_D}$ arm. The formula mixes observed data from two arms. When $\color{teal}{a_Y} = \color{orange}{a_D}$, all terms come from the same arm &mdash; the standard g-formula.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a5">5. From the g-formula to IPW Representation 1: the swap</h2>
+
+    <h3>5.1 &mdash; The question</h3>
+
+    <p>The g-formula mixes two arms. Can we compute it using only individuals in the $A = \color{teal}{a_Y}$ arm?</p>
+
+    <h3>5.2 &mdash; What the $\color{teal}{a_Y}$ arm gives us</h3>
+
+    <p>
+      Among individuals with $A = \color{teal}{a_Y}$, the observed cumulative incidence of $Y$ (ignoring censoring) is the same formula as the g-formula but with Block B evaluated at $A = \color{teal}{a_Y}$ instead of $A = \color{orange}{a_D}$:
+    </p>
+
+    $$\sum_l \sum_s \P(Y_{s+1} = 1 \mid \ldots, A = \color{teal}{a_Y}) \times \prod_j \Big( \P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y}) \times \P(Y_j = 0 \mid \ldots, A = \color{teal}{a_Y}) \Big) \P(L = l)$$
+
+    <p>
+      Almost the g-formula &mdash; but Block B is wrong. In DES: the $\color{teal}{a_Y} = 1$ arm has cardiovascular death at the DES rate. We want the placebo rate &mdash; the rate without DES's coagulation effect.
+    </p>
+
+    <h3>5.3 &mdash; The fix: multiply and divide</h3>
+
+    <p>The $D$ event-free term at $\color{orange}{a_D}$ can be written as the $D$ event-free term at $\color{teal}{a_Y}$ times a correction factor:</p>
+
+    $$\P(D_{j+1} = 0 \mid \ldots, A = \color{orange}{a_D}) = \P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y}) \times \frac{\P(D_{j+1} = 0 \mid \ldots, A = \color{orange}{a_D})}{\P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y})}$$
+
+    <p>This is multiplying and dividing by the same quantity &mdash; pure algebra, no assumptions.</p>
+
+    <h3>5.4 &mdash; Substitute into the g-formula</h3>
+
+    <p>
+      Replace every Block B term in the g-formula using this identity. The $\P(D_{j+1} = 0 \mid \ldots, A = \color{teal}{a_Y})$ factor now matches the $\color{teal}{a_Y}$ arm. Collecting the correction ratios into a product gives $W_{D,s}$:
+    </p>
+
+    $$W_{D,s}(a_Y, a_D) = \prod_{j=0}^{s} \frac{\P(D_{j+1} = 0 \mid D_j = Y_j = 0,\; L = l,\; A = \color{orange}{a_D})}{\P(D_{j+1} = 0 \mid D_j = Y_j = 0,\; L = l,\; A = \color{teal}{a_Y})}$$
+
+    <p>
+      The denominator cancels the $D$ event-free distribution present in the $\color{teal}{a_Y}$ arm &mdash; the DES cardiovascular death rate. The numerator inserts the $D$ event-free distribution from the $\color{orange}{a_D}$ arm &mdash; the placebo cardiovascular death rate.
+    </p>
+
+    <p>
+      After substitution, everything except $W_{D,s}$ and $\P(L = l)$ is the joint probability of "event-free through $s$, $Y$ at $s+1$" in the $\color{teal}{a_Y}$ arm. This joint probability is what the conditional expectation $\E[\ldots \mid A = \color{teal}{a_Y}]$ computes:
+    </p>
+
+    $$\nu = \sum_{s=0}^{K} \E\Big[W_{D,s} \cdot Y_{s+1}(1 - Y_s)(1 - D_{s+1}) \;\Big|\; A = \color{teal}{a_Y}\Big]$$
+
+    <h3>5.5 &mdash; Adding censoring</h3>
+
+    <p>
+      In observed data, some individuals are censored. The observed joint probability includes censoring survival terms $\P(C_{j+1} = 0 \mid \ldots)$ that the g-formula does not have (it targets the no-censoring world). The inverse probability of censoring weight cancels them:
+    </p>
+
+    $$W'_{C,s}(a_Y) = \frac{1}{\prod_{j=0}^{s} \P(C_{j+1} = 0 \mid \bar{C}_j = D_j = Y_j = 0,\; L = l,\; A = a_Y)}$$
+
+    <p>$W'_C$ upweights uncensored individuals to represent those who were lost to follow-up.</p>
+
+    <h3>5.6 &mdash; The full IPW Representation 1</h3>
+
+    $$\nu_{a_Y, a_D, k} = \sum_{s=0}^{k} \E\Big[W'_{C,s}(a_Y) \cdot W_{D,s}(a_Y, a_D) \cdot Y_{s+1}(1 - Y_s)(1 - D_{s+1}) \;\Big|\; A = \color{teal}{a_Y}\Big]$$
+
+    <p>$W'_C$ removes the censoring. $W_D$ swaps the $D$ distribution from the $\color{teal}{a_Y}$ rate to the $\color{orange}{a_D}$ rate. What remains is the g-formula.</p>
+
+    <h3>5.7 &mdash; Why "swap" not "remove"</h3>
+
+    <p>
+      $W_D$ is a ratio. The denominator removes one distribution. The numerator inserts another. Setting $\color{orange}{a_D} = 0$ does not mean nobody dies of cardiovascular disease. It means everyone dies at placebo rates &mdash; the rate without DES's coagulation effect. This is what makes separable effects different from the direct effect of Young et al., which requires eliminating death entirely.
+    </p>
+
+    <h3>5.8 &mdash; What needs to be modelled</h3>
+
+    <p>
+      Only the $D$ hazard (to compute $W_D$) and the censoring probability (to compute $W'_C$). The $Y$ hazard is observed directly among individuals in the $\color{teal}{a_Y}$ arm &mdash; no model needed for it.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a6">6. IPW Representation 2: the mirror</h2>
+
+    <p>
+      The same logic in reverse. Stand in the $A = \color{orange}{a_D}$ arm. The $D$ event-free probability is already correct. The $Y$ hazard and $Y$ event-free terms are wrong &mdash; they are at $\color{orange}{a_D}$ instead of $\color{teal}{a_Y}$.
+    </p>
+
+    <p>
+      Apply the same multiply-and-divide trick to the $Y$ terms. $Y$ appears in two places in the g-formula (hazard at $s+1$ and event-free at $j$), so both must be swapped. The weight $W_Y$ is:
+    </p>
+
+    $$W_{Y,s}(a_D, a_Y) = \frac{\P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0,\; L,\; A = \color{teal}{a_Y})}{\P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0,\; L,\; A = \color{orange}{a_D})} \times \prod_{j=0}^{s-1} \frac{\P(Y_{j+1} = 0 \mid D_{j+1} = Y_j = \bar{C}_{j+1} = 0,\; L,\; A = \color{teal}{a_Y})}{\P(Y_{j+1} = 0 \mid D_{j+1} = Y_j = \bar{C}_{j+1} = 0,\; L,\; A = \color{orange}{a_D})}$$
+
+    <p>The full estimand:</p>
+
+    $$\nu_{a_Y, a_D, k} = \sum_{s=0}^{k} \E\Big[W'_{C,s}(a_D) \cdot W_{Y,s}(a_D, a_Y) \cdot Y_{s+1}(1 - Y_s)(1 - D_{s+1}) \;\Big|\; A = \color{orange}{a_D}\Big]$$
+
+    <p>
+      Only the $Y$ hazard and the censoring probability need to be modelled. The $D$ hazard is observed directly in the $\color{orange}{a_D}$ arm.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a7">7. Summary: what each estimator needs</h2>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 16%;"><col style="width: 28%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 24%;">
+      </colgroup>
+      <tr><th></th><th>Models needed</th><th>Model fitted on</th><th>Expectation over</th><th>Correct specification required</th></tr>
+      <tr><td>G-formula</td><td>$Y$ hazard + $D$ hazard + $\P(L)$ + censoring</td><td>Both arms</td><td>Both arms</td><td>All models</td></tr>
+      <tr><td>IPW Rep. 1</td><td>$D$ hazard + censoring</td><td>Both arms</td><td>$A = \color{teal}{a_Y}$ arm</td><td>$D$ model + censoring model</td></tr>
+      <tr><td>IPW Rep. 2</td><td>$Y$ hazard + censoring</td><td>Both arms</td><td>$A = \color{orange}{a_D}$ arm</td><td>$Y$ model + censoring model</td></tr>
+    </table>
+
+    <p>
+      All three estimators require correct specification of the censoring model when loss to follow-up is present. All models are fitted on data from both arms (with $A$ as a covariate), then predicted at different values of $A$. The distinction between the estimators is not which data they use but how many hazard models need to be correctly specified: the g-formula requires all models; each IPW representation requires only one hazard model. A doubly robust estimator exists (Stensrud et al. 2023) that is consistent if either the weight model or the outcome model is correctly specified. Part 4b extends all three estimators to the 2021 setting with time-varying covariates.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a8">8. The deep proof: counterfactuals to observed data</h2>
+
+    <h3>8.1 &mdash; Why this section exists</h3>
+
+    <p>
+      Section 4.7 said "by exchangeability and consistency, replace counterfactuals with observed data" in one sentence. That sentence hides the hardest part of the proof. The issue: between "single-world counterfactuals" and "observed data" there is a gap, and censoring sits in that gap. This section closes it.
+    </p>
+
+    <h3>8.2 &mdash; Without censoring: the simple case</h3>
+
+    <p>
+      If nobody is censored ($C_k = 0$ for everyone), the step from counterfactuals to observed data is straightforward. After Phase 1, every term is a single-world counterfactual. Consider the $Y$ hazard:
+    </p>
+
+    $$\P(Y^{a,\, \bar{c}=0}_{s+1} = 1 \mid D^{a,\, \bar{c}=0}_{s+1} = 0,\; Y^{a,\, \bar{c}=0}_s = 0,\; L = l)$$
+
+    <p>
+      By E1, counterfactual outcomes are independent of $A$ given $L$, so adding $A = a$ to the conditioning does not change the probability:
+    </p>
+
+    $$= \P(Y^{a,\, \bar{c}=0}_{s+1} = 1 \mid D^{a,\, \bar{c}=0}_{s+1} = 0,\; Y^{a,\, \bar{c}=0}_s = 0,\; L = l,\; A = a)$$
+
+    <p>
+      With no censoring, $\bar{C}_{s+1} = 0$ is trivially satisfied for everyone. Consistency applies immediately &mdash; $Y^{a,\bar{c}=0}_{s+1} = Y_{s+1}$, $D^{a,\bar{c}=0}_{s+1} = D_{s+1}$, $Y^{a,\bar{c}=0}_s = Y_s$:
+    </p>
+
+    $$= \P(Y_{s+1} = 1 \mid D_{s+1} = 0,\; Y_s = 0,\; L = l,\; A = a)$$
+
+    <p>
+      Observed data. Two lines. No iteration, no ratio, no machinery. The same argument applies to every term in the g-formula.
+    </p>
+
+    <h3>8.3 &mdash; What censoring breaks</h3>
+
+    <p>Now suppose some individuals are censored. The same starting point:</p>
+
+    $$\P(Y^{a,\, \bar{c}=0}_{s+1} = 1 \mid D^{a,\, \bar{c}=0}_{s+1} = 0,\; Y^{a,\, \bar{c}=0}_s = 0,\; L = l)$$
+
+    <p>E1 still lets us add $A = a$. But now consistency requires <strong>both</strong> $A = a$ <strong>and</strong> $\bar{C}_{s+1} = 0$ in the conditioning. $\bar{C}_{s+1} = 0$ is no longer trivially true &mdash; some individuals are censored.</p>
+
+    <p>E2 lets us add censoring conditions &mdash; but E2 requires <strong>observed</strong> quantities in its conditioning set:</p>
+
+    $$(Y^{a,\bar{c}=0}_{k+1},\, D^{a,\bar{c}=0}_{k+1}) \;\ind\; C_{k+1} \;\mid\; \underbrace{Y_k = D_k = \bar{C}_k = 0,\; L,\; A}_{\text{must be observed}}$$
+
+    <p>The current conditioning contains $D^{a,\bar{c}=0}_{s+1} = 0$ and $Y^{a,\bar{c}=0}_s = 0$ &mdash; <strong>counterfactuals</strong>, not observed quantities. E2 does not apply.</p>
+
+    <p>
+      To convert counterfactuals to observed values, we need consistency. To use consistency, we need $\bar{C} = 0$ in the conditioning. To add $\bar{C} = 0$, we need E2. To use E2, we need observed quantities in the conditioning. To get observed quantities, we need consistency. Circular. The ratio breaks this circularity.
+    </p>
+
+    <h3>8.4 &mdash; The ratio</h3>
+
+    <p>Start from:</p>
+
+    $$\P(Y^{a,\, \bar{c}=0}_{s+1} = 1 \mid D^{a,\, \bar{c}=0}_{s+1} = 0,\; Y^{a,\, \bar{c}=0}_s = 0,\; L = l)$$
+
+    <p><strong>Step 1.</strong> Add $A = a$ to the conditioning. By E1, counterfactual outcomes are independent of $A$ given $L$:</p>
+
+    $$= \P(Y^{a,\, \bar{c}=0}_{s+1} = 1 \mid D^{a,\, \bar{c}=0}_{s+1} = 0,\; Y^{a,\, \bar{c}=0}_s = 0,\; L = l,\; A = a)$$
+
+    <p><strong>Step 2.</strong> Expand the event-free conditions into the full history. $Y^{a,\bar{c}=0}_s = 0$ implies $Y^{a,\bar{c}=0}_j = 0$ for all $j \leq s$, and $D^{a,\bar{c}=0}_{s+1} = 0$ implies $D^{a,\bar{c}=0}_j = 0$ for all $j \leq s+1$:</p>
+
+    $$= \P(Y^{a,\, \bar{c}=0}_{s+1} = 1 \mid \bar{D}^{a,\bar{c}=0}_{s+1} = 0,\; \bar{Y}^{a,\bar{c}=0}_s = 0,\; L = l,\; A = a)$$
+
+    <p><strong>Step 3.</strong> Apply the definition of conditional probability. $\P(X \mid B, C) = \P(X, B \mid C) / \P(B \mid C)$. Move everything except $L = l$ and $A = a$ from the conditioning to the event:</p>
+
+    <p>Numerator:</p>
+
+    $$\P(Y^{a,\bar{c}=0}_{s+1} = 1,\; \bar{D}^{a,\bar{c}=0}_{s+1} = 0,\; \bar{Y}^{a,\bar{c}=0}_s = 0 \mid L = l,\; A = a)$$
+
+    <p>Denominator:</p>
+
+    $$\P(\bar{D}^{a,\bar{c}=0}_{s+1} = 0,\; \bar{Y}^{a,\bar{c}=0}_s = 0 \mid L = l,\; A = a)$$
+
+    <p>This is the definition of conditional probability applied in reverse &mdash; no assumptions used.</p>
+
+    <p><strong>Step 4.</strong> Add $Y_0 = D_0 = \bar{C}_0 = 0$ to the conditioning of both numerator and denominator. Everyone starts alive, event-free, and uncensored &mdash; these hold with probability 1, so they change nothing. But they match E2's conditioning set at $k = 0$.</p>
+
+    <p>The full ratio, with every term written out explicitly &mdash; the numerator:</p>
+
+    $$\frac{\P(Y^{a,\bar{c}=0}_{s+1} = 1,\; D^{a,\bar{c}=0}_{s+1} = 0,\; Y^{a,\bar{c}=0}_s = 0,\; D^{a,\bar{c}=0}_s = 0,\; \ldots,\; Y^{a,\bar{c}=0}_1 = 0,\; D^{a,\bar{c}=0}_1 = 0 \;\mid\; Y_0 = D_0 = \bar{C}_0 = 0,\; A = a,\; L = l)}{\P(D^{a,\bar{c}=0}_{s+1} = 0,\; Y^{a,\bar{c}=0}_s = 0,\; D^{a,\bar{c}=0}_s = 0,\; \ldots,\; Y^{a,\bar{c}=0}_1 = 0,\; D^{a,\bar{c}=0}_1 = 0 \;\mid\; Y_0 = D_0 = \bar{C}_0 = 0,\; A = a,\; L = l)}$$
+
+    <p>
+      Left of the conditioning bar: counterfactuals at every time from 1 through $s+1$, fully enumerated. Right of the bar: observed baseline quantities only. The numerator includes $Y^{a,\bar{c}=0}_{s+1} = 1$ (the event happens); the denominator does not (event-free only). E2 can now fire.
+    </p>
+
+    <h3>8.5 &mdash; The iterative step at round $k$</h3>
+
+    <p>Suppose that after the previous rounds, the numerator has the form:</p>
+
+    $$\P(\underbrace{Y^{a,\bar{c}=0}_{s+1},\; D^{a,\bar{c}=0}_{s+1},\; \ldots,\; Y^{a,\bar{c}=0}_{k+1},\; D^{a,\bar{c}=0}_{k+1}}_{\text{counterfactuals at times } k+1 \text{ through } s+1} \mid \underbrace{Y_k = D_k = \ldots = Y_0 = D_0 = \bar{C}_k = 0,\; A = a,\; L = l}_{\text{observed through time } k})$$
+
+    <p>The conditioning is observed through time $k$. The event still contains counterfactuals at times $k+1$ through $s+1$.</p>
+
+    <p>
+      <strong>Sub-step 1 &mdash; Apply E2 at $k$.</strong> E2 says:
+    </p>
+
+    $$(Y^{a,\bar{c}=0}_{k+1}, D^{a,\bar{c}=0}_{k+1}) \;\ind\; C_{k+1} \;\mid\; Y_k = D_k = \bar{C}_k = 0,\; L,\; A$$
+
+    <p>
+      The conditioning set of E2 matches what we have on the right of $\mid$. Since $C_{k+1}$ is independent of the counterfactuals in the event, adding $C_{k+1} = 0$ to the conditioning does not change the probability. The conditioning becomes $\bar{C}_{k+1} = 0$.
+    </p>
+
+    <p>
+      <strong>Sub-step 2 &mdash; Apply consistency at time $k+1$.</strong> The conditioning now has both $A = a$ and $\bar{C}_{k+1} = 0$. Consistency says: $Y^{a,\bar{c}=0}_{k+1} = Y_{k+1}$ and $D^{a,\bar{c}=0}_{k+1} = D_{k+1}$. Replace the time-$(k+1)$ counterfactuals in the event with their observed values.
+    </p>
+
+    <p>
+      <strong>Sub-step 3 &mdash; Move observed values into the conditioning.</strong> $Y_{k+1} = 0$ and $D_{k+1} = 0$ are now observed quantities sitting in the event. Move them to the right of $\mid$. The expression becomes:
+    </p>
+
+    $$\P(\underbrace{\ldots \text{counterfactuals at times } k+2 \text{ through } s+1 \ldots}_{\text{one layer fewer}} \mid \underbrace{Y_{k+1} = D_{k+1} = \ldots = Y_0 = D_0 = \bar{C}_{k+1} = 0,\; A = a,\; L = l}_{\text{observed through time } k+1})$$
+
+    <p>One layer peeled. The conditioning is observed through $k+1$. E2 at $k+1$ can fire, and the next round begins.</p>
+
+    <h3>8.6 &mdash; After all rounds</h3>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 20%;"><col style="width: 45%;"><col style="width: 35%;">
+      </colgroup>
+      <tr><th>After round</th><th>Counterfactuals remaining in event</th><th>Observed conditioning through time</th></tr>
+      <tr><td>Ratio</td><td>times $1, 2, \ldots, s+1$</td><td>$0$</td></tr>
+      <tr><td>$k = 0$</td><td>times $2, 3, \ldots, s+1$</td><td>$1$</td></tr>
+      <tr><td>$k = 1$</td><td>times $3, 4, \ldots, s+1$</td><td>$2$</td></tr>
+      <tr><td>$\vdots$</td><td>$\vdots$</td><td>$\vdots$</td></tr>
+      <tr><td>$k = s$</td><td>$\emptyset$</td><td>$s+1$</td></tr>
+    </table>
+
+    <p>After round $k = s$, no counterfactuals remain. Reconstitute the ratio as a conditional probability:</p>
+
+    $$= \P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0,\; A = a,\; L = l)$$
+
+    <p>Observed data. The same argument applies to the $D$ event-free terms (with $a = \color{orange}{a_D}$) and the $Y$ event-free terms (with $a = \color{teal}{a_Y}$).</p>
+
+    <h3>8.7 &mdash; Why this proof matters for computing the g-formula</h3>
+
+    <p>
+      The g-formula in Section 4.8 is a function of observed conditional probabilities: $\P(Y_{s+1} = 1 \mid \ldots, A = \color{teal}{a_Y}, L = l)$ and $\P(D_{j+1} = 0 \mid \ldots, A = \color{orange}{a_D}, L = l)$. To estimate these, we fit models (pooled logistic regressions) to the observed data and predict.
+    </p>
+
+    <p>
+      But why is this allowed? Phase 1 (Sections 4.5&ndash;4.6) showed that each counterfactual hazard depends on only one treatment component. Phase 2 (this section) showed that each counterfactual hazard equals a specific observed-data conditional probability. Without Phase 2, we would have a formula in terms of counterfactuals &mdash; correct but impossible to estimate. Phase 2 is what makes the g-formula computable.
+    </p>
+
+    <p>
+      In practice: Phase 2 justifies fitting a logistic regression for $\P(Y_{s+1} = 1 \mid D_{s+1} = Y_s = \bar{C}_{s+1} = 0, A, L)$ on the observed data and plugging the predictions into the g-formula. Without this proof, that procedure has no theoretical foundation.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a9">9. Where the dismissible conditions come from</h2>
+
+    <p>
+      <em>(To be developed &mdash; requires SWIG diagrams.)</em> The dismissible conditions $\Delta_1$ and $\Delta_2$ follow from d-separation on Single World Intervention Graphs (SWIGs) of the hypothetical 4-arm trial where $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ are independently randomised. The bridge: d-separation on the graph guarantees a conditional independence, which guarantees the hazard does not depend on the other treatment component. A full graphical treatment will be added in a future revision.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="a10">10. When the conditions hold and fail</h2>
+
+    <h3>10.1 &mdash; Separate unmeasured causes: conditions hold</h3>
+
+    <p>
+      If $U_Y$ causes only $Y$ and $U_D$ causes only $D$, no path connects $\color{orange}{A_D}$ to $Y$ through $D$ &mdash; $U_D$ does not cause $Y$, so any path through $U_D$ cannot reach $Y$. The dismissible conditions hold even when $U_Y$ and $U_D$ are unmeasured.
+    </p>
+
+    <h3>10.2 &mdash; Common unmeasured cause: conditions fail</h3>
+
+    <p>
+      Now suppose a single $U_{YD}$ causes both $Y$ and $D$. The dismissible conditions are defined among event-free individuals &mdash; they condition on $D_{k+1} = 0$. This is conditioning on a variable caused by both $\color{orange}{A_D}$ (through treatment) and $U_{YD}$ (through biology). That makes $D_{k+1}$ a <strong>collider</strong> on the path:
+    </p>
+
+    $$\color{orange}{A_D} \to D_{k+1} \leftarrow U_{YD} \to Y_{k+1}$$
+
+    <p>
+      Conditioning on a collider is the classic mechanism of <strong>selection bias</strong> &mdash; it opens a path between variables that are not causally related. Here, conditioning on $D_{k+1} = 0$ (selecting individuals who did not die of cardiovascular disease) creates a spurious association between $\color{orange}{A_D}$ and $Y_{k+1}$ through $U_{YD}$.
+    </p>
+
+    <p>
+      The intuition: among individuals who survived ($D_{k+1} = 0$), knowing that $\color{orange}{A_D}$ was increasing coagulation (pushing towards cardiovascular death) makes it more likely that $U_{YD}$ was protective &mdash; otherwise they would have died. But $U_{YD}$ also affects $Y$, so this information about $U_{YD}$ leaks into the $Y$ hazard. The $Y$ hazard now appears to depend on $\color{orange}{a_D}$ &mdash; not because $\color{orange}{A_D}$ causes $Y$, but because conditioning on survival opened a back-door through the shared unmeasured cause.
+    </p>
+
+    <p>
+      This is the selection bias that the dismissible conditions rule out. When $U_{YD}$ exists and is unmeasured, identification fails.
+    </p>
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <h2>Forward</h2>
+
+    <p>
+      Part 4b extends everything to the 2021 setting: time-varying covariates, four dismissible conditions instead of two, additional IPW weights $W_{L_D}$ and $W_{L_Y}$, the Bayes&rsquo; rule trick for avoiding density estimation, Monte Carlo simulation for the g-formula, and implementation details.
+    </p>
+
+    <hr>
+
+    <h3>References</h3>
+    <p class="references">
+      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2020). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
+      Young JG, Stensrud MJ, Tchetgen Tchetgen EJ, Hern&aacute;n MA (2020). A causal framework for classical statistical estimands in failure time settings with competing events. <em>Statistics in Medicine</em> 39(8):1199&ndash;1236.<br>
+      Stensrud MJ, Hern&aacute;n MA, Tchetgen Tchetgen EJ, Robins JM, Didelez V, Young JG (2021). A generalized theory of separable effects in competing event settings. <em>Lifetime Data Analysis</em> 27:588&ndash;631.<br>
+      Stensrud MJ, Robins JM, Sarvet A, Tchetgen Tchetgen EJ, Young JG (2023). Conditional separable effects. <em>Journal of the American Statistical Association</em> 118(544):2671&ndash;2683.<br>
+      Hern&aacute;n MA, Robins JM (2020). <em>Causal Inference: What If</em>. Chapman &amp; Hall/CRC.
+    </p>
+
+    <div class="module-nav">
+      <a href="part3-generalized-separable-effects-2021.html" class="nav-prev">&larr; Part 3: Generalized Separable Effects</a>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>

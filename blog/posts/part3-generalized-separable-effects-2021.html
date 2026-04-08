@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generalized Separable Effects | Alex Mourer</title>
+  <link rel="stylesheet" href="../../css/style.css?v=29">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        macros: {
+          E:   '\\mathbb{E}',
+          P:   '\\mathbb{P}',
+          R:   '\\mathbb{R}',
+          ind: '\\perp\\!\\!\\!\\perp'
+        }
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="../../index.html" class="nav-logo">
+        <span class="bracket">[</span>AM<span class="bracket">]</span>
+        Alex Mourer
+      </a>
+      <div class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="../index.html" class="active">Posts</a>
+        <a href="../../about/index.html">About</a>
+      </div>
+    </div>
+  </nav>
+  <div class="post-layout">
+    <a href="../index.html" class="back-link">&larr; Posts</a>
+    <div class="series-label">Competing Events &amp; Causal Inference</div>
+    <div class="post-meta">
+      <span class="post-date">2026-04-07</span>
+      <span class="post-tag">Causal Inference</span>
+      <span class="post-tag">Competing Risks</span>
+      <span class="post-tag">Separable Effects</span>
+    </div>
+
+    <h1>Generalized Separable Effects</h1>
+    <p class="subtitle">Part 3: Stensrud, Hern&aacute;n, Tchetgen Tchetgen, Robins, Didelez &amp; Young (2021) extend separable effects to time-varying covariates, shared intermediates, and loss to follow-up.</p>
+
+    <hr>
+
+    <p>
+      This post explains Stensrud et al. (2021), <em>A generalized theory of separable effects in competing event settings</em>. <a href="part2-separable-effects-2020.html">Part 2</a> introduced separable effects under full isolation and baseline covariates only. In most real trials, both assumptions fail. This paper relaxes them.
+    </p>
+
+    <p>
+      The running example is the SPRINT trial: intensive vs standard blood pressure therapy in patients with high cardiovascular risk. The event of interest is acute kidney injury ($Y$). The competing event is death ($D$). Blood pressure ($L_k$) is measured repeatedly during follow-up and is affected by treatment.
+    </p>
+
+    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
+      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
+      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
+        <li><a href="#s1">What changes from 2020</a></li>
+        <li><a href="#s2">$Z_k$ vs $L_k$: what you need vs what you have</a></li>
+        <li><a href="#s3">The isolation hierarchy</a></li>
+        <li><a href="#s4">Generalized dismissible conditions</a></li>
+        <li><a href="#s5">The generalized g-formula</a></li>
+        <li><a href="#s6">Discussion</a></li>
+      </ol>
+    </div>
+
+
+    <h2 id="s1">1. What changes from 2020</h2>
+
+    <p>
+      Three complications that the 2020 paper assumed away:
+    </p>
+
+    <p>
+      <strong>Time-varying covariates.</strong> In SPRINT, blood pressure is measured at each visit. Intensive therapy lowers blood pressure more, and blood pressure predicts both kidney injury and death. This is treatment-confounder feedback: $A \to L_k \to (Y_{k+1}, D_{k+1})$.
+    </p>
+
+    <p>
+      <strong>Shared intermediate variables.</strong> Blood pressure sits on the pathway between treatment and both outcomes. The 2020 paper assumed full isolation &mdash; no shared intermediates. That fails here: $\color{orange}{A_D}$ (the blood-pressure-lowering mechanism) affects blood pressure, which affects both $Y$ and $D$.
+    </p>
+
+    <p>
+      <strong>Loss to follow-up.</strong> Some patients drop out ($C_{k+1} = 1$), making future outcomes unobserved. This adds a censoring weight to the estimators.
+    </p>
+
+    <!-- DAG: Faithful reproduction of Stensrud et al. 2021 Figure 2b -->
+    <div class="dag-container" style="margin: 2em 0;">
+      <svg viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif; max-width:700px; width:100%;">
+
+        <!-- Nodes -->
+        <text x="60"  y="260" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1916">A</text>
+        <text x="200" y="190" text-anchor="middle" font-size="22" font-weight="700" fill="#2a5f4f">A<tspan font-size="14" dy="4">Y</tspan></text>
+        <text x="200" y="290" text-anchor="middle" font-size="22" font-weight="700" fill="#b35900">A<tspan font-size="14" dy="4">D</tspan></text>
+        <text x="100" y="60"  text-anchor="middle" font-size="20" font-weight="700" fill="#aaa">Z<tspan font-size="12" dy="3">0</tspan></text>
+        <text x="430" y="60"  text-anchor="middle" font-size="20" font-weight="700" fill="#1a1916">Z<tspan font-size="12" dy="3">1</tspan></text>
+        <text x="360" y="190" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1916">Y<tspan font-size="14" dy="4">1</tspan></text>
+        <text x="360" y="290" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1916">D<tspan font-size="14" dy="4">1</tspan></text>
+        <text x="600" y="190" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1916">Y<tspan font-size="14" dy="4">2</tspan></text>
+        <text x="600" y="290" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1916">D<tspan font-size="14" dy="4">2</tspan></text>
+
+        <!-- Grey arrows (baseline) -->
+        <line x1="80" y1="248" x2="178" y2="192" stroke="#bbb" stroke-width="2.5" marker-end="url(#fg1)"/>
+        <line x1="80" y1="268" x2="178" y2="288" stroke="#bbb" stroke-width="2.5" marker-end="url(#fg2)"/>
+        <line x1="125" y1="55" x2="405" y2="55" stroke="#ccc" stroke-width="1.5" marker-end="url(#fg3)"/>
+        <line x1="115" y1="68" x2="340" y2="180" stroke="#ccc" stroke-width="1.2" marker-end="url(#fg4)"/>
+        <line x1="110" y1="72" x2="338" y2="278" stroke="#ccc" stroke-width="1.2" marker-end="url(#fg5)"/>
+
+        <!-- A_Y → Y_1 -->
+        <line x1="225" y1="185" x2="335" y2="185" stroke="#1a1916" stroke-width="1.8" marker-end="url(#fb1)"/>
+        <!-- A_Y → Z_1 -->
+        <line x1="215" y1="178" x2="410" y2="68" stroke="#1a1916" stroke-width="1.3" marker-end="url(#fb2)"/>
+        <!-- A_Y → Y_2 (arc) -->
+        <path d="M220,175 Q410,120 578,178" fill="none" stroke="#1a1916" stroke-width="1.3" marker-end="url(#fb3)"/>
+
+        <!-- A_D → D_1 -->
+        <line x1="225" y1="287" x2="335" y2="287" stroke="#1a1916" stroke-width="1.8" marker-end="url(#fb4)"/>
+        <!-- A_D → D_2 (arc) -->
+        <path d="M220,298 Q410,340 578,295" fill="none" stroke="#1a1916" stroke-width="1.3" marker-end="url(#fb5)"/>
+
+        <!-- Z_1 → Y_2 -->
+        <line x1="450" y1="65" x2="580" y2="178" stroke="#1a1916" stroke-width="1.5" marker-end="url(#fb6)"/>
+        <!-- Z_1 → D_2 -->
+        <line x1="448" y1="72" x2="582" y2="275" stroke="#1a1916" stroke-width="1.3" marker-end="url(#fb7)"/>
+
+        <!-- Y_1 → Y_2 -->
+        <line x1="385" y1="185" x2="575" y2="185" stroke="#1a1916" stroke-width="1.5" marker-end="url(#fb8)"/>
+        <!-- Y_1 → D_2 -->
+        <line x1="380" y1="198" x2="580" y2="278" stroke="#1a1916" stroke-width="1.2" marker-end="url(#fb9)"/>
+
+        <!-- D_1 → Y_1 (structural, upward) -->
+        <line x1="355" y1="275" x2="355" y2="202" stroke="#1a1916" stroke-width="1.3" marker-end="url(#fb10)"/>
+        <!-- D_1 → D_2 -->
+        <line x1="385" y1="287" x2="575" y2="287" stroke="#1a1916" stroke-width="1.5" marker-end="url(#fb11)"/>
+        <!-- D_1 → Y_2 -->
+        <line x1="380" y1="278" x2="580" y2="198" stroke="#1a1916" stroke-width="1.2" marker-end="url(#fb12)"/>
+
+        <!-- D_2 → Y_2 (structural, upward) -->
+        <line x1="595" y1="275" x2="595" y2="202" stroke="#1a1916" stroke-width="1.3" marker-end="url(#fb13)"/>
+
+        <defs>
+          <marker id="fg1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bbb"/></marker>
+          <marker id="fg2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bbb"/></marker>
+          <marker id="fg3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+          <marker id="fg4" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+          <marker id="fg5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ccc"/></marker>
+          <marker id="fb1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="fb2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a1916"/></marker>
+          <marker id="fb5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb6" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb7" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb8" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb9" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb10" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb11" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb12" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+          <marker id="fb13" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1a1916"/></marker>
+        </defs>
+      </svg>
+      <p class="dag-caption">Figure 1 &mdash; Extended DAG with treatment decomposition over two time points (adapted from Stensrud et al. 2021, Figure 2b). $A$ decomposes into $\color{teal}{A_Y}$ and $\color{orange}{A_D}$. $Z_k$ represents all causes of $Y$ and $D$ (e.g., blood pressure in SPRINT). Grey nodes and arrows are baseline quantities. $\color{teal}{A_Y}$ affects $Y_1$, $Y_2$, and $Z_1$; $\color{orange}{A_D}$ affects $D_1$ and $D_2$. Upward arrows $D \to Y$ are structural: death precludes the event of interest.</p>
+    </div>
+
+
+    <h2 id="s2">2. $Z_k$ vs $L_k$: what you need vs what you have</h2>
+
+    <p>
+      The paper introduces $Z_k$ &mdash; <strong>all</strong> direct or indirect causes of $Y_{k+1}$ and $D_{k+1}$, including variables you did not measure. This includes blood pressure, kidney biomarkers, inflammatory state, genetic factors, subclinical vascular damage &mdash; everything that causally matters for what happens next.
+    </p>
+
+    <p>
+      $L_k$ is what you actually measured. Always $L_k \subseteq Z_k$.
+    </p>
+
+    <p>
+      The distinction matters because <strong>interpretation</strong> of separable effects depends on $Z_k$ (the full causal structure &mdash; which pathways does the effect capture?), while <strong>identification</strong> depends on $L_k$ (what can you condition on in your data?). The gap between them determines how much you rely on untestable assumptions. If $L_k = Z_k$ (you measured everything), identification is straightforward. If $L_k \subset Z_k$ (unmeasured causes exist), the dismissible conditions must do more work.
+    </p>
+
+
+    <h2 id="s3">3. The isolation hierarchy</h2>
+
+    <p>
+      The 2020 paper assumed full isolation. The 2021 paper defines a hierarchy of progressively weaker assumptions, each still sufficient for identification but with different implications for how the separable effects should be interpreted.
+    </p>
+
+    <div class="callout callout-definition">
+      <div class="callout-label">Full isolation</div>
+      <p style="margin-bottom: 0;">
+        $\color{teal}{A_Y}$ does not affect any $Z_k$ that causes $D_{k+1}$ (except through $Y$). $\color{orange}{A_D}$ does not affect any $Z_k$ that causes $Y_{k+1}$ (except through $D$). No shared intermediates. Both separable effects have pure pathway interpretations: the direct effect captures only $\color{teal}{A_Y} \to Y$, the indirect effect captures only $\color{orange}{A_D} \to D \to Y$. Often unrealistic when time-varying intermediates exist.
+      </p>
+    </div>
+
+    <div class="callout callout-definition" style="margin-top: 0.8em;">
+      <div class="callout-label">$A_Y$ partial isolation</div>
+      <p style="margin-bottom: 0;">
+        $\color{teal}{A_Y}$ still does not affect shared intermediates &mdash; same restriction as full isolation for $\color{teal}{A_Y}$. But $\color{orange}{A_D}$ <strong>can</strong> affect intermediates that cause both $Y$ and $D$. In SPRINT: $\color{teal}{A_Y}$ (direct renal mechanism) does not affect blood pressure, but $\color{orange}{A_D}$ (blood-pressure-lowering) does. The $\color{teal}{A_Y}$ separable effect remains clean &mdash; purely $\color{teal}{A_Y} \to Y$. The $\color{orange}{A_D}$ separable effect is a bundle: $\color{orange}{A_D} \to D \to Y$ plus $\color{orange}{A_D} \to BP_k \to Y$.
+      </p>
+    </div>
+
+    <div class="callout callout-definition" style="margin-top: 0.8em;">
+      <div class="callout-label">$A_D$ partial isolation</div>
+      <p style="margin-bottom: 0;">
+        Mirror image. $\color{orange}{A_D}$ does not affect shared intermediates, but $\color{teal}{A_Y}$ can. Now the $\color{orange}{A_D}$ separable effect is clean; the $\color{teal}{A_Y}$ effect is a bundle.
+      </p>
+    </div>
+
+    <div class="callout callout-definition" style="margin-top: 0.8em;">
+      <div class="callout-label">No isolation + $Z_k$ partition</div>
+      <p style="margin-bottom: 0;">
+        Both $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ affect intermediates &mdash; but <strong>different</strong> ones. $Z_k$ can be split into $Z_{Y,k}$ (affected by $\color{teal}{A_Y}$ only) and $Z_{D,k}$ (affected by $\color{orange}{A_D}$ only). Both separable effects are bundles, but they capture <strong>non-overlapping</strong> pathways. Still identifiable.
+      </p>
+    </div>
+
+    <div class="callout callout-definition" style="margin-top: 0.8em;">
+      <div class="callout-label">No isolation, no partition</div>
+      <p style="margin-bottom: 0;">
+        Both $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ affect the <strong>same</strong> $Z_k$. The effect of $Z_k$ on $Y$ cannot be attributed to one component &mdash; like mixed paint, you cannot unmix it. The paper proves (Lemma 4) that at least one dismissible condition must fail. <strong>Generally not identifiable</strong> from a two-arm trial.
+      </p>
+    </div>
+
+    <p>
+      The difference between the last two levels is the core issue. When $\color{teal}{A_Y}$ and $\color{orange}{A_D}$ affect <strong>different</strong> intermediates ($Z_{Y,k}$ and $Z_{D,k}$), each intermediate "knows where it came from" &mdash; if $Z_{Y,k}$ changes, it must be because of $\color{teal}{A_Y}$, and we can attribute its downstream effect on $Y$. But when both affect the <strong>same</strong> $Z_k$ &mdash; say $\color{teal}{A_Y} \to Z_k \leftarrow \color{orange}{A_D}$ with $Z_k \to Y$ and $Z_k \to D$ &mdash; the observed value of $Z_k$ is a mixture of both components' effects, and there is no way to decompose how much came from each.
+    </p>
+
+    <table style="table-layout: fixed; margin: 1.5em 0;">
+      <colgroup>
+        <col style="width: 22%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 18%;"><col style="width: 15%;">
+      </colgroup>
+      <tr><th>Assumption</th><th>$\color{teal}{A_Y}$ affects $Z_k$?</th><th>$\color{orange}{A_D}$ affects $Z_k$?</th><th>Shared $Z_k$?</th><th>Interpretation</th><th>Identifiable?</th></tr>
+      <tr><td>Full isolation</td><td>No</td><td>No</td><td>N/A</td><td>Both effects pure</td><td>Yes</td></tr>
+      <tr><td>$A_Y$ partial</td><td>No</td><td>Yes</td><td>N/A</td><td>$A_Y$ clean, $A_D$ mixed</td><td>Yes</td></tr>
+      <tr><td>$A_D$ partial</td><td>Yes</td><td>No</td><td>N/A</td><td>$A_D$ clean, $A_Y$ mixed</td><td>Yes</td></tr>
+      <tr><td>No isolation + partition</td><td>Yes</td><td>Yes</td><td>No &mdash; splittable</td><td>Both mixed, non-overlapping</td><td>Yes</td></tr>
+      <tr style="background: #fdf6f0;"><td>No isolation, no partition</td><td>Yes</td><td>Yes</td><td>Yes &mdash; same variable</td><td>Both mixed, overlapping</td><td><strong>No</strong> (generally)</td></tr>
+    </table>
+
+    <div class="callout callout-insight">
+      <div class="callout-label">What stays the same across all levels</div>
+      <p style="margin-bottom: 0;">
+        The estimand $\P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{K+1} = 1]$ is always well-defined and always answers "what would happen under this modified treatment." What changes is how precisely you can describe which pathways the effect captures.
+      </p>
+    </div>
+
+
+    <h2 id="s4">4. Generalized dismissible conditions</h2>
+
+    <p>
+      The 2020 paper had two conditions ($\Delta_1$, $\Delta_2$). With time-varying covariates, two more are needed &mdash; one for each side of the covariate partition $L_k = (L_{Y,k},\, L_{D,k})$.
+    </p>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 10%;"><col style="width: 45%;"><col style="width: 45%;">
+      </colgroup>
+      <tr><th></th><th>Condition</th><th>In words</th></tr>
+      <tr><td>(14)</td><td>$Y_{k+1} \ind \color{orange}{A_D} \mid \color{teal}{A_Y},\; D_{k+1} = Y_k = 0,\; \bar{L}_k$</td><td>The $Y$ hazard does not depend on $\color{orange}{A_D}$ &mdash; same as $\Delta_1$, now conditioning on full history $\bar{L}_k$</td></tr>
+      <tr><td>(15)</td><td>$D_{k+1} \ind \color{teal}{A_Y} \mid \color{orange}{A_D},\; D_k = Y_k = 0,\; \bar{L}_k$</td><td>The $D$ hazard does not depend on $\color{teal}{A_Y}$ &mdash; same as $\Delta_2$</td></tr>
+      <tr><td>(16)</td><td>$L_{Y,k} \ind \color{orange}{A_D} \mid \color{teal}{A_Y},\; Y_k = D_k = 0,\; \bar{L}_{k-1},\; L_{D,k}$</td><td><strong>New.</strong> The $Y$-related covariates do not depend on $\color{orange}{A_D}$</td></tr>
+      <tr><td>(17)</td><td>$L_{D,k} \ind \color{teal}{A_Y} \mid \color{orange}{A_D},\; D_k = Y_k = 0,\; \bar{L}_{k-1}$</td><td><strong>New.</strong> The $D$-related covariates do not depend on $\color{teal}{A_Y}$</td></tr>
+    </table>
+
+    <p>
+      The covariate partition is a substantive decision. In SPRINT: $L_{D,k}$ = blood pressure (on the $\color{orange}{A_D}$ pathway), $L_{Y,k} = \emptyset$ (no measured time-varying covariates on the $\color{teal}{A_Y}$ pathway alone). Conditions (16) and (17) ensure the partition respects the decomposition &mdash; each component only affects its own side of the covariates.
+    </p>
+
+
+    <h2 id="s5">5. The generalized g-formula</h2>
+
+    <p>
+      Same target as before: $\P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{K+1} = 1]$. The identification follows the same logic as Post 2 &mdash; laws of probability, then dismissible conditions separate the components, then exchangeability and consistency link to observed data. The result has the same mixing structure, with two new terms for the covariate densities.
+    </p>
+
+    <p>
+      At each time $j$ in the product, five terms appear &mdash; each drawn from the appropriate arm:
+    </p>
+
+    $$\P[Y^{\color{teal}{a_Y},\, \color{orange}{a_D}}_{K+1} = 1] = \sum_{\bar{l}_K, \bar{d}_{K+1}} \sum_{s=0}^{K} \underbrace{\P[Y_{s+1} = 1 \mid \ldots,\; A = \color{teal}{a_Y}]}_{\text{CS hazard of } Y}$$
+
+    $$\times \prod_{j=0}^{s} \bigg( \underbrace{\P[D_{j+1} = 0 \mid \ldots,\; A = \color{orange}{a_D}]}_{\text{event-free from } D} \times \underbrace{\P[Y_j = 0 \mid \ldots,\; A = \color{teal}{a_Y}]}_{\text{event-free from } Y}$$
+
+    $$\times \underbrace{f(L_{Y,j} \mid \ldots,\; L_{D,j},\; A = \color{teal}{a_Y})}_{\text{Y-covariates density}} \times \underbrace{f(L_{D,j} \mid \ldots,\; A = \color{orange}{a_D})}_{\text{D-covariates density}} \bigg)$$
+
+    <p>
+      Compared to the 2020 formula, two new terms appear inside the product at each time $j$:
+    </p>
+
+    <table style="table-layout: fixed; margin: 1em 0;">
+      <colgroup>
+        <col style="width: 35%;"><col style="width: 25%;"><col style="width: 40%;">
+      </colgroup>
+      <tr><th>Term</th><th>From arm</th><th>2020 vs 2021</th></tr>
+      <tr><td>CS hazard of $Y$ at $s+1$</td><td>$A = \color{teal}{a_Y}$</td><td>Same</td></tr>
+      <tr><td>Event-free from $D$ at $j+1$</td><td>$A = \color{orange}{a_D}$</td><td>Same</td></tr>
+      <tr><td>Event-free from $Y$ at $j$</td><td>$A = \color{teal}{a_Y}$</td><td>Same</td></tr>
+      <tr><td>$f(L_{Y,j} \mid \ldots)$</td><td>$A = \color{teal}{a_Y}$</td><td><strong>New</strong></td></tr>
+      <tr><td>$f(L_{D,j} \mid \ldots)$</td><td>$A = \color{orange}{a_D}$</td><td><strong>New</strong></td></tr>
+    </table>
+
+    <p>
+      The mixing logic extends naturally: everything related to $Y$ (hazard, event-free, $Y$-covariates) from the $\color{teal}{a_Y}$ arm, everything related to $D$ (event-free, $D$-covariates) from the $\color{orange}{a_D}$ arm. Because the formula now sums over all possible covariate histories $\bar{l}_K$, it cannot be evaluated by direct plug-in as in the 2020 paper &mdash; it requires Monte Carlo simulation.
+    </p>
+
+
+    <h2 id="s6">6. Discussion</h2>
+
+    <p>
+      <strong>Estimation.</strong> The 2021 paper provides three estimators (parametric g-formula, two IPW variants), each extending the 2020 estimators with additional covariate weights. The IPW weights for time-varying covariates follow the same ratio logic &mdash; swapping distributions between arms, not removing them. A practical shortcut avoids density estimation by using propensity score models instead. The technical companion post will walk through these estimators and their implementation.
+    </p>
+
+    <p>
+      <strong>Sensitivity analysis.</strong> The paper provides a formal sensitivity function $t_k$ measuring how much the dismissible conditions are violated, allowing researchers to compute separable effects for a range of assumed violation magnitudes. The isolation hierarchy itself also serves as a sensitivity check: comparing estimates under full isolation (2020) against $Z_k$ partition (2021) reveals whether time-varying covariates matter.
+    </p>
+
+    <p>
+      <strong>Application.</strong> Stensrud et al. applied this framework to the SPRINT trial with $L_{D,k}$ = blood pressure and $L_{Y,k} = \emptyset$. The estimated $\color{teal}{A_Y}$ separable effect was 0.00 (95% CI: [&minus;0.10, 0.02]) at 30 months when $\color{orange}{a_D} = 1$, suggesting that removing the $\color{teal}{A_Y}$ component from intensive therapy would not decrease the average risk of kidney injury at 30 months.
+    </p>
+
+    <p>
+      <strong>Limitations.</strong> The dismissible conditions remain untestable in a two-arm trial. The covariate partition $L_k = (L_{Y,k}, L_{D,k})$ is a substantive choice that encodes biological knowledge and may be wrong. When no $Z_k$ partition exists &mdash; when both components affect the same intermediate variable &mdash; identification generally fails, and sensitivity analysis is the only recourse.
+    </p>
+
+    <hr>
+
+    <h3>References</h3>
+    <p class="references">
+      Stensrud MJ, Hern&aacute;n MA, Tchetgen Tchetgen EJ, Robins JM, Didelez V, Young JG (2021). A generalized theory of separable effects in competing event settings. <em>Lifetime Data Analysis</em> 27:588&ndash;631.<br>
+      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2020). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
+      Young JG, Stensrud MJ, Tchetgen Tchetgen EJ, Hern&aacute;n MA (2020). A causal framework for classical statistical estimands in failure time settings with competing events. <em>Statistics in Medicine</em> 39(8):1199&ndash;1236.<br>
+      Stensrud MJ, Robins JM, Sarvet A, Tchetgen Tchetgen EJ, Young JG (2023). Conditional separable effects. <em>Journal of the American Statistical Association</em> 118(544):2671&ndash;2683.
+    </p>
+
+    <div class="module-nav">
+      <a href="part2-separable-effects-2020.html" class="nav-prev">&larr; Part 2: Separable Effects</a>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-left">&copy; 2026 Alex Mourer</span>
+    </div>
+  </footer>
+</body>
+</html>
