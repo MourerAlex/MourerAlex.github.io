@@ -406,10 +406,10 @@ nav {
 
 .about-banner-bio {
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 300;
   letter-spacing: 0;
-  line-height: 1.7;
+  line-height: 1.75;
   text-transform: none;
   color: var(--text-muted);
   max-width: 480px;
@@ -562,9 +562,9 @@ nav {
   margin: 20px 0 18px;
 }
 .home-mid-banner-text p {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
-  line-height: 1.7;
+  line-height: 1.75;
   font-weight: 300;
   max-width: 360px;
   margin-bottom: 28px;
