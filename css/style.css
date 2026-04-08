@@ -331,7 +331,7 @@ nav {
   justify-content: center;
   border-left: 1px solid #b0d4f0;
   border-right: 1px solid #b0d4f0;
-  height: 340px;
+  height: 440px;
   overflow: hidden;
 }
 .about-banner-decor {
@@ -543,7 +543,7 @@ nav {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  height: 340px;
+  height: 420px;
   align-items: stretch;
   border-left: 1px solid #b0d4f0;
   border-right: 1px solid #b0d4f0;
