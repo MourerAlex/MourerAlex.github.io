@@ -600,6 +600,9 @@ nav {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
 }
 .home-topic-card:last-child { border-right: none; }
 .home-topic-card h3 {
@@ -607,14 +610,8 @@ nav {
   font-weight: 300;
   letter-spacing: -0.01em;
   line-height: 1.35;
-  margin: 18px 0 14px;
-}
-.home-topic-card p {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.75;
-  font-weight: 300;
-  flex: 1;
+  margin: 18px 0 22px;
+  max-width: 280px;
 }
 .topic-link {
   display: inline-flex;
