@@ -993,6 +993,9 @@ footer {
   font-weight: 300;
 }
 .post-layout p strong { color: var(--text); font-weight: 500; }
+/* MathJax equations slightly larger than body text for readability */
+.post-layout mjx-container { font-size: 112% !important; }
+.post-layout mjx-container[display="true"] { font-size: 118% !important; margin: 1.1em 0 !important; }
 .post-layout a:not(.back-link) { color: #2563eb; text-decoration: underline; text-decoration-color: rgba(37,99,235,0.3); }
 .post-layout a:not(.back-link):hover { color: #1d4ed8; text-decoration-color: rgba(37,99,235,0.6); }
 .post-layout ul, .post-layout ol {
