@@ -141,9 +141,9 @@ nav {
   font-style: italic; color: var(--accent);
 }
 .hero-bio {
-  font-size: 15px; line-height: 1.75;
+  font-size: 17px; line-height: 1.75;
   color: var(--text-muted); font-weight: 300;
-  max-width: 420px;
+  max-width: 460px;
 }
 .hero-tags {
   display: flex; flex-wrap: wrap; gap: 8px;
@@ -236,7 +236,7 @@ nav {
   margin-bottom: 10px; color: var(--text);
 }
 .post-card p {
-  font-size: 13px; color: var(--text-muted);
+  font-size: 17px; color: var(--text-muted);
   line-height: 1.65; font-weight: 300;
 }
 
@@ -246,7 +246,7 @@ nav {
   padding: 44px 36px;
 }
 .post-featured h3 { font-size: 22px; }
-.post-featured p { font-size: 14px; max-width: 520px; }
+.post-featured p { font-size: 17px; max-width: 520px; }
 
 /* ── ABOUT STRIP ── */
 .about-strip {
@@ -273,7 +273,7 @@ nav {
   margin-bottom: 16px;
 }
 .about-strip p {
-  font-size: 14px; color: var(--text-muted);
+  font-size: 17px; color: var(--text-muted);
   line-height: 1.7; font-weight: 300;
 }
 .stat-grid {
@@ -406,13 +406,13 @@ nav {
 
 .about-banner-bio {
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 300;
   letter-spacing: 0;
   line-height: 1.75;
   text-transform: none;
   color: var(--text-muted);
-  max-width: 480px;
+  max-width: 520px;
   margin-top: 20px;
 }
 .about-banner-roles {
@@ -426,7 +426,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 14px;
-  font-size: 14px;
+  font-size: 17px;
   color: var(--text-muted);
   font-weight: 300;
 }
@@ -456,7 +456,7 @@ nav {
   color: var(--text-faint);
 }
 .meta-value {
-  font-size: 14px;
+  font-size: 17px;
   color: var(--text);
   font-weight: 300;
 }
@@ -487,12 +487,12 @@ nav {
   padding: 72px 0;
 }
 .home-intro-left p {
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.75;
   color: var(--text-muted);
   margin-bottom: 20px;
   font-weight: 300;
-  max-width: 440px;
+  max-width: 480px;
 }
 .home-post-list {
   display: flex;
@@ -519,7 +519,7 @@ nav {
   white-space: nowrap;
 }
 .home-post-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 300;
   line-height: 1.4;
   color: var(--text);
@@ -562,11 +562,11 @@ nav {
   margin: 20px 0 18px;
 }
 .home-mid-banner-text p {
-  font-size: 15px;
+  font-size: 17px;
   color: var(--text-muted);
   line-height: 1.75;
   font-weight: 300;
-  max-width: 360px;
+  max-width: 400px;
   margin-bottom: 28px;
 }
 .home-mid-banner-image {
@@ -650,11 +650,11 @@ nav {
   margin: 14px 0 10px;
 }
 .consulting-box p {
-  font-size: 14px;
+  font-size: 17px;
   color: var(--text-muted);
   font-weight: 300;
   line-height: 1.6;
-  max-width: 520px;
+  max-width: 560px;
 }
 
 /* ── STAT STRIP ── */
@@ -727,8 +727,8 @@ footer {
   letter-spacing: -0.025em;
 }
 .page-header p {
-  font-size: 15px; color: var(--text-muted);
-  margin-top: 14px; max-width: 480px;
+  font-size: 17px; color: var(--text-muted);
+  margin-top: 14px; max-width: 520px;
   line-height: 1.7;
 }
 .filter-bar {
@@ -779,12 +779,13 @@ footer {
   font-size: 12px; color: var(--text-faint);
 }
 .post-list-title {
-  font-size: 16px; font-weight: 400;
+  font-size: 18px; font-weight: 400;
   letter-spacing: -0.01em;
 }
 .post-list-title span {
-  font-size: 13px; color: var(--text-muted);
-  display: block; margin-top: 4px; font-weight: 300;
+  font-size: 17px; color: var(--text-muted);
+  display: block; margin-top: 6px; font-weight: 300;
+  line-height: 1.55;
 }
 .post-list-tag {
   font-family: var(--mono);
@@ -846,9 +847,9 @@ footer {
   letter-spacing: -0.02em; margin-bottom: 20px;
 }
 .about-main p {
-  font-size: 15px; color: var(--text-muted);
+  font-size: 17px; color: var(--text-muted);
   line-height: 1.75; font-weight: 300;
-  margin-bottom: 20px; max-width: 600px;
+  margin-bottom: 20px; max-width: 640px;
 }
 .research-areas {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
@@ -871,8 +872,8 @@ footer {
   margin-bottom: 6px; letter-spacing: -0.01em;
 }
 .research-card p {
-  font-size: 12px; color: var(--text-faint);
-  line-height: 1.5; margin: 0;
+  font-size: 17px; color: var(--text-faint);
+  line-height: 1.55; margin: 0;
 }
 
 /* ── PROJECTS PAGE ── */
@@ -915,7 +916,7 @@ footer {
   line-height: 1.35;
 }
 .project-card p {
-  font-size: 13px; color: var(--text-muted);
+  font-size: 17px; color: var(--text-muted);
   line-height: 1.65; font-weight: 300;
   margin-bottom: 20px;
 }
@@ -1156,7 +1157,7 @@ footer {
   .nav-links { gap: 2px; }
   .nav-links a { padding: 6px 8px; font-size: 10px; }
   .hero h1 { font-size: 28px; }
-  .hero-bio { font-size: 14px; }
+  .hero-bio { font-size: 17px; }
   .stat-strip-inner { grid-template-columns: 1fr; }
   .stat-strip-item { border-right: none; border-bottom: 1px solid var(--border); }
   .stat-strip-item:last-child { border-bottom: none; }
