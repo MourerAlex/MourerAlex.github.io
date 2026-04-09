@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Posts — Alex Mourer</title>
-  <link rel="stylesheet" href="../css/style.css?v=36">
+  <link rel="stylesheet" href="../css/style.css?v=37">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
     .posts-banner {
@@ -89,6 +89,45 @@
   </div>
 
   <div class="container">
+
+    <section class="series-shelf" aria-label="Post series">
+      <h2 class="series-shelf-heading">Series</h2>
+      <div class="series-grid">
+
+        <article class="series-card">
+          <h3 class="series-card-title">Competing Events &amp; Causal Inference</h3>
+          <ol class="series-card-list">
+            <li><a href="posts/competing-events-causal-inference.html">Competing Events and Causal Inference</a></li>
+            <li><a href="posts/part2-separable-effects-2020.html">Separable Effects</a></li>
+            <li><a href="posts/part3-generalized-separable-effects-2021.html">Generalized Separable Effects</a></li>
+            <li><a href="posts/part4a-technical-2020.html">Technical Companion &mdash; 2020 Mathematics</a></li>
+            <li><a href="posts/part4b-technical-2021.html">Technical Companion &mdash; 2021 Extensions</a></li>
+          </ol>
+        </article>
+
+        <article class="series-card">
+          <h3 class="series-card-title">Causal Inference Models</h3>
+          <ol class="series-card-list">
+            <li><a href="posts/intro-why-model.html">Introduction: Why Model?</a></li>
+            <li><a href="posts/module0-foundations.html">Foundations</a></li>
+            <li><a href="posts/module1-ipw.html">Inverse Probability Weighting</a></li>
+          </ol>
+        </article>
+
+        <article class="series-card">
+          <h3 class="series-card-title">Causal Inference &mdash; Design</h3>
+          <ol class="series-card-list">
+            <li><a href="posts/causal-roadmap.html">The Causal Roadmap</a></li>
+            <li><a href="posts/estimand-itt-vs-pp.html">Intention-to-Treat vs. Per-Protocol &mdash; Estimands</a></li>
+            <li><a href="posts/module2-tte.html">Target Trial Emulation</a></li>
+            <li><a href="posts/rwe-study-designs.html">From ACNU to Sequential Nested Trials</a></li>
+          </ol>
+        </article>
+
+      </div>
+    </section>
+
+    <h2 class="latest-posts-heading">Latest posts</h2>
 
     <div class="filter-bar">
       <button class="filter-btn active" onclick="filterPosts('all', this)">All</button>
@@ -192,7 +231,7 @@
       <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module0-foundations.html'">
         <span class="post-list-date">2025-02-19</span>
         <div class="post-list-title">
-          Causal Inference Methods: Module 0 — Foundations
+          Foundations
           <span>Potential outcomes, identification assumptions, and the shared framework behind IPW, G-formula, AIPW, and TMLE.</span>
         </div>
         <span class="post-list-tag">Causal Inference</span>
@@ -201,7 +240,7 @@
       <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module2-tte.html'">
         <span class="post-list-date">2025-01-09</span>
         <div class="post-list-title">
-          Module 2: Target Trial Emulation
+          Target Trial Emulation
           <span>Designing observational analyses that mimic the trial you wish you had.</span>
         </div>
         <span class="post-list-tag">Causal Inference</span>
@@ -210,7 +249,7 @@
       <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module1-ipw.html'">
         <span class="post-list-date">2024-11-27</span>
         <div class="post-list-title">
-          Module 1: Inverse Probability Weighting
+          Inverse Probability Weighting
           <span>Weighting observations to create a pseudo-population where treatment is unconfounded.</span>
         </div>
         <span class="post-list-tag">Causal Inference</span>

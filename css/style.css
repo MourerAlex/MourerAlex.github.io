@@ -731,6 +731,99 @@ footer {
   margin-top: 14px; max-width: 520px;
   line-height: 1.7;
 }
+/* ---------- Series shelf ---------- */
+.series-shelf {
+  padding: 48px 0 8px 0;
+}
+.series-shelf-heading,
+.latest-posts-heading {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 0 0 20px 0;
+}
+.latest-posts-heading {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.series-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px 26px 22px 26px;
+  background: #fcfcfb;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.series-card:hover {
+  border-color: #b8bcc8;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+.series-card-title {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0 0 16px 0;
+  line-height: 1.35;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.series-card-list {
+  list-style: none;
+  counter-reset: series-counter;
+  margin: 0;
+  padding: 0;
+}
+.series-card-list li {
+  counter-increment: series-counter;
+  position: relative;
+  padding: 8px 0 8px 32px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.series-card-list li::before {
+  content: counter(series-counter);
+  position: absolute;
+  left: 0;
+  top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+.series-card-list a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.series-card-list a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+@media (max-width: 900px) {
+  .series-grid { grid-template-columns: 1fr; }
+}
+/* ---------- /Series shelf ---------- */
+
 .filter-bar {
   display: flex; gap: 8px;
   padding: 20px 0;
