@@ -1257,3 +1257,124 @@ footer {
   .home-mid-banner-text h2 { font-size: 24px; }
   .about-banner .section-label { font-size: 24px; }
 }
+
+/* ================================================================
+   Code blocks (pre) and inline code
+   ================================================================ */
+
+/* Inline code inside paragraphs and list items */
+.post-layout p code,
+.post-layout li code,
+.post-layout td code,
+.post-layout h2 code,
+.post-layout h3 code,
+.post-layout h4 code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: #f2f0eb;
+  color: #1a1916;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* Block code containers */
+.post-layout pre {
+  position: relative;
+  background: #f8f7f2;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin: 1.4em 0;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: var(--mono);
+  color: #1a1916;
+  tab-size: 2;
+  -moz-tab-size: 2;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03) inset;
+}
+.post-layout pre code {
+  font-family: var(--mono);
+  font-size: inherit;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  white-space: pre;
+  display: block;
+}
+
+/* Scrollbar styling for code blocks */
+.post-layout pre::-webkit-scrollbar {
+  height: 8px;
+}
+.post-layout pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+.post-layout pre::-webkit-scrollbar-thumb {
+  background: #d8d5cd;
+  border-radius: 4px;
+}
+.post-layout pre::-webkit-scrollbar-thumb:hover {
+  background: #b8b5ad;
+}
+
+/* ----------------------------------------------------------------
+   Syntax highlighting — custom muted palette matching the site
+   (targets highlight.js token classes)
+   ---------------------------------------------------------------- */
+.post-layout pre .hljs-comment,
+.post-layout pre .hljs-quote {
+  color: #8a8680;
+  font-style: italic;
+}
+.post-layout pre .hljs-keyword,
+.post-layout pre .hljs-selector-tag,
+.post-layout pre .hljs-literal {
+  color: #7a3e3e;
+  font-weight: 500;
+}
+.post-layout pre .hljs-string,
+.post-layout pre .hljs-regexp,
+.post-layout pre .hljs-attr {
+  color: #2a5f4f;
+}
+.post-layout pre .hljs-number,
+.post-layout pre .hljs-meta {
+  color: #8b5a2b;
+}
+.post-layout pre .hljs-built_in,
+.post-layout pre .hljs-builtin-name,
+.post-layout pre .hljs-title,
+.post-layout pre .hljs-title.function_,
+.post-layout pre .hljs-name {
+  color: #1f4d6b;
+}
+.post-layout pre .hljs-variable,
+.post-layout pre .hljs-params {
+  color: #1a1916;
+}
+.post-layout pre .hljs-symbol,
+.post-layout pre .hljs-operator,
+.post-layout pre .hljs-punctuation {
+  color: #4a4740;
+}
+.post-layout pre .hljs-type,
+.post-layout pre .hljs-class .hljs-title {
+  color: #5a3d7a;
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .post-layout pre {
+    font-size: 12.5px;
+    padding: 14px 16px;
+    margin: 1.2em -4px;
+    border-radius: 4px;
+  }
+}
+

@@ -4,7 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Implementation — From Formula to Code | Alex Mourer</title>
-  <link rel="stylesheet" href="../../css/style.css?v=37">
+  <link rel="stylesheet" href="../../css/style.css?v=38">
+  <!-- highlight.js core (no theme — colors are defined in style.css) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('pre code').forEach(function(block) {
+        if (!block.className) block.className = 'language-r';
+        if (window.hljs) window.hljs.highlightElement(block);
+      });
+    });
+  </script>
   <script>
     window.MathJax = {
       tex: {
@@ -27,7 +38,6 @@
     details summary:hover { text-decoration: underline; }
     details[open] > summary { margin-bottom: 0.5em; }
     details .collapsible-content { border-left: 3px solid #e0ddd5; padding-left: 1.2em; margin-left: 0.2em; }
-    pre code { font-size: 0.88em; line-height: 1.5; }
     .eq-box { background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 0.8em 1.2em; margin: 1.2em 0 0.8em 0; font-size: 0.95em; overflow-x: auto; }
     .eq-box .eq-label { display: block; font-size: 0.85em; color: #666; margin-bottom: 0.4em; }
   </style>

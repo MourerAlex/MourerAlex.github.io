@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inverse Probability Weighting — Causal Inference Models | Alex Mourer</title>
-  <link rel="stylesheet" href="../../css/style.css?v=37">
+  <link rel="stylesheet" href="../../css/style.css?v=38">
 
   <script>
     window.MathJax = {
@@ -674,7 +674,7 @@ $$
 
 <h3>6.2 R implementation</h3>
 
-<pre style="background: var(--gray-light); padding: 1.2rem 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.88rem; line-height: 1.5; font-family: 'Courier New', monospace;">
+<pre>
 <code><span style="color:#7f8c8d;"># ── Simulate data ──────────────────────────────────────</span>
 set.seed(42)
 n &lt;- 10000
@@ -722,7 +722,7 @@ cat("SMD (age) after weighting: ", round(smd_age_after, 3), "\n")</code>
 
 <h3>6.3 Python implementation</h3>
 
-<pre style="background: var(--gray-light); padding: 1.2rem 1.5rem; border-radius: 6px; overflow-x: auto; font-size: 0.88rem; line-height: 1.5; font-family: 'Courier New', monospace;">
+<pre>
 <code><span style="color:#7f8c8d;"># ── Simulate data ──────────────────────────────────────</span>
 import numpy as np
 from scipy.special import expit
