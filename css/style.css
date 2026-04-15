@@ -1323,49 +1323,11 @@ footer {
   background: #b8b5ad;
 }
 
-/* ----------------------------------------------------------------
-   Syntax highlighting — custom muted palette matching the site
-   (targets highlight.js token classes)
-   ---------------------------------------------------------------- */
-.post-layout pre .hljs-comment,
-.post-layout pre .hljs-quote {
-  color: #8a8680;
+/* Code inside pre is deliberately monochrome — no syntax highlighting.
+   Author-provided <span class="comment"> is the one allowed accent. */
+.post-layout pre .comment {
+  color: #6a8a7a;
   font-style: italic;
-}
-.post-layout pre .hljs-keyword,
-.post-layout pre .hljs-selector-tag,
-.post-layout pre .hljs-literal {
-  color: #7a3e3e;
-  font-weight: 500;
-}
-.post-layout pre .hljs-string,
-.post-layout pre .hljs-regexp,
-.post-layout pre .hljs-attr {
-  color: #2a5f4f;
-}
-.post-layout pre .hljs-number,
-.post-layout pre .hljs-meta {
-  color: #8b5a2b;
-}
-.post-layout pre .hljs-built_in,
-.post-layout pre .hljs-builtin-name,
-.post-layout pre .hljs-title,
-.post-layout pre .hljs-title.function_,
-.post-layout pre .hljs-name {
-  color: #1f4d6b;
-}
-.post-layout pre .hljs-variable,
-.post-layout pre .hljs-params {
-  color: #1a1916;
-}
-.post-layout pre .hljs-symbol,
-.post-layout pre .hljs-operator,
-.post-layout pre .hljs-punctuation {
-  color: #4a4740;
-}
-.post-layout pre .hljs-type,
-.post-layout pre .hljs-class .hljs-title {
-  color: #5a3d7a;
 }
 
 /* Mobile tweaks */
@@ -1376,5 +1338,67 @@ footer {
     margin: 1.2em -4px;
     border-radius: 4px;
   }
+}
+
+/* ---------- Downloadable code companion block ---------- */
+.post-layout a.code-download {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 2em 0;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-light);
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+              transform 0.15s ease, background 0.15s ease;
+}
+.post-layout a.code-download:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgba(42, 95, 79, 0.10);
+  transform: translateY(-1px);
+}
+.post-layout .code-download-icon {
+  font-family: var(--mono);
+  font-size: 22px;
+  color: var(--accent);
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #fff;
+  font-weight: 400;
+  line-height: 1;
+}
+.post-layout .code-download-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.post-layout .code-download-title {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.post-layout .code-download-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .post-layout a.code-download { gap: 14px; padding: 14px 16px; }
+  .post-layout .code-download-icon { width: 36px; height: 36px; font-size: 20px; }
+  .post-layout .code-download-title { font-size: 14px; }
+  .post-layout .code-download-desc { font-size: 13px; }
 }
 

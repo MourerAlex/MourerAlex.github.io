@@ -4,18 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Implementation — From Formula to Code | Alex Mourer</title>
-  <link rel="stylesheet" href="../../css/style.css?v=38">
-  <!-- highlight.js core (no theme — colors are defined in style.css) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('pre code').forEach(function(block) {
-        if (!block.className) block.className = 'language-r';
-        if (window.hljs) window.hljs.highlightElement(block);
-      });
-    });
-  </script>
+  <link rel="stylesheet" href="../../css/style.css?v=39">
   <script>
     window.MathJax = {
       tex: {
@@ -40,6 +29,11 @@
     details .collapsible-content { border-left: 3px solid #e0ddd5; padding-left: 1.2em; margin-left: 0.2em; }
     .eq-box { background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 0.8em 1.2em; margin: 1.2em 0 0.8em 0; font-size: 0.95em; overflow-x: auto; }
     .eq-box .eq-label { display: block; font-size: 0.85em; color: #666; margin-bottom: 0.4em; }
+    table.data-table { border-collapse: collapse; font-size: 0.85em; margin: 1em 0; width: 100%; }
+    table.data-table th, table.data-table td { border: 1px solid #d4d0c8; padding: 0.3em 0.6em; text-align: center; }
+    table.data-table th { background: #f0eeea; font-weight: 600; }
+    table.data-table tr:nth-child(even) { background: #faf9f6; }
+    .comment { color: #6a9955; }
   </style>
 </head>
 <body>
@@ -64,94 +58,78 @@
     </div>
 
     <h1>Implementation &mdash; From Formula to Code</h1>
-    <p class="subtitle">Part 5: The g-formula and IPW estimators for separable effects in R, applied to the DES prostate cancer trial.</p>
+    <p class="subtitle">Part 5: The g-formula and IPW estimators for separable effects, implemented step by step in R on the DES prostate cancer trial.</p>
     <hr>
 
-    <p>
-      This post implements the estimators from Parts 4a and 4b on the DES prostate cancer trial. Event of interest ($Y$): prostate cancer death. Competing event ($D$): death from other causes. Treatment ($A$): DES ($A = 1$) vs placebo ($A = 0$). Baseline covariates only &mdash; the 2020 setting. The code follows <a href="https://github.com/palolili23/SER_competing_events_workshop">Rojas-Saunero (SER 2023 Workshop)</a> and Stensrud et al. (2020, 2021).
-    </p>
+    <p>This post implements the estimators from Parts 4a and 4b on the DES prostate cancer trial. Event of interest ($Y$): prostate cancer death. Competing event ($D$): death from other causes. Treatment ($A$): DES ($A = 1$) vs placebo ($A = 0$). Baseline covariates only &mdash; the 2020 setting. The code follows the implementations by <a href="https://github.com/palolili23/SER_competing_events_workshop">Rojas-Saunero (SER 2023 Workshop)</a> and Stensrud et al. (2020, 2021).</p>
 
-    <pre><code>library(survival)  # survSplit for person-time data
-library(dplyr)     # data manipulation
-library(ggplot2)   # plotting
-library(splines)   # ns() for natural splines (ships with R)
+    <details>
+      <summary>Variable glossary</summary>
+      <div class="collapsible-content">
+        <table class="data-table">
+          <tr><th>Code</th><th>Meaning</th></tr>
+          <tr><td><code>A</code></td><td>Observed treatment (1 = DES, 0 = placebo)</td></tr>
+          <tr><td><code>A_y</code></td><td>Treatment column for $Y$-hazard model (= <code>A</code> in observed data)</td></tr>
+          <tr><td><code>A_d</code></td><td>Treatment column for $D$-hazard model (= <code>A</code> in observed data)</td></tr>
+          <tr><td><code>a_y, a_d</code></td><td>Intervention values (scalars set once at top: <code>a_y &larr; 1</code>, <code>a_d &larr; 0</code>)</td></tr>
+          <tr><td><code>y_event, d_event, c_event</code></td><td>Binary indicators for prostate death, other death, censoring</td></tr>
+          <tr><td><code>k</code></td><td>Discrete time index (month 0, 1, 2, &hellip;)</td></tr>
+          <tr><td><code>haz_y, haz_d</code></td><td>Predicted discrete hazards $\hat{h}_Y$, $\hat{h}_D$</td></tr>
+          <tr><td><code>haz_d_ad, haz_d_ay</code></td><td>$D$-hazard predicted at $A_d = a_d$ and $A_d = a_y$</td></tr>
+          <tr><td><code>net_surv_d_ad</code></td><td>Net $D$-free survival: <code>cumprod(1 - haz_d_ad)</code> &mdash; survival under elimination of $Y$</td></tr>
+          <tr><td><code>w_d, w_cens, w_total</code></td><td>IPW weights: $D$-swap, censoring, combined</td></tr>
+          <tr><td><code>riskset_s</code></td><td>Subjects at risk at time $s$</td></tr>
+          <tr><td><code>eventset_s</code></td><td>Subjects experiencing $Y$ at time $s$</td></tr>
+        </table>
+      </div>
+    </details>
 
-# Intervention values for the separable effect (a_Y = 1, a_D = 0):
-# "What if DES only suppressed testosterone (a_Y=1) but did NOT cause
-#  coagulation (a_D=0), so cardiovascular death occurred at placebo rates?"
-a_y <- 1   # A_Y: DES testosterone suppression
-a_d <- 0   # A_D: placebo cardiovascular rate
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s1">1 &mdash; The data</h2>
+
+    <pre><code>library(Hmisc)      <span class="comment"># getHdata() for prostate dataset</span>
+library(survival)   <span class="comment"># survSplit for person-time expansion</span>
+library(dplyr)      <span class="comment"># case_when, mutate, group_by</span>
+
+a_y &lt;- 1   <span class="comment"># A_Y intervention: DES testosterone suppression</span>
+a_d &lt;- 0   <span class="comment"># A_D intervention: placebo cardiovascular rate</span>
+
+getHdata(prostate)
 </code></pre>
 
     <details>
-      <summary>Variable glossary (click to expand)</summary>
+      <summary>Data preprocessing (collapse to show/hide)</summary>
       <div class="collapsible-content">
-        <pre><code># ── Columns in subject_df (one row per subject) ──
-id             # subject identifier
-A              # observed treatment (1 = DES, 0 = placebo)
-event_time     # month of event or censoring
-event_type     # 0 = censored, 1 = prostate death, 2 = other death
-normal_act     # baseline: normal daily activity (0/1)
-age_cat        # baseline: age category
-cv_hist        # baseline: cardiovascular history (0/1)
-hemo_bin       # baseline: hemoglobin &lt; 12 g/dL (0/1)
+<pre><code><span class="comment"># Strip Hmisc labels (they conflict with dplyr mutate)</span>
+prostate &lt;- as.data.frame(prostate)
+prostate$rx     &lt;- as.character(prostate$rx)
+prostate$status &lt;- as.character(prostate$status)
+prostate$pf     &lt;- as.character(prostate$pf)
 
-# ── Columns added in pt_df (person-time) ──
-k              # time interval (0, 1, ..., 59)
-A_y            # copy of A for Y-hazard model
-A_d            # copy of A for D-hazard model
-y_event        # Y occurred at end of this interval (0/1/NA)
-d_event        # D occurred at end of this interval (0/1/NA)
-c_event        # censored at end of this interval (0/1)
-
-# ── Model objects ──
-fit_y_haz      # pooled logistic: Y hazard (uses A_y)
-fit_d_haz      # pooled logistic: D hazard (uses A_d)
-fit_cens       # pooled logistic: censoring (uses A, IPW only)
-
-# ── Weights (IPW only) ──
-surv_d_ad      # Pr(D=0|..., A_d = a_d) per interval
-surv_d_ay      # Pr(D=0|..., A_d = a_y) per interval
-surv_cens      # Pr(C=0|...) per interval
-w_d            # cumulative D survival ratio
-w_cens         # inverse cumulative censoring survival
-w_total        # w_d * w_cens
-
-# ── G-formula (in cloned data) ──
-haz_y, haz_d   # predicted hazards
-surv           # (1 - haz_y) * (1 - haz_d)
-inc            # incidence increment per individual per time
-cum_inc        # cumulative incidence curve
-
-# ── Scalars ──
-a_y, a_d       # intervention values (1 and 0 for DES example)
-n              # number of subjects
+subject_df &lt;- prostate %&gt;%
+  filter(rx %in% c("placebo", "5.0 mg estrogen")) %&gt;%
+  mutate(
+    A = as.integer(rx == "5.0 mg estrogen"),
+    event_type = case_when(
+      status == "dead - prostatic ca" ~ 1L,
+      status == "alive"               ~ 0L,
+      TRUE                            ~ 2L),
+    tstart     = 0,                       <span class="comment"># month 0 = enrollment</span>
+    event_time = dtime + 1,               <span class="comment"># shift +1: "died month 0" &rarr; month 1</span>
+    normal_act = as.integer(pf == "normal activity"),
+    age_cat    = cut2(age, c(0, 60, 70, 80, 100)),
+    cv_hist    = hx,
+    hemo_bin   = as.integer(hg &lt; 12)
+  ) %&gt;%
+  select(id = patno, A, event_time, event_type, tstart,
+         normal_act, age_cat, cv_hist, hemo_bin)
 </code></pre>
       </div>
     </details>
 
-    <div style="background: #f7f6f3; border-left: 3px solid #2a5f4f; padding: 1em 1.4em; margin: 1.5em 0 2em 0; font-size: 0.92em;">
-      <strong style="display: block; margin-bottom: 0.4em; color: #1a1916;">Contents</strong>
-      <ol style="margin: 0; padding-left: 1.3em; line-height: 2;">
-        <li><a href="#s1">The data</a></li>
-        <li><a href="#s2">The person-time dataset</a></li>
-        <li><a href="#s3">Pooled logistic regression</a></li>
-        <li><a href="#s4">A note on censoring</a></li>
-        <li><a href="#s5">The g-formula estimator</a></li>
-        <li><a href="#s6">The IPW estimator</a></li>
-        <li><a href="#s7">Causal contrasts</a></li>
-        <li><a href="#s8">Summary</a></li>
-      </ol>
-    </div>
-
-
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s1">1. The data</h2>
-
     <p>The DES trial: 252 patients (125 DES, 127 placebo), followed monthly for up to 60 months. One row per subject:</p>
 
-    <table style="table-layout: fixed; margin: 1em 0; font-size: 0.88em;">
-      <colgroup><col style="width:7%;"><col style="width:5%;"><col style="width:14%;"><col style="width:12%;"><col style="width:12%;"><col style="width:10%;"><col style="width:10%;"><col style="width:10%;"></colgroup>
+    <table class="data-table">
       <tr><th>id</th><th>A</th><th>event_time</th><th>event_type</th><th>normal_act</th><th>age_cat</th><th>cv_hist</th><th>hemo_bin</th></tr>
       <tr><td>A</td><td>1</td><td>3</td><td>1</td><td>1</td><td>70&ndash;80</td><td>0</td><td>0</td></tr>
       <tr><td>B</td><td>0</td><td>2</td><td>2</td><td>0</td><td>60&ndash;70</td><td>1</td><td>1</td></tr>
@@ -160,418 +138,375 @@ n              # number of subjects
 
     <p><code>event_type</code>: 0 = censored (loss to follow-up or administrative end), 1 = prostate cancer death ($Y$), 2 = death from other causes ($D$). Patient A (DES): prostate cancer death at month 3. Patient B (placebo): death from other causes at month 2. Patient C (DES): censored at month 4.</p>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s2">2 &mdash; Person-time expansion</h2>
 
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s2">2. The person-time dataset</h2>
+    <p>We expand to one row per subject per time interval using a single call to <code>survSplit</code>. We set <code>event_indicator = 1L</code> for <em>all</em> subjects, including censored ones. <code>survSplit</code> uses this to flag each subject's terminal row.</p>
 
-    <p>Every estimator operates on a person-time dataset: one row per patient per time interval. <code>survSplit</code> expands the one-row-per-subject data:</p>
+    <pre><code>subject_df &lt;- subject_df %&gt;%
+  mutate(event_indicator = 1L)
 
-    <pre><code>cut_times <- 0:59  # monthly intervals, 60 months follow-up
+cut_times &lt;- 1:75
 
-pt_df <- survSplit(
+pt_df &lt;- survSplit(
   data  = subject_df,
   cut   = cut_times,
-  start = "t_start",
+  start = "tstart",
   end   = "event_time",
-  event = "any_event"
+  event = "event_indicator"
 )
+
+pt_df &lt;- pt_df %&gt;%
+  rename(tstop = event_time) %&gt;%    <span class="comment"># interval boundaries [tstart, tstop)</span>
+  mutate(k = tstart)                <span class="comment"># k = interval index (month 0, 1, 2, ...)</span>
 </code></pre>
 
-    <p>Create separate event indicators, then apply the temporal ordering $(C_k, D_k, Y_k)$ from Part 4a Section 2: if censoring occurs, $D$ and $Y$ are unobserved; if $D$ occurs (uncensored), $Y$ is unobserved.</p>
+    <p>Derive the three event indicators from <code>event_indicator</code> + <code>event_type</code>:</p>
 
-    <pre><code># Event type indicators
-pt_df$y_event <- pt_df$any_event == 1 & pt_df$event_type == 1  # prostate death
-pt_df$d_event <- pt_df$any_event == 1 & pt_df$event_type == 2  # other death
-pt_df$c_event <- pt_df$any_event == 1 & pt_df$event_type == 0  # censored
-
-# Temporal ordering: set unobserved outcomes to NA
-pt_df$d_event[pt_df$c_event == 1] <- NA  # censored -> D unobserved
-pt_df$y_event[pt_df$c_event == 1] <- NA  # censored -> Y unobserved
-pt_df$y_event[pt_df$d_event == 1] <- NA  # D occurred -> Y unobserved
+    <pre><code>pt_df &lt;- pt_df %&gt;%
+  mutate(
+    y_event = as.integer(event_indicator == 1 &amp; event_type == 1),  <span class="comment"># prostate death</span>
+    d_event = as.integer(event_indicator == 1 &amp; event_type == 2),  <span class="comment"># other death</span>
+    c_event = as.integer(event_indicator == 1 &amp; event_type == 0)   <span class="comment"># censored/alive</span>
+  )
 </code></pre>
 
-    <p>The same three patients in person-time format:</p>
+    <h3>Temporal ordering</h3>
 
-    <table style="table-layout: fixed; margin: 1em 0; font-size: 0.88em;">
-      <colgroup><col style="width:7%;"><col style="width:6%;"><col style="width:5%;"><col style="width:10%;"><col style="width:10%;"><col style="width:10%;"><col style="width:12%;"><col style="width:12%;"></colgroup>
-      <tr><th>id</th><th>k</th><th>A</th><th>c_event</th><th>d_event</th><th>y_event</th><th>normal_act</th><th>hemo_bin</th></tr>
-      <tr><td>A</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
-      <tr><td>A</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
-      <tr><td>A</td><td>2</td><td>1</td><td>0</td><td>0</td><td><strong>1</strong></td><td>1</td><td>0</td></tr>
-      <tr><td>B</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
-      <tr><td>B</td><td>1</td><td>0</td><td>0</td><td><strong>1</strong></td><td><em>NA</em></td><td>0</td><td>1</td></tr>
-      <tr><td>C</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
-      <tr><td>C</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
-      <tr><td>C</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
-      <tr><td>C</td><td>3</td><td>1</td><td><strong>1</strong></td><td><em>NA</em></td><td><em>NA</em></td><td>1</td><td>1</td></tr>
-    </table>
+    <p>The ordering within each interval is $C_k$, then $D_k$, then $Y_k$. If censoring happens, $D$ and $Y$ are unobserved. If $D$ happens, $Y$ is unobserved. We encode this by setting the unobserved indicators to <code>NA</code>. When <code>glm</code> encounters <code>NA</code> in the outcome, it drops that row &mdash; which is exactly the correct risk set for each model.</p>
 
-    <p>Patient B at $k = 1$: <code>d_event = 1</code>, <code>y_event = NA</code> &mdash; $D$ happened first, $Y$ is unobserved. Patient C at $k = 3$: censored, both <code>d_event</code> and <code>y_event</code> are NA. These NAs define the risk sets: <code>glm</code> drops NA rows automatically.</p>
+    <pre><code>pt_df &lt;- pt_df %&gt;%
+  mutate(
+    d_event = ifelse(c_event == 1, NA, d_event),    <span class="comment"># censored &rarr; D unobserved</span>
+    y_event = ifelse(c_event == 1, NA, y_event),    <span class="comment"># censored &rarr; Y unobserved</span>
+    y_event = ifelse(d_event == 1, NA, y_event),    <span class="comment"># D occurred &rarr; Y unobserved</span>
+    A_y = A,                                         <span class="comment"># Y-hazard model sees A_y</span>
+    A_d = A                                          <span class="comment"># D-hazard model sees A_d</span>
+  )
 
-    <pre><code># Two copies of treatment: A_y for Y-hazard model, A_d for D-hazard model
-# In observed data, A = A_y = A_d. They diverge only at prediction time.
-pt_df$A_y <- pt_df$A
-pt_df$A_d <- pt_df$A
-
-# Baseline data frame: one row per subject at k=0
-baseline_df <- pt_df[pt_df$k == 0, ]
-n <- length(unique(pt_df$id))
+baseline_df &lt;- pt_df %&gt;% filter(k == 0)   <span class="comment"># one row per subject</span>
+n &lt;- n_distinct(pt_df$id)
 </code></pre>
 
+    <p><code>A_y</code> and <code>A_d</code> are copies of <code>A</code>. In the observed data they are identical. They diverge in the cloned datasets (Section 4), where the cross-arm trick sets them to different values.</p>
 
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s3">3. Pooled logistic regression</h2>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s3">3 &mdash; A note on censoring</h2>
 
-    <p>Every model is a pooled logistic regression: one <code>glm</code> on the stacked person-time data, with $k$ as a covariate. A polynomial in $k$ captures the baseline hazard shape. Interactions with treatment allow the treatment effect to change over time. To predict under a specific treatment value, override the treatment column inside the <code>predict</code> call:</p>
+    <p>The g-formula and IPW handle censoring differently:</p>
+    <p><strong>G-formula</strong>: no separate censoring model. Censoring is handled by <em>conditioning</em> &mdash; the covariates that predict censoring are included in the hazard models. The g-formula integrates over the full covariate history, accounting for informative censoring as long as the relevant predictors are in the models. The cloned datasets have no censoring: every subject "lives" through all time points. This is the $\bar{c} = 0$ world.</p>
+    <p><strong>IPW</strong>: requires an explicit censoring model. IPW operates on observed individuals, and censored subjects are missing from the later risk sets. The censoring weights $W_C$ upweight the uncensored subjects to represent those who were lost.</p>
 
-    <pre><code># Predict Y hazard as if everyone received DES (A_y = 1)
-predict(fit_y_haz, newdata = pt_df %>% mutate(A_y = 1), type = "response")
-</code></pre>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s4">4 &mdash; G-formula plug-in estimator</h2>
 
+    <p>The target is a counterfactual quantity: $\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1)$ &mdash; the risk of prostate cancer death had treatment components been set to $a_Y$ and $a_D$ and nobody been censored. This quantity cannot be observed directly.</p>
 
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s4">4. A note on censoring</h2>
-
-    <p>Both estimators target the same quantity from Part 4a Section 2:</p>
+    <p>The <strong>identification step</strong> (Part 4a, Section 4.8) showed that under the dismissible component conditions, exchangeability, consistency, and positivity, this counterfactual equals an expression involving only observed-data conditional probabilities &mdash; the cause-specific hazards at each time, conditioned on covariates and treatment:</p>
 
     <div class="eq-box">
-      <span class="eq-label">The target &mdash; cumulative incidence in the no-censoring world:</span>
-      $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1)$$
+      <span class="eq-label">The g-formula for separable effects (Part 4a, Section 4.8 / Stensrud 2020, eq. 8/9):</span>
+      $$\nu(a_Y, a_D) = \sum_l \left[ \sum_{s=0}^{K} \underbrace{\P(Y_{s+1}\!=\!1 \mid D_{s+1}\!=\!Y_s\!=\!0,\; A\!=\!\color{teal}{a_Y},\; L\!=\!l)}_{\text{Block A}} \prod_{j=0}^{s} \left( \underbrace{\P(D_{j+1}\!=\!0 \mid D_j\!=\!Y_j\!=\!0,\; A\!=\!\color{orange}{a_D},\; L\!=\!l)}_{\text{Block B}} \times \underbrace{\P(Y_j\!=\!0 \mid D_j\!=\!Y_{j-1}\!=\!0,\; A\!=\!\color{teal}{a_Y},\; L\!=\!l)}_{\text{Block C}} \right) \right] \P(L\!=\!l)$$
+      <p style="margin-top:0.6em; font-size:0.88em;">The entire Part 4a derivation was to reach this expression &mdash; converting an unobservable causal quantity into a function of observable conditional probabilities. Block A: $Y$-hazard from the $\color{teal}{a_Y}$ arm. Block B: $D$-free probability from the $\color{orange}{a_D}$ arm. Block C: $Y$-free probability from the $\color{teal}{a_Y}$ arm. The key: Blocks A and C are evaluated at $A = \color{teal}{a_Y}$, Block B at $A = \color{orange}{a_D}$ &mdash; different arms in the cross-arm regime $(1, 0)$.</p>
     </div>
 
-    <p>The superscript $\bar{c} = 0$ means censoring has been intervened away. But the models are fitted on real data where some individuals <strong>are</strong> censored. The two estimators handle this differently.</p>
-
-    <p><strong>The g-formula handles censoring through conditioning.</strong> The hazard models are conditioned on being uncensored: $\P(Y_{k+1} = 1 \mid \bar{C}_{k+1} = 0, \ldots)$. In the person-time data, censored individuals contribute rows up to their censoring time, then stop &mdash; <code>glm</code> drops NA rows automatically. The risk set at each time naturally excludes censored people. Under assumption E2 from Part 4a (censoring is ignorable given the covariates in the model), the fitted hazards on this observed risk set equal the counterfactual hazards under $\bar{c} = 0$ (Hern&aacute;n &amp; Robins 2020, Technical Point 21.10). No separate censoring model is needed. In practice, this means the hazard models must include all covariates that predict both the outcome and censoring &mdash; if they do, E2 is satisfied and the conditioning handles censoring automatically.</p>
-
-    <p><strong>The IPW estimator handles censoring through weighting.</strong> It computes a weighted average among actually observed individuals in the $A = a_Y$ arm. Some of those individuals are censored &mdash; they disappear from the data. Without $W_C$ (Part 4a Section 5.5), the remaining uncensored individuals are a potentially biased subsample. $W_C$ upweights the uncensored to represent the full population under $\bar{c} = 0$. A censoring model is needed.</p>
-
-    <p>Both approaches require the same assumption (E2: censoring is ignorable given measured covariates). The mechanism differs: conditioning vs weighting.</p>
-
-
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s5">5. The g-formula estimator</h2>
-
-    <p>The g-formula plugs predicted hazards into the identification formula from Part 4a Section 4.8. No weights. Create hypothetical datasets, predict hazards under the intervention, and compute the cumulative incidence.</p>
+    <p>We write $\hat{h}_Y$ and $\hat{h}_D$ for the discrete hazards &mdash; these are conditional probabilities of the event at a given interval, given survival to that interval. They are the quantities that <code>predict(..., type = "response")</code> returns from the pooled logistic models. Replacing each conditional probability with its estimate $\hat{h}$ and using the empirical average $\frac{1}{n}\sum_i$ in place of $\sum_l \ldots \P(L=l)$:</p>
 
     <div class="eq-box">
-      <span class="eq-label">Target &mdash; the g-formula for separable effects (Part 4a, Section 4.8):</span>
-      $$\P(Y^{a_Y,\, a_D,\, \bar{c}=0}_{K+1} = 1) = \sum_{l} \sum_{s=0}^{K} \underbrace{\P(Y_{s+1} = 1 \mid \bar{C}_{s+1} = D_{s+1} = Y_s = 0,\; L = l,\; A = \color{teal}{a_Y})}_{\text{Block A: Y hazard from } \color{teal}{a_Y} \text{ arm}}$$
-      $$\times \prod_{j=0}^{s} \underbrace{\P(D_{j+1} = 0 \mid \bar{C}_{j+1} = D_j = Y_j = 0,\; L = l,\; A = \color{orange}{a_D})}_{\text{Block B: D event-free from } \color{orange}{a_D} \text{ arm}} \times \underbrace{\P(Y_j = 0 \mid \ldots,\; A = \color{teal}{a_Y})}_{\text{Block C: Y event-free}} \times \P(L = l)$$
+      <span class="eq-label">Implementation form (maps directly to the code):</span>
+      $$\hat{\nu}(a_Y, a_D) = \frac{1}{n}\sum_{i=1}^{n} \sum_{s=0}^{K} \;\underbrace{\hat{h}_Y(s\!+\!1 \mid l_i,\, \color{teal}{a_Y})}_{\text{Block A}} \;\times\; \underbrace{(1-\hat{h}_D(s\!+\!1 \mid l_i,\, \color{orange}{a_D})) \;\prod_{j=0}^{s-1}(1-\hat{h}_D(j\!+\!1 \mid l_i,\, \color{orange}{a_D}))}_{\text{Block B}} \;\times\; \underbrace{\prod_{j=0}^{s}(1-\hat{h}_Y(j \mid l_i,\, \color{teal}{a_Y}))}_{\text{Block C}}$$
     </div>
 
-    <h3>5.1 &mdash; Fit the two hazard models</h3>
+    <p>The <strong>estimation step</strong> replaces each true conditional hazard with an estimate from a pooled logistic regression. "Pooled" means all person-time records from all individuals at all times are stacked into one dataset, and one <code>glm</code> is fitted on the whole thing. Time enters as a covariate, so the model can produce a different hazard at each month. Concretely, for the $Y$-hazard:</p>
 
-    <p>The $Y$-hazard model uses <code>A_y</code>. The $D$-hazard model uses <code>A_d</code>. In the observed data both equal $A$. They diverge at prediction time.</p>
+    <div class="eq-box">
+      <span class="eq-label">The pooled logistic model for the $Y$-hazard:</span>
+      $$\text{logit}\;\hat{h}_Y(k \mid l_i, a_Y) = \beta_0 + \beta_1 a_Y + \beta_2 k + \beta_3 k^2 + \beta_4 k^3 + \beta_5 \,\texttt{normal\_act}_i + \cdots$$
+    </div>
 
-    <pre><code># Y hazard model: uses A_y as treatment variable
-fit_y_haz <- glm(
-  y_event ~ A_y * (k + I(k^2) + I(k^3)) + normal_act + age_cat + cv_hist + hemo_bin,
+    <p>All coefficients $(\beta_0, \ldots)$ are estimated simultaneously from the stacked person-time data. An individual followed for 20 months contributes 20 rows. An individual followed for 60 months contributes 60 rows. The polynomial in $k$ is what allows the model to produce a different hazard at each month &mdash; it learns the shape of the baseline hazard from the pooled data. The treatment effect ($\beta_1$) is constant over time. Once the model is fitted, <code>predict</code> evaluates it at any combination of $(k, a_Y, l_i)$.</p>
+
+    <p>This is how the identification formula becomes computable: predict the $Y$-hazard at $a_Y$ and the $D$-hazard at $a_D$, for each individual at each time. The cloned datasets (below) are the mechanism &mdash; by setting <code>A_y</code> and <code>A_d</code> to different values, each model sees the treatment value prescribed by the identification formula.</p>
+
+    <h3>4.1 &mdash; Fit hazard models</h3>
+
+    <pre><code>fit_y_haz &lt;- glm(
+  y_event ~ A_y + k + I(k^2) + I(k^3) + normal_act + age_cat + cv_hist + hemo_bin,
   data = pt_df, family = binomial()
 )
 
-# D hazard model: uses A_d as treatment variable
-fit_d_haz <- glm(
-  d_event ~ A_d * (k + I(k^2) + I(k^3)) + normal_act + age_cat + cv_hist + hemo_bin,
+fit_d_haz &lt;- glm(
+  d_event ~ A_d + k + I(k^2) + I(k^3) + normal_act + age_cat + cv_hist + hemo_bin,
   data = pt_df, family = binomial()
 )
 </code></pre>
 
-    <p>Both models are fitted on the observed person-time data. Censored individuals contribute rows until their censoring time. The $\bar{C}_{k+1} = 0$ conditioning is implicit in the risk set (Section 4).</p>
+    <p>Both models are fitted on the observed person-time data. <code>fit_y_haz</code> uses <code>A_y</code>; <code>fit_d_haz</code> uses <code>A_d</code>. Censored individuals contribute rows until their censoring time, then stop. The $\bar{C}_{k+1} = 0$ conditioning is implicit in the risk set.</p>
 
-    <h3>5.2 &mdash; Create cloned datasets</h3>
+    <h3>4.2 &mdash; Create cloned datasets</h3>
 
-    <p>For each $(a_Y, a_D)$ combination, expand the baseline data over all time points with treatment set to the intervention values. The $\sum_l \ldots \P(L = l)$ in the formula becomes an average over individuals:</p>
+    <p>For each $(a_Y, a_D)$ regime, expand the baseline data over all time points with treatment set to the intervention values. The $\sum_l f(l)\,\P(L = l)$ standardisation becomes $(1/n)\sum_i f(l_i)$: each subject carries their own covariates, the empirical average <em>is</em> the standardisation.</p>
 
-    <pre><code>make_clone <- function(baseline_df, a_y, a_d, cut_times) {
-  # baseline_df has one row per subject, guaranteeing each subject
-  # appears exactly once per k in the clone
-  n_subj <- nrow(baseline_df)
-  K      <- length(cut_times)
-  clone       <- baseline_df[rep(seq_len(n_subj), each = K), ]
-  clone$k     <- rep(cut_times, n_subj)
-  clone$A_y   <- a_y   # Y-component intervention value
-  clone$A_d   <- a_d   # D-component intervention value
+    <pre><code>make_clone &lt;- function(baseline_df, a_y, a_d, times) {
+  n_subj &lt;- nrow(baseline_df)
+  K      &lt;- length(times)
+  clone       &lt;- baseline_df[rep(seq_len(n_subj), each = K), ]
+  clone$k     &lt;- rep(times, n_subj)
+  clone$A_y   &lt;- a_y   <span class="comment"># Y-component intervention value</span>
+  clone$A_d   &lt;- a_d   <span class="comment"># D-component intervention value</span>
   return(clone)
 }
 
-# Three clones: observed DES, observed placebo, modified treatment
-clone_11 <- make_clone(baseline_df, a_y = 1, a_d = 1, cut_times)  # DES
-clone_00 <- make_clone(baseline_df, a_y = 0, a_d = 0, cut_times)  # Placebo
-clone_10 <- make_clone(baseline_df, a_y = 1, a_d = 0, cut_times)  # Modified
+time_points &lt;- c(0, cut_times)   <span class="comment"># all k values: 0, 1, ..., 75</span>
+
+clone_11 &lt;- make_clone(baseline_df, a_y = 1, a_d = 1, time_points)  <span class="comment"># DES</span>
+clone_00 &lt;- make_clone(baseline_df, a_y = 0, a_d = 0, time_points)  <span class="comment"># Placebo</span>
+clone_10 &lt;- make_clone(baseline_df, a_y = 1, a_d = 0, time_points)  <span class="comment"># Modified</span>
 </code></pre>
 
-    <p>Each clone has $n \times 60$ rows. In <code>clone_10</code>: <code>A_y = 1</code> and <code>A_d = 0</code>. No censoring &mdash; every subject "lives" through all time points. This is the $\bar{c} = 0$ world.</p>
+    <p>In <code>clone_10</code>: <code>A_y = 1</code> and <code>A_d = 0</code>. No censoring &mdash; every subject "lives" through all time points.</p>
 
-    <h3>5.3 &mdash; Predict hazards</h3>
+    <h3>4.3 &mdash; Predict hazards (the cross-arm trick)</h3>
 
     <div class="eq-box">
-      <span class="eq-label">Cross-arm prediction in clone_10 &mdash; the <code>A_y</code>/<code>A_d</code> trick:</span>
-      $$\hat{p}_Y(s+1) = \P(Y_{s+1} = 1 \mid \ldots,\; \underbrace{A = \color{teal}{1}}_{\texttt{A\_y} = 1}) \qquad \hat{p}_D(s+1) = \P(D_{s+1} = 1 \mid \ldots,\; \underbrace{A = \color{orange}{0}}_{\texttt{A\_d} = 0})$$
+      <span class="eq-label">Cross-arm prediction in clone_10:</span>
+      $$\hat{h}_Y(s\!+\!1) = \P(Y_{s+1} = 1 \mid \ldots,\; \underbrace{A = \color{teal}{1}}_{\texttt{A\_y} = 1}) \qquad \hat{h}_D(s\!+\!1) = \P(D_{s+1} = 1 \mid \ldots,\; \underbrace{A = \color{orange}{0}}_{\texttt{A\_d} = 0})$$
     </div>
 
-    <pre><code>predict_hazards <- function(clone, fit_y, fit_d) {
-  # Y hazard: fit_y_haz looks for A_y in the data
-  clone$haz_y <- predict(fit_y, newdata = clone, type = "response")
-  # D hazard: fit_d_haz looks for A_d in the data
-  clone$haz_d <- predict(fit_d, newdata = clone, type = "response")
-  # Joint event-free survival at each interval
-  clone$surv  <- (1 - clone$haz_y) * (1 - clone$haz_d)
+    <pre><code>predict_hazards &lt;- function(clone, fit_y, fit_d) {
+  clone$haz_y &lt;- predict(fit_y, newdata = clone, type = "response")  <span class="comment"># fit_y sees A_y</span>
+  clone$haz_d &lt;- predict(fit_d, newdata = clone, type = "response")  <span class="comment"># fit_d sees A_d</span>
+  <span class="comment"># Joint event-free probability within ONE interval (not cumulative).</span>
+  clone$surv  &lt;- (1 - clone$haz_y) * (1 - clone$haz_d)
   return(clone)
 }
 
-clone_11 <- predict_hazards(clone_11, fit_y_haz, fit_d_haz)
-clone_00 <- predict_hazards(clone_00, fit_y_haz, fit_d_haz)
-clone_10 <- predict_hazards(clone_10, fit_y_haz, fit_d_haz)
+clone_11 &lt;- predict_hazards(clone_11, fit_y_haz, fit_d_haz)
+clone_00 &lt;- predict_hazards(clone_00, fit_y_haz, fit_d_haz)
+clone_10 &lt;- predict_hazards(clone_10, fit_y_haz, fit_d_haz)
 </code></pre>
 
-    <p>In <code>clone_10</code>: <code>fit_y_haz</code> sees <code>A_y = 1</code> &rarr; $Y$ hazard under DES. <code>fit_d_haz</code> sees <code>A_d = 0</code> &rarr; $D$ hazard under placebo. The g-formula mixes hazards from two arms.</p>
+    <p>In <code>clone_10</code>: <code>fit_y_haz</code> sees <code>A_y = 1</code> &rarr; $Y$ hazard under DES. <code>fit_d_haz</code> sees <code>A_d = 0</code> &rarr; $D$ hazard under placebo. This is the cross-arm prediction from Part 4a.</p>
 
-    <h3>5.4 &mdash; Compute cumulative incidence</h3>
-
-    <div class="eq-box">
-      <span class="eq-label">Iterative computation of the cumulative incidence (Part 4a, Section 4.8):</span>
-      $$S_i(0) = 1$$
-      $$S_i(s) = S_i(s-1) \times \underbrace{(1 - \hat{p}_{Y,i}(s))}_{\texttt{1 - haz\_y}} \times \underbrace{(1 - \hat{p}_{D,i}(s))}_{\texttt{1 - haz\_d}}$$
-      $$\text{inc}_i(s+1) = \underbrace{\hat{p}_{Y,i}(s+1)}_{\text{Block A}} \times \underbrace{(1 - \hat{p}_{D,i}(s+1))}_{\text{Block B}} \times S_i(s)$$
-      $$\hat{\nu}_{a_Y, a_D} = \frac{1}{n}\sum_{i=1}^{n} \sum_{s=0}^{K} \text{inc}_i(s+1)$$
-    </div>
-
-    <pre><code>compute_cum_inc <- function(clone_df) {
-  result <- clone_df %>%
-    group_by(id) %>%
-    mutate(
-      # S_i(s): cumulative event-free survival, built iteratively
-      cum_surv     = cumprod(surv),
-      # S_i(s-1): survival through PREVIOUS interval. At k=0, S(-1) = 1
-      lag_cum_surv = lag(cum_surv, default = 1),
-      # Incidence increment: Y hazard * D event-free * prior survival
-      inc          = haz_y * (1 - haz_d) * lag_cum_surv
-    ) %>%
-    ungroup() %>%
-    # Average across subjects at each time (standardisation over L)
-    group_by(k) %>%
-    summarise(mean_inc = mean(inc), .groups = "drop") %>%
-    arrange(k) %>%
-    # Cumulate over time to get the cumulative incidence curve
-    mutate(cum_inc = cumsum(mean_inc))
-
-  return(result)
-}
-
-cum_inc_11 <- compute_cum_inc(clone_11)  # nu(1,1): DES
-cum_inc_00 <- compute_cum_inc(clone_00)  # nu(0,0): Placebo
-cum_inc_10 <- compute_cum_inc(clone_10)  # nu(1,0): Modified treatment
-</code></pre>
+    <h3>4.4 &mdash; Compute cumulative incidence</h3>
 
     <details>
-      <summary>Plot code (click to expand)</summary>
+      <summary>From equation to code &mdash; the math traceback</summary>
       <div class="collapsible-content">
-        <pre><code>plot_df <- bind_rows(
-  cum_inc_11 %>% mutate(arm = "(a_Y=1, a_D=1) DES"),
-  cum_inc_00 %>% mutate(arm = "(a_Y=0, a_D=0) Placebo"),
-  cum_inc_10 %>% mutate(arm = "(a_Y=1, a_D=0) Modified")
-)
-
-ggplot(plot_df, aes(x = k, y = cum_inc, colour = arm)) +
-  geom_step() +
-  labs(x = "Month", y = "Cumulative incidence of prostate cancer death",
-       colour = NULL) +
-  ylim(0, 1) +
-  theme_minimal()
-</code></pre>
+        <p>Define shorthand for subject $i$ with covariates $l_i$:</p>
+        <ul>
+          <li>$\hat{h}_Y(s \mid i) \equiv \hat{h}_Y(s \mid l_i, a_Y)$</li>
+          <li>$\hat{h}_D(s \mid i) \equiv \hat{h}_D(s \mid l_i, a_D)$</li>
+        </ul>
+        <p>The product $S_i(s) = \prod_{j=0}^{s}(1 - \hat{h}_Y(j \mid i))(1 - \hat{h}_D(j \mid i))$ is the joint event-free survival through interval $s$. In the paper, $j$ runs from 0 to $s$, so $D$-survival at $s+1$ is NOT in the product &mdash; it's in the conditioning of the $Y$-hazard (Block B).</p>
+        <p><strong>Temporal ordering within interval $s+1$:</strong> at interval $s+1$, $D$ is resolved first, then $Y$. So the incidence increment at interval $s+1$ is:</p>
+        <ul>
+          <li>Survive all prior intervals: $S_i(s)$</li>
+          <li>At interval $s+1$: survive $D$ (prob $1 - \hat{h}_D(s\!+\!1 \mid i)$), then experience $Y$ (prob $\hat{h}_Y(s\!+\!1 \mid i)$)</li>
+        </ul>
+        <p>This maps directly to:</p>
+        <pre><code>inc = haz_y * (1 - haz_d) * lag_cum_surv</code></pre>
+        <p>where <code>lag_cum_surv</code> $= S_i(s)$ via <code>lag(cumprod(surv), default = 1)</code>, and <code>surv</code> $= (1 - \hat{h}_Y)(1 - \hat{h}_D)$.</p>
+        <p>The standardisation $\sum_l f(l)\P(L = l)$ becomes the sample average $\frac{1}{n}\sum_i f(l_i)$. Each subject $i$ provides one draw from the covariate distribution &mdash; the empirical distribution assigns weight $1/n$ to each observed $l_i$. This is why we compute per-subject first (each has a different hazard trajectory due to different covariates), then average across subjects:</p>
+        $$\nu = \sum_{s} \underbrace{\frac{1}{n}\sum_i \text{inc}_i(s+1)}_{\texttt{mean(inc) grouped by k}} \quad\longrightarrow\quad \texttt{cumsum(mean\_inc)}$$
       </div>
     </details>
 
-    <p>The green curve ($a_Y = 1, a_D = 0$) is the separable effect: prostate cancer death risk under DES&rsquo;s testosterone suppression, had cardiovascular death occurred at placebo rates. The g-formula requires both hazard models to be correctly specified.</p>
-
-
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s6">6. The IPW estimator</h2>
-
-    <p>The g-formula requires both hazard models to be correct. IPW Representation 1 needs only the $D$ hazard model (plus censoring). It stands in the $A = \color{teal}{a_Y}$ arm. In that arm, two of the three g-formula blocks are already at the right value ($Y$ hazard and $Y$ event-free at $\color{teal}{a_Y}$). Only the $D$ event-free block needs fixing &mdash; $W_D$ swaps it from $\color{teal}{a_Y}$ to $\color{orange}{a_D}$.</p>
-
     <div class="eq-box">
-      <span class="eq-label">Target &mdash; IPW Representation 1 (Part 4a, Section 5.6):</span>
-      $$\nu_{a_Y, a_D, k} = \sum_{s=0}^{k} \E\Big[\underbrace{W'_{C,s}}_{\texttt{w\_cens}} \cdot \underbrace{W_{D,s}}_{\texttt{w\_d}} \cdot Y_{s+1}(1 - Y_s)(1 - D_{s+1}) \;\Big|\; A = \color{teal}{a_Y}\Big]$$
-      $$W_{D,s} = \prod_{j=0}^{s} \frac{\P(D_{j+1} = 0 \mid \ldots,\; A = \color{orange}{a_D})}{\P(D_{j+1} = 0 \mid \ldots,\; A = \color{teal}{a_Y})} \qquad W'_{C,s} = \frac{1}{\prod_{j=0}^{s} \P(C_{j+1} = 0 \mid \ldots,\; A = \color{teal}{a_Y})}$$
+      <span class="eq-label">Iterative form (maps directly to the code):</span>
+      $$S_i(0) = 1$$
+      $$S_i(s) = S_i(s\!-\!1) \;\times\; \bigl(1 - \hat{h}_Y(s \mid l_i)\bigr)\;\bigl(1 - \hat{h}_D(s \mid l_i)\bigr)$$
+      $$\text{inc}_i(s\!+\!1) = \hat{h}_Y(s\!+\!1 \mid l_i) \;\times\; \bigl(1 - \hat{h}_D(s\!+\!1 \mid l_i)\bigr) \;\times\; S_i(s)$$
+      $$\nu = \sum_{s} \frac{1}{n}\sum_i \text{inc}_i(s\!+\!1)$$
     </div>
 
-    <h3>6.1 &mdash; Fit models</h3>
+    <p>This is the <strong>parametric g-formula</strong>, not Aalen-Johansen. We must compute per-subject first, then average: $\text{cumprod}(\text{mean}(\text{surv})) \neq \text{mean}(\text{cumprod}(\text{surv}))$ because each subject has different covariates &rarr; different hazard trajectories &rarr; different survival paths.</p>
 
-    <p>The $D$ hazard model (same as in the g-formula). Plus a censoring model &mdash; Section 4 explains why IPW needs it. The censoring model uses the observed treatment $A$: since $W_C$ is only applied within the $A = a_Y$ arm, predicting at the observed value is already predicting at $a_Y$.</p>
+    <pre><code>compute_cum_inc &lt;- function(clone_df) {
+  clone_df %&gt;%
+    group_by(id) %&gt;%
+    arrange(k) %&gt;%
+    mutate(
+      cum_surv     = cumprod(surv),                <span class="comment"># S_i(s): cumulative event-free survival</span>
+      lag_cum_surv = lag(cum_surv, default = 1),    <span class="comment"># S_i(s-1); default=1 implies S_i(0)=1 at k=0</span>
+      inc          = haz_y * (1 - haz_d) * lag_cum_surv   <span class="comment"># subdensity increment</span>
+    ) %&gt;%
+    ungroup() %&gt;%
+    group_by(k) %&gt;%
+    summarise(mean_inc = mean(inc), .groups = "drop") %&gt;%
+    arrange(k) %&gt;%
+    mutate(cum_inc = cumsum(mean_inc))
+}
 
-    <pre><code># D hazard model (same as g-formula, uses A_d)
-fit_d_haz <- glm(
-  d_event ~ A_d * (k + I(k^2) + I(k^3)) + normal_act + age_cat + cv_hist + hemo_bin,
-  data = pt_df, family = binomial()
-)
+cum_inc_11 &lt;- compute_cum_inc(clone_11)   <span class="comment"># &nu;(1,1): DES</span>
+cum_inc_00 &lt;- compute_cum_inc(clone_00)   <span class="comment"># &nu;(0,0): Placebo</span>
+cum_inc_10 &lt;- compute_cum_inc(clone_10)   <span class="comment"># &nu;(1,0): Modified</span>
+</code></pre>
 
-# Censoring model (uses observed A — see Section 4)
-fit_cens <- glm(
-  c_event ~ A * (k + I(k^2) + I(k^3)) + normal_act + age_cat + cv_hist + hemo_bin,
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s5">5 &mdash; IPW estimator</h2>
+
+    <p>IPW Representation 1 (Part 4a Section 5.6): stand in the $A = a_Y$ arm. $Y$ hazards and $Y$ events are already correct in that arm. $W_D$ swaps the $D$ distribution from $a_Y$ to $a_D$. $W_C$ corrects for censoring. No $Y$ hazard model needed &mdash; just observed $Y$ events, reweighted. Trade-off: doesn't need the $Y$ model to be correct, but needs the $D$ and censoring models to be correct.</p>
+
+    <h3>5.1 &mdash; Fit censoring model</h3>
+
+    <p>The censoring model uses the observed treatment $A$, not an overridden $a_Y$. This is because $W_C$ is only applied to individuals in the $A = a_Y$ arm (the <code>estimate_sep_eff</code> function filters to that arm). For those individuals, $A = a_Y$ is already true. Predicting at the observed value <em>is</em> predicting at $a_Y$.</p>
+
+    <pre><code>fit_cens &lt;- glm(
+  c_event ~ A + k + I(k^2) + I(k^3) + normal_act + age_cat + cv_hist + hemo_bin,
   data = pt_df, family = binomial()
 )
 </code></pre>
 
-    <h3>6.2 &mdash; Predict D survival at both arms</h3>
+    <h3>5.2 &mdash; Predict hazards at both arms</h3>
 
     <div class="eq-box">
-      <span class="eq-label">Numerator and denominator of $W_D$:</span>
-      $$\texttt{surv\_d\_ad} = \P(D_{j+1} = 0 \mid \ldots,\; A = \color{orange}{a_D}) \qquad \texttt{surv\_d\_ay} = \P(D_{j+1} = 0 \mid \ldots,\; A = \color{teal}{a_Y})$$
+      <span class="eq-label">$W_D$ weight (Stensrud 2020, eq. 11):</span>
+      $$W_D(s) = \frac{\prod_{j=0}^{s}\bigl(1 - \hat{h}_D(j \mid l,\, \color{orange}{a_D})\bigr)}{\prod_{j=0}^{s}\bigl(1 - \hat{h}_D(j \mid l,\, \color{teal}{a_Y})\bigr)}$$
+      <p style="margin-top:0.5em; font-size:0.88em;">
+        Numerator: cumulative $D$-free survival under the rate we <em>want</em> ($a_D$). Denominator: cumulative $D$-free survival under the rate we <em>cancel</em> ($a_Y$).<br>
+        In code: $\hat{h}_D(j \mid l, a_D)$ = <code>haz_d_ad</code>, $\hat{h}_D(j \mid l, a_Y)$ = <code>haz_d_ay</code>. Then <code>net_surv_d_ad = cumprod(1 - haz_d_ad)</code> and <code>net_surv_d_ay = cumprod(1 - haz_d_ay)</code>.<br>
+        $W_D > 1$ when $D$ is more likely under $a_Y$ than $a_D$: surviving $D$ in the $a_Y$ arm is "too rare", so we upweight those who made it.
+      </p>
     </div>
 
-    <pre><code># D survival under a_D = 0: numerator of W_D (the rate we WANT)
-pt_df$surv_d_ad <- 1 - predict(
-  fit_d_haz,
-  newdata = pt_df %>% mutate(A_d = 0),  # predict at placebo D rate
-  type = "response"
-)
-
-# D survival under a_Y = 1: denominator of W_D (the rate we CANCEL)
-pt_df$surv_d_ay <- 1 - predict(
-  fit_d_haz,
-  newdata = pt_df %>% mutate(A_d = 1),  # predict at DES D rate
-  type = "response"
-)
-
-# Censoring survival at observed treatment (no override needed)
-pt_df$surv_cens <- 1 - predict(fit_cens, newdata = pt_df, type = "response")
-</code></pre>
-
-    <h3>6.3 &mdash; Compute weights</h3>
-
-    <pre><code>pt_df <- pt_df %>%
-  group_by(id) %>%  # cumulative products must be per subject
+    <pre><code>pt_df &lt;- pt_df %&gt;%
   mutate(
-    # Cumulative D survival at each arm
-    cum_surv_d_ad = cumprod(surv_d_ad),  # product through time k
-    cum_surv_d_ay = cumprod(surv_d_ay),
-    cum_surv_cens = cumprod(surv_cens),
-    # W_D: swap D distribution from a_Y rate to a_D rate
-    w_d     = cum_surv_d_ad / cum_surv_d_ay,
-    # W_C: upweight uncensored to represent censored
-    w_cens  = 1 / cum_surv_cens,
-    # Total weight
-    w_total = w_d * w_cens
-  ) %>%
+    haz_d_ad = predict(fit_d_haz,                                <span class="comment"># D-hazard at a_D (rate we WANT)</span>
+                       newdata = pt_df %&gt;% mutate(A_d = a_d),
+                       type = "response"),
+    haz_d_ay = predict(fit_d_haz,                                <span class="comment"># D-hazard at a_Y (rate to CANCEL)</span>
+                       newdata = pt_df %&gt;% mutate(A_d = a_y),
+                       type = "response"),
+    haz_cens = predict(fit_cens, newdata = pt_df,                <span class="comment"># censoring hazard</span>
+                       type = "response")
+  )
+</code></pre>
+
+    <h3>5.3 &mdash; Compute weights</h3>
+
+    <p>The cumulative products below are <strong>net survivals</strong> &mdash; survival under hypothetical elimination of the other event type (the same quantity as the "marginal cumulative incidence" from Part 1, but here on the survival scale). They are used purely as computational building blocks for the weights, not as estimands.</p>
+
+    <pre><code>pt_df &lt;- pt_df %&gt;%
+  group_by(id) %&gt;%               <span class="comment"># cumprod MUST be per-subject</span>
+  arrange(k) %&gt;%
+  mutate(
+    net_surv_d_ad = cumprod(1 - haz_d_ad),     <span class="comment"># net D-survival under a_D (D-free, eliminating Y)</span>
+    net_surv_d_ay = cumprod(1 - haz_d_ay),     <span class="comment"># net D-survival under a_Y (D-free, eliminating Y)</span>
+    net_surv_cens = cumprod(1 - haz_cens),     <span class="comment"># net censoring survival</span>
+    w_d     = net_surv_d_ad / net_surv_d_ay,    <span class="comment"># swap D distribution</span>
+    w_cens  = 1 / net_surv_cens,                <span class="comment"># correct for censoring</span>
+    w_total = w_d * w_cens                      <span class="comment"># combined weight</span>
+  ) %&gt;%
   ungroup()
 </code></pre>
 
-    <p>$W_D$ swaps the $D$ distribution: the denominator cancels the DES cardiovascular death rate in the $\color{teal}{a_Y} = 1$ arm; the numerator inserts the placebo rate. In the 2021 setting with time-varying covariates, a third weight $W_{L_D}$ (Part 4b Section 5) would multiply in. For baseline covariates only, $W_{L_D} = 1$.</p>
+    <h3>5.4 &mdash; Weighted estimator</h3>
 
-    <h3>6.4 &mdash; The weighted estimator</h3>
+    <div class="eq-box">
+      <span class="eq-label">IPW cumulative incidence (Part 4a eq. 11 / Young et al. 2020 eq. 38):</span>
+      $$\hat{\nu}(a_Y, a_D) = \sum_{s=0}^{K} \frac{1}{n_{a_Y}} \sum_{i:\, A_i = a_Y} W_D(s) \cdot W_C(s) \cdot \mathbb{1}\{Y_{i,s+1} = 1,\; D_{i,s+1} = 0,\; C_{i,s+1} = 0\}$$
+      <p style="margin-top:0.5em; font-size:0.88em;">Divide by $n$ at <em>baseline</em>, not current risk set. This is Horvitz-Thompson: the weights already correct for attrition.</p>
+    </div>
 
-    <p>Among individuals in the $A = \color{teal}{a_Y}$ arm: at each time $k$, sum the weights of those who experience $Y$, divided by the number of subjects in the arm at baseline. Cumulate:</p>
+    <pre><code>estimate_sep_eff &lt;- function(pt_df, a_y_val, max_k) {
+  <span class="comment"># Keep only individuals in the a_Y arm</span>
+  ay_df &lt;- pt_df %&gt;% filter(A == a_y_val)
+  <span class="comment"># Denominator: number of subjects at baseline, NOT current risk set</span>
+  n_ay  &lt;- sum(ay_df$k == 0)
+  times &lt;- sort(unique(ay_df$k))
+  times &lt;- times[times &gt; 0 &amp; times &lt;= max_k]
 
-    <pre><code>estimate_sep_eff <- function(pt_df, a_y, max_time) {
-  # Keep only individuals in the a_Y arm
-  ay_df <- pt_df[pt_df$A == a_y, ]
-  # Denominator: subjects at baseline, not current risk set
-  n_ay  <- sum(ay_df$k == 0)
-
-  times     <- seq_len(max_time)
-  event_vec <- numeric(max_time)
-
-  for (s in times) {
-    # Risk set at time s: uncensored, D-free
-    riskset_s <- ay_df[ay_df$k == s & ay_df$c_event == 0 & ay_df$d_event == 0, ]
-    # Subjects who experienced Y at time s
-    eventset_s <- riskset_s[riskset_s$y_event == 1, ]
-    # Weighted incidence increment
-    event_vec[s] <- sum(eventset_s$w_total) / n_ay
+  event_vec &lt;- numeric(length(times))
+  for (i in seq_along(times)) {
+    s &lt;- times[i]
+    <span class="comment"># Risk set: alive, uncensored, D-free at time s</span>
+    riskset_s  &lt;- ay_df %&gt;%
+      filter(k == s, c_event == 0, d_event == 0)
+    <span class="comment"># Y events at time s</span>
+    eventset_s &lt;- riskset_s %&gt;% filter(y_event == 1)
+    <span class="comment"># Weighted incidence increment</span>
+    event_vec[i] &lt;- sum(eventset_s$w_total) / n_ay
   }
-
-  # Cumulate over time
   return(data.frame(k = times, cum_inc = cumsum(event_vec)))
 }
 </code></pre>
 
-    <pre><code># Observed arms (a_Y = a_D): no D swap needed, W_D = 1
-# Override w_total to use only censoring weights
-cum_inc_11_ipw <- estimate_sep_eff(
-  pt_df %>% mutate(w_total = w_cens),
-  a_y = 1, max_time = 59
+    <p>For the observed arms ($a_Y = a_D$), $W_D = 1$ and only censoring weights apply:</p>
+
+    <pre><code>max_k &lt;- max(pt_df$k)
+
+<span class="comment"># Observed arms (a_Y = a_D): W_D = 1, only censoring weights</span>
+cum_inc_11_ipw &lt;- estimate_sep_eff(
+  pt_df %&gt;% mutate(w_total = w_cens), a_y_val = 1, max_k = max_k
 )
-cum_inc_00_ipw <- estimate_sep_eff(
-  pt_df %>% mutate(w_total = w_cens),
-  a_y = 0, max_time = 59
+cum_inc_00_ipw &lt;- estimate_sep_eff(
+  pt_df %&gt;% mutate(w_total = w_cens), a_y_val = 0, max_k = max_k
 )
 
-# Cross-arm (a_Y=1, a_D=0): full separable effect weight
-cum_inc_10_ipw <- estimate_sep_eff(pt_df, a_y = 1, max_time = 59)
+<span class="comment"># Cross-arm (a_Y=1, a_D=0): full W_D x W_C</span>
+cum_inc_10_ipw &lt;- estimate_sep_eff(pt_df, a_y_val = 1, max_k = max_k)
 </code></pre>
 
-    <details>
-      <summary>Plot code (click to expand)</summary>
-      <div class="collapsible-content">
-        <pre><code>plot_df <- bind_rows(
-  cum_inc_11_ipw %>% mutate(arm = "(a_Y=1, a_D=1) DES"),
-  cum_inc_00_ipw %>% mutate(arm = "(a_Y=0, a_D=0) Placebo"),
-  cum_inc_10_ipw %>% mutate(arm = "(a_Y=1, a_D=0) Modified")
-)
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s6">6 &mdash; Causal contrasts</h2>
 
-ggplot(plot_df, aes(x = k, y = cum_inc, colour = arm)) +
-  geom_step() +
-  labs(x = "Month", y = "Cumulative incidence of prostate cancer death",
-       colour = NULL, title = "IPW estimates") +
-  ylim(0, 1) +
-  theme_minimal()
-</code></pre>
-      </div>
-    </details>
+    <pre><code><span class="comment"># G-formula contrasts at end of follow-up</span>
+gf_11 &lt;- tail(cum_inc_11$cum_inc, 1)
+gf_00 &lt;- tail(cum_inc_00$cum_inc, 1)
+gf_10 &lt;- tail(cum_inc_10$cum_inc, 1)
 
-    <p>The g-formula and IPW curves should be close if both sets of models are correctly specified. Discrepancies suggest model misspecification. Computing both is the strongest practical check. Weight diagnostics and bootstrap confidence intervals are standard (Hern&aacute;n &amp; Robins 2020, Chapters 12 and 17).</p>
+<span class="comment"># IPW contrasts at end of follow-up</span>
+ipw_11 &lt;- tail(cum_inc_11_ipw$cum_inc, 1)
+ipw_00 &lt;- tail(cum_inc_00_ipw$cum_inc, 1)
+ipw_10 &lt;- tail(cum_inc_10_ipw$cum_inc, 1)
 
-
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s7">7. Causal contrasts</h2>
-
-    <p>The g-formula and IPW each produce cumulative incidence curves $\hat{\nu}(a_Y, a_D, k)$ &mdash; the risk of $Y$ by month $k$ under a specific treatment combination. The causal questions are answered by contrasts between these curves:</p>
-
-    <div class="eq-box">
-      <span class="eq-label">Risk differences at time $K$ (Part 2, Section 5):</span>
-      $$\text{Total effect} = \hat{\nu}(1,1,K) - \hat{\nu}(0,0,K)$$
-      $$\text{Separable indirect effect } (A_D) = \hat{\nu}(1,1,K) - \hat{\nu}(1,0,K)$$
-      $$\text{Separable direct effect } (A_Y) = \text{Total} - \text{Indirect}$$
-    </div>
-
-    <pre><code># Risk differences at month 60 (using g-formula estimates)
-K <- 60
-total_eff    <- cum_inc_11$cum_inc[K] - cum_inc_00$cum_inc[K]
-sep_indirect <- cum_inc_11$cum_inc[K] - cum_inc_10$cum_inc[K]
-sep_direct   <- total_eff - sep_indirect
-
-data.frame(
-  estimand = c("Total effect", "Separable indirect (A_D)", "Separable direct (A_Y)"),
-  risk_diff = round(c(total_eff, sep_indirect, sep_direct), 4)
-)
+<span class="comment"># Risk differences</span>
+total_eff_gf    &lt;- gf_11 - gf_00            <span class="comment"># &nu;(1,1) - &nu;(0,0)</span>
+sep_indirect_gf &lt;- gf_11 - gf_10            <span class="comment"># &nu;(1,1) - &nu;(1,0)</span>
+sep_direct_gf   &lt;- total_eff_gf - sep_indirect_gf  <span class="comment"># = &nu;(1,0) - &nu;(0,0)</span>
 </code></pre>
 
-    <p>The separable indirect effect ($A_D$) captures how much of DES&rsquo;s effect on prostate cancer death operates through its effect on cardiovascular death. The separable direct effect ($A_Y$) captures the effect through testosterone suppression alone. These risk difference curves can also be plotted over time &mdash; the gap between the DES curve and the modified curve at each month $k$ traces the separable indirect effect.</p>
-
-
-    <!-- ═══════════════════════════════════════ -->
-    <h2 id="s8">8. Summary</h2>
-
-    <table style="table-layout: fixed; margin: 1em 0;">
-      <colgroup><col style="width: 16%;"><col style="width: 30%;"><col style="width: 20%;"><col style="width: 34%;"></colgroup>
-      <tr><th></th><th>Models needed</th><th>Expectation over</th><th>Censoring handling</th></tr>
-      <tr><td>G-formula</td><td>$Y$ hazard + $D$ hazard</td><td>Both arms</td><td>Conditioning (implicit in risk set)</td></tr>
-      <tr><td>IPW Rep. 1</td><td>$D$ hazard + censoring</td><td>$A = \color{teal}{a_Y}$ arm</td><td>Weighting ($W_C$)</td></tr>
+    <table class="data-table">
+      <tr><th>Estimand</th><th>Definition</th><th>G-formula</th><th>IPW</th></tr>
+      <tr><td>Total effect</td><td>$\nu(1,1) - \nu(0,0)$</td><td>&minus;0.0974</td><td>&minus;0.1044</td></tr>
+      <tr><td>Sep. indirect ($A_D$)</td><td>$\nu(1,1) - \nu(1,0)$</td><td>&minus;0.0199</td><td>&minus;0.0201</td></tr>
+      <tr><td>Sep. direct ($A_Y$)</td><td>total &minus; indirect</td><td>&minus;0.0775</td><td>&minus;0.0843</td></tr>
     </table>
 
-    <p>The g-formula uses all information (both hazards) but requires both to be correct. IPW avoids the $Y$ hazard model entirely. A mirror IPW Representation 2 (Part 4a Section 6) avoids the $D$ model instead. Computing all estimators and comparing is the strongest consistency check.</p>
+    <p>If both estimators are correctly specified, the g-formula and IPW results should roughly agree. The close agreement here is reassuring. Discrepancies would suggest model misspecification in one or both approaches.</p>
 
-    <p>This post covers the baseline-covariates-only setting (Stensrud et al. 2020). When time-varying covariates are present (Stensrud et al. 2021), the IPW estimator acquires an additional weight $W_{L_D}$ via the Bayes&rsquo; rule trick (Part 4b Section 5), and the g-formula requires Monte Carlo simulation or the ICE representation. These extensions, along with sensitivity analysis for violations of the isolation conditions, will be covered in a future post.</p>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h2 id="s7">7 &mdash; Summary</h2>
+
+    <table class="data-table">
+      <tr><th></th><th>G-formula</th><th>IPW</th></tr>
+      <tr><td><strong>Models needed</strong></td><td>$Y$-hazard, $D$-hazard</td><td>$D$-hazard, censoring</td></tr>
+      <tr><td><strong>No $Y$ model?</strong></td><td>No &mdash; needs $Y$ model</td><td>Yes &mdash; uses observed $Y$ events</td></tr>
+      <tr><td><strong>Censoring</strong></td><td>Handled by conditioning</td><td>Explicit $W_C$ model</td></tr>
+      <tr><td><strong>Key trick</strong></td><td>The cross-arm trick</td><td>$W_D$ ratio swaps $D$ distribution</td></tr>
+      <tr><td><strong>Robustness</strong></td><td>Correct if hazard and censoring models are right, given the same set of confounders and model specification</td><td>Correct if $D$ and censoring models are right</td></tr>
+    </table>
+
+    <p>Bootstrap confidence intervals (subject-level resampling with ID reassignment) are standard for both estimators; see the 2021 supplementary code for the implementation pattern. Sensitivity analysis for the separability conditions will be addressed in a future post.</p>
 
     <hr>
-    <h3>References</h3>
-    <p class="references">
-      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2020). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
+    <p style="font-size: 0.88em; color: #666;">
+      <strong>References.</strong><br>
+      Stensrud MJ, Young JG, Didelez V, Robins JM, Hern&aacute;n MA (2022). Separable effects for causal inference in the presence of competing events. <em>Journal of the American Statistical Association</em> 117(537):175&ndash;183.<br>
       Young JG, Stensrud MJ, Tchetgen Tchetgen EJ, Hern&aacute;n MA (2020). A causal framework for classical statistical estimands in failure time settings with competing events. <em>Statistics in Medicine</em> 39(8):1199&ndash;1236.<br>
       Rojas-Saunero LP (2023). Causal inference with competing events. SER Workshop. <a href="https://github.com/palolili23/SER_competing_events_workshop">Code</a>.<br>
+      Dudukina E (2022). Competing events survival analyses. <a href="https://www.elenadudukina.com/post/competing-events/2022-11-24-competing-events/">Blog post</a>.<br>
       Hern&aacute;n MA, Robins JM (2020). <em>Causal Inference: What If</em>. Chapman &amp; Hall/CRC.
     </p>
+
+    <a class="code-download" href="part5_run.R" download>
+      <span class="code-download-icon">&darr;</span>
+      <span class="code-download-body">
+        <span class="code-download-title">part5_run.R</span>
+        <span class="code-download-desc">Executable R companion reproducing every estimator in this post on the DES prostate cancer trial.</span>
+      </span>
+    </a>
 
     <div class="module-nav">
       <a href="part4b-technical-2021.html" class="nav-prev">&larr; Part 4b: 2021 Extensions</a>
