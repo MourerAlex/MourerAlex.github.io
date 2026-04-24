@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competing Events — Series — Alex Mourer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Inter+Tight:wght@400;500;600&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "forest",
+  "typePair": "editorial",
+  "density": "tight",
+  "hero": "bleed"
+}/*EDITMODE-END*/;
+</script>
+
+<link rel="stylesheet" href="../../../css/style.css">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   SERIES LANDING — SPECIFICS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Simple typographic hero ───────────────────────────────── */
+.series-header {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.series-header-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 96px var(--gutter) 56px;
+}
+.series-header .crumb {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 12px;
+  margin-bottom: 48px;
+}
+.series-header .crumb::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent);
+}
+.series-header .crumb a {
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.series-header .crumb a:hover { color: var(--accent); border-color: var(--accent); }
+
+.series-header h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(44px, 5.6vw, 80px);
+  line-height: 1.03;
+  letter-spacing: -0.026em;
+  color: var(--ink);
+  max-width: 18ch;
+  margin: 0 0 40px;
+}
+.series-header h1 em {
+  font-style: italic; color: var(--accent); font-weight: 300;
+}
+
+.series-header-meta {
+  display: flex; flex-wrap: wrap; gap: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.series-header-meta .item .k { display: block; margin-bottom: 6px; }
+.series-header-meta .item .v {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 300;
+}
+
+/* ── Abstract ──────────────────────────────────────────────── */
+.abstract {
+  padding: var(--dpad-section) 0 72px;
+}
+.abstract-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.abstract .label {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.abstract .label::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent);
+}
+.abstract .label .num { color: var(--faint); margin-right: 4px; }
+.abstract p {
+  font-family: var(--serif);
+  font-size: clamp(20px, 1.8vw, 24px);
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: -0.008em;
+  color: var(--ink);
+  max-width: 52ch;
+}
+.abstract p em { font-style: italic; color: var(--accent); }
+
+/* ── Graph — the centrepiece ───────────────────────────────── */
+.graph-section {
+  padding: 48px 0 var(--dpad-section);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.graph-head {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 80px;
+  align-items: baseline;
+  padding-bottom: 40px;
+  margin-bottom: 32px;
+}
+.graph-head .label {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.graph-head .label::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent);
+}
+.graph-head .label .num { color: var(--faint); margin-right: 4px; }
+.graph-head .hint {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.graph-head .hint .kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 0 2px;
+  border: 1px solid var(--rule-2);
+  background: var(--card);
+  color: var(--ink-2);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+/* Canvas */
+.graph-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 780px;
+  max-height: 780px;
+  margin: 0 auto;
+}
+@media (min-width: 961px) {
+  .graph-wrap { max-width: 820px; aspect-ratio: 1 / 0.92; }
+}
+.graph-wrap svg.edges {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+}
+.graph-wrap svg.edges line {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  transition: stroke 0.25s, stroke-width 0.25s, opacity 0.25s;
+  opacity: 0.5;
+}
+.graph-wrap svg.edges line.active {
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  opacity: 1;
+}
+
+/* Center hub (the R package) */
+.graph-hub {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 158px; height: 158px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--paper);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 6px color-mix(in oklab, var(--accent) 14%, var(--paper)),
+    0 0 0 7px color-mix(in oklab, var(--accent) 22%, var(--paper)),
+    0 22px 48px -18px color-mix(in oklab, var(--accent) 60%, transparent);
+  z-index: 3;
+}
+.graph-hub .hub-kicker {
+  font-family: var(--mono);
+  font-size: 9.5px; letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--paper) 78%, transparent);
+}
+.graph-hub .hub-name {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  line-height: 1.1;
+  text-align: center;
+  padding: 0 14px;
+}
+.graph-hub .hub-sub {
+  font-family: var(--mono);
+  font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--paper) 72%, transparent);
+  margin-top: 2px;
+}
+
+/* Nodes */
+.graph-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 112px; height: 112px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--rule-2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: width 0.38s cubic-bezier(.2,.7,.2,1),
+              height 0.38s cubic-bezier(.2,.7,.2,1),
+              border-color 0.25s,
+              box-shadow 0.3s,
+              background 0.3s;
+  z-index: 2;
+  user-select: none;
+  overflow: hidden;
+  text-align: center;
+}
+.graph-node:hover,
+.graph-node.hover {
+  width: 132px; height: 132px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 10%, transparent);
+  z-index: 4;
+}
+.graph-node.active {
+  width: 280px; height: 280px;
+  background: color-mix(in oklab, var(--accent) 8%, var(--card));
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 5px color-mix(in oklab, var(--accent) 12%, transparent),
+    0 22px 48px -18px color-mix(in oklab, var(--accent) 48%, transparent);
+  z-index: 10;
+}
+.graph-node .n-num {
+  font-family: var(--mono);
+  font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  transition: color 0.25s, font-size 0.3s;
+}
+.graph-node.active .n-num {
+  color: var(--accent);
+  font-size: 11px;
+}
+.graph-node .n-label {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  text-align: center;
+  padding: 0 12px;
+  max-width: 11ch;
+  transition: font-size 0.3s, max-width 0.3s, padding 0.3s;
+}
+.graph-node .n-label em { font-style: italic; font-weight: 300; color: var(--accent); }
+.graph-node.active .n-label {
+  font-size: 18px;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  max-width: 16ch;
+  padding: 0 20px;
+}
+
+/* Expanded content — only visible when .active */
+.graph-node .n-expand {
+  display: none;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 14px;
+  padding: 0 28px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s 0.15s, transform 0.3s 0.15s;
+}
+.graph-node.active .n-expand {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+}
+.graph-node .n-body {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  text-align: center;
+  max-width: 32ch;
+}
+.graph-node .n-meta {
+  display: flex; gap: 18px; align-items: baseline;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.graph-node .n-cta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--rule-strong);
+  margin-top: 4px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.graph-node .n-cta:hover { color: var(--accent); border-color: var(--accent); }
+
+/* When any node is active, fade the others */
+.graph-wrap.has-active .graph-node:not(.active) { opacity: 0.35; }
+.graph-wrap.has-active .graph-hub { opacity: 0.35; }
+.graph-wrap .graph-node,
+.graph-wrap .graph-hub { transition: opacity 0.3s, width 0.38s cubic-bezier(.2,.7,.2,1), height 0.38s cubic-bezier(.2,.7,.2,1), border-color 0.25s, box-shadow 0.3s, background 0.3s; }
+/* ── R companion callout ───────────────────────────────────── */
+.companion {
+  padding: var(--dpad-section) 0;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.companion-inner {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 0;
+  border: 1px solid var(--rule-2);
+  background: var(--card);
+}
+.companion-left {
+  padding: 56px 48px;
+  border-right: 1px solid var(--rule-2);
+  display: flex; flex-direction: column; gap: 24px; justify-content: space-between;
+  background: var(--paper-2);
+}
+.companion-left .eye {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent);
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.companion-left .eye .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.companion-left h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.014em;
+  color: var(--ink);
+  max-width: 16ch;
+}
+.companion-left h3 em { font-style: italic; font-weight: 300; color: var(--accent); }
+.companion-left .pkg {
+  font-family: var(--mono); font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  padding: 10px 14px;
+  border: 1px solid var(--rule-2);
+  background: var(--paper);
+  align-self: flex-start;
+}
+.companion-left .pkg .sig { color: var(--accent); }
+.companion-right {
+  padding: 56px 48px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.companion-right p {
+  font-size: 15px; line-height: 1.65; color: var(--muted);
+  max-width: 52ch;
+}
+.companion-right .feats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px;
+  border-top: 1px solid var(--rule);
+  padding-top: 24px;
+  margin-top: 4px;
+}
+.companion-right .feat .k {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 6px;
+}
+.companion-right .feat .v {
+  font-family: var(--serif); font-style: italic;
+  font-size: 15px; font-weight: 300; color: var(--ink-2);
+  line-height: 1.4;
+}
+.companion-right .cta {
+  display: flex; gap: 28px; align-items: baseline;
+  padding-top: 8px;
+}
+
+/* ── Back nav ──────────────────────────────────────────────── */
+.series-foot-nav {
+  padding: 56px 0;
+  background: var(--paper);
+}
+.series-foot-nav a {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 3px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.series-foot-nav a:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .abstract-grid, .graph-head { grid-template-columns: 1fr; gap: 24px; }
+  .series-header-inner { padding: 64px var(--gutter) 40px; }
+  .graph-wrap { max-width: 520px; }
+  .graph-hub { width: 124px; height: 124px; }
+  .graph-hub .hub-name { font-size: 22px; }
+  .graph-node { width: 84px; height: 84px; }
+  .graph-node:hover, .graph-node.hover { width: 96px; height: 96px; }
+  .graph-node.active { width: 300px; height: 300px; }
+  .graph-node .n-label { font-size: 12px; max-width: 10ch; }
+  .graph-node.active .n-label { font-size: 18px; max-width: 16ch; padding: 0 20px; }
+  .graph-node .n-expand { max-width: 240px; padding: 0 16px; }
+  .graph-node .n-body { font-size: 11.5px; }
+  .companion-inner { grid-template-columns: 1fr; }
+  .companion-left, .companion-right { padding: 40px 32px; border-right: none; }
+  .companion-left { border-bottom: 1px solid var(--rule-2); }
+  .companion-right .feats { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ NAV ══════════════════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../../../" class="nav-logo">Alex Mourer</a>
+    <div class="nav-center">
+      <a href="../../../">Index</a>
+      <a href="../../../blog/" class="active">Posts</a>
+      <a href="../../../about/">About</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════ HEADER ═══════════════════════ -->
+<section class="series-header">
+  <div class="series-header-inner">
+    <span class="crumb"><a href="../../../blog/">Posts</a> / Series / Competing Events</span>
+    <h1>Competing events and <em>causal</em> inference.</h1>
+    <div class="series-header-meta">
+      <div class="item"><span class="k">Parts</span><span class="v">Six</span></div>
+      <div class="item"><span class="k">Subject</span><span class="v">Causal inference &amp; biostatistics</span></div>
+      <div class="item"><span class="k">Span</span><span class="v">2024 — 2026</span></div>
+      <div class="item"><span class="k">Status</span><span class="v">Ongoing</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ ABSTRACT ═════════════════════ -->
+<section class="abstract">
+  <div class="container">
+    <div class="abstract-grid">
+      <span class="label"><span class="num">§&nbsp;01</span> Abstract</span>
+      <p>
+        A six-part series on estimating causal effects when a competing event can
+        precede the outcome of interest. Each post introduces one piece of the
+        framework; the <em>CausalCompetingRisk</em> R package implements them.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ GRAPH ════════════════════════ -->
+<section class="graph-section">
+  <div class="container">
+    <div class="graph-head">
+      <span class="label"><span class="num">§&nbsp;02</span> Map</span>
+      <span class="hint">Click a node to read its summary</span>
+    </div>
+
+    <div class="graph-wrap" id="graph">
+      <svg class="edges" id="edges" preserveAspectRatio="none"></svg>
+
+      <div class="graph-hub" id="graphHub" role="button" tabindex="0" aria-label="Go to package section">
+        <span class="hub-kicker">R package</span>
+        <span class="hub-name">CausalCompetingRisk</span>
+        <span class="hub-sub">implementation</span>
+      </div>
+
+      <!-- Nodes: summary lives inside, revealed when .active -->
+      <button class="graph-node" data-id="1" style="left: 50%; top: 4%;">
+        <span class="n-num">01</span>
+        <span class="n-label">The problem</span>
+        <span class="n-expand">
+          <span class="n-body"></span>
+          <span class="n-meta"></span>
+          <a class="n-cta" href="../competing-events-causal-inference.html">Read →</a>
+        </span>
+      </button>
+      <button class="graph-node" data-id="2" style="left: 92%; top: 27%;">
+        <span class="n-num">02</span>
+        <span class="n-label">Separable effects</span>
+        <span class="n-expand">
+          <span class="n-body"></span>
+          <span class="n-meta"></span>
+          <a class="n-cta" href="../part2-separable-effects-2020.html">Read →</a>
+        </span>
+      </button>
+      <button class="graph-node" data-id="3" style="left: 82%; top: 78%;">
+        <span class="n-num">03</span>
+        <span class="n-label">Generalized effects</span>
+        <span class="n-expand">
+          <span class="n-body"></span>
+          <span class="n-meta"></span>
+          <a class="n-cta" href="../part3-generalized-separable-effects-2021.html">Read →</a>
+        </span>
+      </button>
+      <button class="graph-node" data-id="4" style="left: 50%; top: 96%;">
+        <span class="n-num">04</span>
+        <span class="n-label">Companion 2020</span>
+        <span class="n-expand">
+          <span class="n-body"></span>
+          <span class="n-meta"></span>
+          <a class="n-cta" href="../part4a-technical-2020.html">Read →</a>
+        </span>
+      </button>
+      <button class="graph-node" data-id="5" style="left: 18%; top: 78%;">
+        <span class="n-num">05</span>
+        <span class="n-label">Companion 2021</span>
+        <span class="n-expand">
+          <span class="n-body"></span>
+          <span class="n-meta"></span>
+          <a class="n-cta" href="../part4b-technical-2021.html">Read →</a>
+        </span>
+      </button>
+      <button class="graph-node" data-id="6" style="left: 8%; top: 27%;">
+        <span class="n-num">06</span>
+        <span class="n-label">Implementation</span>
+        <span class="n-expand">
+          <span class="n-body"></span>
+          <span class="n-meta"></span>
+          <a class="n-cta" href="../part5-implementation.html">Read →</a>
+        </span>
+      </button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════ R COMPANION ══════════════════ -->
+<section class="companion" id="package">
+  <div class="container">
+    <div class="companion-inner">
+      <div class="companion-left">
+        <span class="eye"><span class="dot"></span>Companion package</span>
+        <h3>An R companion to the series.</h3>
+        <code class="pkg"><span class="sig">❯</span>&nbsp; remotes::install_github("mourer/CausalCompetingRisk")</code>
+      </div>
+      <div class="companion-right">
+        <p>
+          The <em>CausalCompetingRisk</em> package provides estimators of the
+          separable effects under competing risks, so readers can apply the
+          methods from the series to their own data.
+        </p>
+        <div class="feats">
+          <div class="feat">
+            <div class="k">Goal</div>
+            <div class="v">Estimate separable effects under competing risks.</div>
+          </div>
+          <div class="feat">
+            <div class="k">Status</div>
+            <div class="v">API and functions in progress.</div>
+          </div>
+          <div class="feat">
+            <div class="k">Dependencies</div>
+            <div class="v">tidyverse, survival.</div>
+          </div>
+          <div class="feat">
+            <div class="k">Release</div>
+            <div class="v">Pre-release. Expect breaking changes.</div>
+          </div>
+        </div>
+        <div class="cta">
+          <a href="https://github.com/moureralex" class="btn-ghost">GitHub →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ BACK ═════════════════════════ -->
+<section class="series-foot-nav">
+  <div class="container">
+    <a href="../../../blog/">← All posts</a>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">© 2026 Alex Mourer</div>
+    <div class="footer-links">
+      <a href="../../../">Index</a>
+      <a href="../../../blog/">Posts</a>
+      <a href="../../../about/">About</a>
+    </div>
+    <div class="footer-meta"></div>
+  </div>
+</footer>
+
+
+<!-- ══════════════════════════════ SCRIPTS ══════════════════════ -->
+<script>
+// ── Tokens ──────────────────────────────────────────────────────
+const state = { ...TWEAK_DEFAULTS };
+function applyTokens() {
+  const root = document.documentElement;
+  root.setAttribute('data-accent',  state.accent);
+  root.setAttribute('data-type',    state.typePair);
+  root.setAttribute('data-density', state.density);
+  document.querySelectorAll('.tweak-group').forEach(g => {
+    const key = g.dataset.key;
+    g.querySelectorAll('.tg-opt').forEach(o => {
+      o.classList.toggle('active', o.dataset.val === state[key]);
+    });
+  });
+}
+applyTokens();
+
+// ── Tweak panel ─────────────────────────────────────────────────
+const panel = document.getElementById('tweaks');
+window.addEventListener('message', (e) => {
+  const d = e.data || {};
+  if (d.type === '__activate_edit_mode')   panel.classList.add('open');
+  if (d.type === '__deactivate_edit_mode') panel.classList.remove('open');
+});
+window.parent.postMessage({type: '__edit_mode_available'}, '*');
+document.getElementById('tweaksClose').addEventListener('click', () => panel.classList.remove('open'));
+document.querySelectorAll('.tweak-group').forEach(g => {
+  const key = g.dataset.key;
+  g.querySelectorAll('.tg-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      state[key] = o.dataset.val;
+      applyTokens();
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: o.dataset.val } }, '*');
+    });
+  });
+});
+
+// ── Posts data ──────────────────────────────────────────────────
+const POSTS = {
+  1: {
+    title: 'Competing events and causal inference.',
+    body:  'Defines the problem: when a competing event can precede the outcome, standard hazard-ratio thinking produces estimates that do not correspond to clean causal quantities. Sets the vocabulary used by the rest of the series.',
+    date: 'Sep 18, 2025', read: '9 min read',
+  },
+  2: {
+    title: 'Separable effects — a cleaner estimand under competing risks.',
+    body:  'Introduces the separable-effects decomposition as an alternative target. States the identifying assumptions and explains what each one buys.',
+    date: 'Oct 28, 2025', read: '11 min read',
+  },
+  3: {
+    title: 'Generalized separable effects.',
+    body:  'Extends the framework to multiple competing events and partial modifications of treatment. Lists the additional assumptions required.',
+    date: 'Dec 02, 2025', read: '10 min read',
+  },
+  4: {
+    title: 'Technical companion — 2020.',
+    body:  'Formal setup of the 2020 paper: notation, identifying assumptions, and the separable-effects estimand. Read alongside Part 02.',
+    date: 'Mar 04, 2026', read: '15 min read',
+  },
+  5: {
+    title: 'Technical companion — 2021.',
+    body:  'Annotated proofs for the 2021 paper. Read alongside Part 03.',
+    date: 'Apr 03, 2026', read: '17 min read',
+  },
+  6: {
+    title: 'Implementation — from formula to code.',
+    body:  'Worked example in R: data structure, pseudo-population construction, separable-effects estimation, and bootstrap variance.',
+    date: 'Jun 18, 2026', read: '19 min read',
+  },
+};
+
+// ── Edges ───────────────────────────────────────────────────────
+const graph = document.getElementById('graph');
+const edgesSvg = document.getElementById('edges');
+const nodes = Array.from(document.querySelectorAll('.graph-node'));
+const hub = document.querySelector('.graph-hub');
+
+function drawEdges() {
+  const rect = graph.getBoundingClientRect();
+  const hubRect = hub.getBoundingClientRect();
+  const cx = hubRect.left - rect.left + hubRect.width / 2;
+  const cy = hubRect.top  - rect.top  + hubRect.height / 2;
+  edgesSvg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+  edgesSvg.innerHTML = '';
+  nodes.forEach(n => {
+    const nr = n.getBoundingClientRect();
+    const nx = nr.left - rect.left + nr.width / 2;
+    const ny = nr.top  - rect.top  + nr.height / 2;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+    line.setAttribute('x2', nx); line.setAttribute('y2', ny);
+    line.dataset.id = n.dataset.id;
+    edgesSvg.appendChild(line);
+  });
+}
+drawEdges();
+window.addEventListener('resize', drawEdges);
+// Re-draw after fonts settle (nodes may shift slightly)
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => setTimeout(drawEdges, 40));
+}
+
+// ── Node interaction ────────────────────────────────────────────
+const graphWrap = document.querySelector('.graph-wrap');
+let activeId = null;
+
+function highlightEdge(id, on) {
+  edgesSvg.querySelectorAll('line').forEach(l => {
+    if (l.dataset.id === String(id)) l.classList.toggle('active', on);
+  });
+}
+
+// Pre-fill each node's expanded content
+nodes.forEach(n => {
+  const p = POSTS[n.dataset.id];
+  if (!p) return;
+  n.querySelector('.n-body').textContent = p.body;
+  n.querySelector('.n-meta').innerHTML = p.date + ' \u00B7 ' + p.read;
+});
+
+function closeAll() {
+  nodes.forEach(n => n.classList.remove('active'));
+  edgesSvg.querySelectorAll('line').forEach(l => l.classList.remove('active'));
+  graphWrap.classList.remove('has-active');
+  activeId = null;
+}
+
+function openNode(id) {
+  if (activeId === String(id)) { closeAll(); return; }
+  activeId = String(id);
+  nodes.forEach(n => n.classList.toggle('active', n.dataset.id === activeId));
+  edgesSvg.querySelectorAll('line').forEach(l => l.classList.toggle('active', l.dataset.id === activeId));
+  graphWrap.classList.add('has-active');
+  // Re-draw edges after expansion settles so lines hit the new node size
+  setTimeout(drawEdges, 420);
+}
+
+nodes.forEach(n => {
+  n.addEventListener('mouseenter', () => {
+    if (activeId !== n.dataset.id) highlightEdge(n.dataset.id, true);
+  });
+  n.addEventListener('mouseleave', () => {
+    if (activeId !== n.dataset.id) highlightEdge(n.dataset.id, false);
+  });
+  n.addEventListener('click', (e) => {
+    // Let the "Read →" link through only when node is already active
+    if (e.target.closest('.n-cta') && n.classList.contains('active')) return;
+    e.preventDefault();
+    openNode(n.dataset.id);
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.graph-node') && activeId) closeAll();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && activeId) closeAll();
+});
+
+// Hub click → scroll to package section
+const hubEl = document.getElementById('graphHub');
+function goToPackage() {
+  const target = document.getElementById('package');
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+hubEl.addEventListener('click', goToPackage);
+hubEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToPackage(); }
+});
+</script>
+</body>
+</html>

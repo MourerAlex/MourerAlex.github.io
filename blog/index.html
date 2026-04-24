@@ -1,317 +1,701 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Posts — Alex Mourer</title>
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <style>
-    .posts-banner {
-      border-bottom: 1px solid #d0d4e4;
-      background: #e8eaf2;
-      overflow: hidden;
-    }
-    .posts-banner-inner {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 0 40px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: stretch;
-      min-height: 260px;
-    }
-    .posts-banner-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 72px 48px 72px 0;
-    }
-    .posts-banner h1 {
-      font-size: clamp(36px, 4vw, 52px);
-      font-weight: 300;
-      letter-spacing: -0.025em;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-    .posts-banner p {
-      font-size: 15px;
-      color: var(--text-muted);
-      font-weight: 300;
-      max-width: 380px;
-      line-height: 1.7;
-    }
-    .posts-banner-image {
-      display: flex;
-      align-items: stretch;
-      border-left: 1px solid #d0d4e4;
-    }
-    .posts-banner-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 65%;
-      display: block;
-    }
-    @media (max-width: 768px) {
-      .posts-banner-inner { grid-template-columns: 1fr; }
-      .posts-banner-image { display: none; }
-      .posts-banner-text { padding: 48px 0; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Posts — Alex Mourer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Inter+Tight:wght@400;500;600&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "forest",
+  "typePair": "editorial",
+  "density": "balanced"
+}/*EDITMODE-END*/;
+</script>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   POSTS-PAGE SPECIFICS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page header ─────────────────────────────────────────── */
+.page-header {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.page-header-grid {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  min-height: 460px;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+}
+.page-header-text {
+  padding: 96px 56px 64px 48px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  gap: 32px;
+  border-right: 1px solid var(--rule);
+}
+.page-header .breadcrumb {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.page-header .breadcrumb::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent);
+}
+.page-header h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(42px, 5.2vw, 72px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  max-width: 28ch;
+  margin: 24px 0 0;
+}
+.page-header h1 em {
+  font-style: italic; color: var(--accent); font-weight: 300;
+}
+.page-header .count {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.page-header-image {
+  position: relative;
+  background: url('../cubes-dispersion.png') center / cover no-repeat;
+  overflow: hidden;
+}
+.page-header-image::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--paper) 18%, transparent),
+    transparent 40%,
+    color-mix(in oklab, var(--paper) 10%, transparent));
+}
+.page-header-image .caption {
+  position: absolute; left: 32px; bottom: 32px; right: 32px;
+  z-index: 2;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.72;
+}
+
+/* ── Series block (inherits .series from site.css) ─────────
+   Use series styles as-is
+──────────────────────────────────────────────────────────── */
+
+/* ── All posts area ──────────────────────────────────────── */
+.all-posts {
+  padding: var(--dpad-section) 0 calc(var(--dpad-section) - 24px);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Filter bar */
+.filter-bar {
+  display: grid;
+  grid-template-columns: 280px 1fr auto;
+  gap: 48px;
+  align-items: baseline;
+  padding-bottom: 32px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.filter-bar .label {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink);
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.filter-bar .label::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent);
+}
+.filter-bar .label .num {
+  color: var(--faint); font-weight: 400; margin-right: 4px;
+}
+.filter-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.chip {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 12px 7px 12px;
+  background: transparent;
+  border: 1px solid var(--rule-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.chip:hover { border-color: var(--rule-strong); color: var(--ink); }
+.chip.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.chip .chip-count {
+  font-size: 10px;
+  color: var(--faint);
+  padding-left: 6px;
+  border-left: 1px solid var(--rule-2);
+}
+.chip.active .chip-count {
+  color: color-mix(in oklab, var(--paper) 60%, var(--ink));
+  border-color: color-mix(in oklab, var(--paper) 25%, var(--ink));
+}
+.sort-ctrl {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: baseline; gap: 8px;
+  white-space: nowrap;
+}
+.sort-ctrl strong {
+  color: var(--ink); font-weight: 500;
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 2px;
+}
+
+/* Post list */
+.posts-index {
+  border-top: 1px solid var(--rule);
+}
+.posts-index .post-item {
+  display: grid;
+  grid-template-columns: 80px 130px 1fr 200px 28px;
+  gap: 32px;
+  align-items: baseline;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--rule);
+  transition: padding 0.2s, background 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.posts-index .post-item:hover {
+  padding-left: 16px; padding-right: 16px;
+  background: color-mix(in oklab, var(--card) 60%, var(--paper));
+}
+.posts-index .post-item[hidden] { display: none !important; }
+
+.post-item .p-num {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em; color: var(--faint);
+}
+.post-item .p-date {
+  font-family: var(--mono); font-size: 12px;
+  letter-spacing: 0.02em; color: var(--muted);
+}
+.post-item .p-date .p-time {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+}
+.post-item .p-body { min-width: 0; }
+.post-item .p-series {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.post-item .p-series .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+}
+.post-item .p-title {
+  font-family: var(--serif); font-size: 22px;
+  font-weight: 400; line-height: 1.25;
+  letter-spacing: -0.012em; color: var(--ink);
+  margin-bottom: 6px;
+}
+.post-item .p-title em { font-style: italic; color: var(--accent); font-weight: 400; }
+.post-item .p-dek {
+  font-family: var(--sans); font-size: 14.5px;
+  line-height: 1.55; color: var(--muted);
+  max-width: 64ch;
+}
+.post-item .p-tag {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  justify-self: start;
+  border: 1px solid var(--rule-2);
+  padding: 4px 10px;
+}
+.post-item .p-arrow {
+  font-family: var(--serif); font-size: 20px;
+  color: var(--faint);
+  transition: transform 0.2s, color 0.2s;
+  justify-self: end;
+}
+.post-item:hover .p-arrow {
+  transform: translateX(4px);
+  color: var(--accent);
+}
+
+/* No results state */
+.no-results {
+  padding: 72px 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--muted);
+  font-style: italic;
+  display: none;
+}
+.no-results.active { display: block; }
+
+/* Year markers in the list */
+.year-marker {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 32px;
+  padding: 36px 0 20px;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.year-marker[hidden] { display: none !important; }
+.year-marker .y-num {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; color: var(--faint);
+  text-transform: uppercase;
+}
+.year-marker .y-label {
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-style: italic;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .page-header-grid { grid-template-columns: 1fr; min-height: 0; }
+  .page-header-text { padding: 56px 24px; border-right: none; border-bottom: 1px solid var(--rule); }
+  .page-header-image { min-height: 240px; }
+  .filter-bar { grid-template-columns: 1fr; gap: 18px; }
+  .posts-index .post-item {
+    grid-template-columns: 60px 1fr;
+    gap: 12px;
+  }
+  .posts-index .post-item .p-date,
+  .posts-index .post-item .p-tag,
+  .posts-index .post-item .p-arrow { display: none; }
+  .year-marker { grid-template-columns: 60px 1fr; gap: 12px; }
+  .year-marker .y-label { font-size: 32px; }
+}
+</style>
 </head>
 <body>
 
-  <nav>
-    <div class="nav-inner">
-      <a href="../index.html" class="nav-logo">
-        <span class="bracket">[</span>AM<span class="bracket">]</span>
-        Alex Mourer
-      </a>
-      <div class="nav-links">
-        <a href="../index.html">Home</a>
-        <a href="index.html" class="active">Posts</a>
-        <a href="../about/index.html">About</a>
-      </div>
+<!-- ══════════════════════════════ NAV ══════════════════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../" class="nav-logo">
+      Alex Mourer
+    </a>
+    <div class="nav-center">
+      <a href="../">Index</a>
+      <a href="../blog/" class="active">Posts</a>
+      <a href="../about/">About</a>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <div class="posts-banner">
-    <div class="posts-banner-inner">
-      <div class="posts-banner-text">
-        <h1>Posts</h1>
-        <p>Notes, essays, and tutorials on causal inference, biostatistics, and machine learning.</p>
-      </div>
-      <div class="posts-banner-image">
-        <img src="../Disposition de carreaux gris-bleu.png" alt="">
+<!-- ══════════════════════════════ PAGE HEADER ═════════════════ -->
+<section class="page-header">
+  <div class="page-header-grid">
+    <div class="page-header-text">
+      <span class="breadcrumb">Index / Posts</span>
+      <h1>Notes on <em>causation</em> and survival.</h1>
+      <span class="count">21 Posts · Updated Jun 2026</span>
+    </div>
+    <div class="page-header-image">
+      <div class="caption">
+        <span>Plate 02</span>
+        <span>Fig. — Dispersion</span>
       </div>
     </div>
   </div>
+</section>
 
+<!-- ══════════════════════════════ SERIES ══════════════════════ -->
+<section class="series" id="series">
+  <div class="container">
+    <div class="section-head">
+      <span class="label"><span class="num">§&nbsp;01</span> Series</span>
+      <h2>Longer arcs, from the basics to implementation.</h2>
+      <a href="#all" class="head-link">Jump to all posts →</a>
+    </div>
+    <div class="series-grid">
+
+      <article class="series-card">
+        <span class="series-tag"><span class="dot"></span>Competing Risks</span>
+        <h3><a href="../blog/posts/competing-events/">Competing Events and Causal Inference</a></h3>
+        <ol>
+          <li><a href="posts/competing-events-causal-inference.html">Competing Events and Causal Inference</a></li>
+          <li><a href="posts/part2-separable-effects-2020.html">Separable Effects</a></li>
+          <li><a href="posts/part3-generalized-separable-effects-2021.html">Generalized Separable Effects</a></li>
+          <li><a href="posts/part4a-technical-2020.html">Technical Companion — 2020</a></li>
+          <li><a href="posts/part4b-technical-2021.html">Technical Companion — 2021</a></li>
+          <li><a href="posts/part5-implementation.html">Implementation — From Formula to Code</a></li>
+        </ol>
+        <div class="series-foot">
+          <span>6 parts · ongoing</span>
+          <a href="posts/competing-events-causal-inference.html">Begin →</a>
+        </div>
+      </article>
+
+      <article class="series-card">
+        <span class="series-tag"><span class="dot"></span>Causal Inference</span>
+        <h3>Models for Causal Inference</h3>
+        <ol>
+          <li><a href="posts/intro-why-model.html">Introduction: Why Model?</a></li>
+          <li><a href="posts/module0-foundations.html">Foundations</a></li>
+          <li><a href="posts/module1-ipw.html">Inverse Probability Weighting</a></li>
+        </ol>
+        <div class="series-foot">
+          <span>3 parts · ongoing</span>
+          <a href="posts/intro-why-model.html">Begin →</a>
+        </div>
+      </article>
+
+      <article class="series-card">
+        <span class="series-tag"><span class="dot"></span>Design</span>
+        <h3>Causal Inference — Design</h3>
+        <ol>
+          <li><a href="posts/causal-roadmap.html">The Causal Roadmap</a></li>
+          <li><a href="posts/estimand-itt-vs-pp.html">ITT vs. Per-Protocol — Estimands</a></li>
+          <li><a href="posts/module2-tte.html">Target Trial Emulation</a></li>
+          <li><a href="posts/rwe-study-designs.html">From ACNU to Sequential Nested Trials</a></li>
+        </ol>
+        <div class="series-foot">
+          <span>4 parts · ongoing</span>
+          <a href="posts/causal-roadmap.html">Begin →</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ ALL POSTS ═══════════════════ -->
+<section class="all-posts" id="all">
   <div class="container">
 
-    <section class="series-shelf" aria-label="Post series">
-      <h2 class="series-shelf-heading">Series</h2>
-      <div class="series-grid">
-
-        <article class="series-card">
-          <h3 class="series-card-title">Competing Events &amp; Causal Inference</h3>
-          <ol class="series-card-list">
-            <li><a href="posts/competing-events-causal-inference.html">Competing Events and Causal Inference</a></li>
-            <li><a href="posts/part2-separable-effects-2020.html">Separable Effects</a></li>
-            <li><a href="posts/part3-generalized-separable-effects-2021.html">Generalized Separable Effects</a></li>
-            <li><a href="posts/part4a-technical-2020.html">Technical Companion &mdash; 2020 Mathematics</a></li>
-            <li><a href="posts/part4b-technical-2021.html">Technical Companion &mdash; 2021 Extensions</a></li>
-            <li><a href="posts/part5-implementation.html">Implementation &mdash; From Formula to Code</a></li>
-          </ol>
-        </article>
-
-        <article class="series-card">
-          <h3 class="series-card-title">Causal Inference Models</h3>
-          <ol class="series-card-list">
-            <li><a href="posts/intro-why-model.html">Introduction: Why Model?</a></li>
-            <li><a href="posts/module0-foundations.html">Foundations</a></li>
-            <li><a href="posts/module1-ipw.html">Inverse Probability Weighting</a></li>
-          </ol>
-        </article>
-
-        <article class="series-card">
-          <h3 class="series-card-title">Causal Inference &mdash; Design</h3>
-          <ol class="series-card-list">
-            <li><a href="posts/causal-roadmap.html">The Causal Roadmap</a></li>
-            <li><a href="posts/estimand-itt-vs-pp.html">Intention-to-Treat vs. Per-Protocol &mdash; Estimands</a></li>
-            <li><a href="posts/module2-tte.html">Target Trial Emulation</a></li>
-            <li><a href="posts/rwe-study-designs.html">From ACNU to Sequential Nested Trials</a></li>
-          </ol>
-        </article>
-
-      </div>
-    </section>
-
-    <h2 class="latest-posts-heading">Latest posts</h2>
-
+    <!-- Filter bar -->
     <div class="filter-bar">
-      <button class="filter-btn active" onclick="filterPosts('all', this)">All</button>
-      <button class="filter-btn" onclick="filterPosts('causal', this)">Causal Inference</button>
-      <button class="filter-btn" onclick="filterPosts('biostat', this)">Biostatistics</button>
-      <button class="filter-btn" onclick="filterPosts('ml', this)">Machine Learning</button>
+      <span class="label"><span class="num">—</span> Filter</span>
+      <div class="filter-chips" id="chips">
+        <button class="chip active" data-tag="all">All <span class="chip-count">21</span></button>
+        <button class="chip" data-tag="causal">Causal Inference <span class="chip-count">8</span></button>
+        <button class="chip" data-tag="biostat">Biostatistics <span class="chip-count">6</span></button>
+        <button class="chip" data-tag="epi">Epidemiology <span class="chip-count">5</span></button>
+        <button class="chip" data-tag="ml">Machine Learning <span class="chip-count">2</span></button>
+      </div>
+      <div class="sort-ctrl">
+        Sort <strong>Newest first</strong>
+      </div>
     </div>
 
-    <div class="posts-list">
+    <!-- List -->
+    <div class="posts-index" id="postsList">
 
-      <article class="post-list-item" data-cat="causal biostat" onclick="location.href='posts/part5-implementation.html'">
-        <span class="post-list-date">2026-04-09</span>
-        <div class="post-list-title">
-          Implementation — From Formula to Code
-          <span>Part 5: the g-formula and IPW estimators for separable effects in R, applied to the DES prostate cancer trial.</span>
-        </div>
-        <span class="post-list-tag">Competing Risks</span>
-      </article>
+      <!-- 2026 -->
+      <div class="year-marker" data-year="2026">
+        <span class="y-num">Year</span>
+        <span class="y-label">2026</span>
+      </div>
 
-      <article class="post-list-item" data-cat="causal biostat" onclick="location.href='posts/part4b-technical-2021.html'">
-        <span class="post-list-date">2026-04-08</span>
-        <div class="post-list-title">
-          Technical Companion — 2021 Extensions
-          <span>Part 4b: the generalized identification proof with time-varying covariates, shared intermediates, and loss to follow-up.</span>
+      <a href="posts/part5-implementation.html" class="post-item" data-tag="biostat" data-year="2026">
+        <span class="p-num">№ 21</span>
+        <div class="p-date">Jun 18, 2026<span class="p-time">19 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Competing Events · Part 06</span>
+          <h3 class="p-title">Implementation — <em>from formula to code,</em> estimating separable effects in R.</h3>
+          <p class="p-dek">The practical companion to the series: data structure, pseudo-population construction, variance via the bootstrap, and common pitfalls.</p>
         </div>
-        <span class="post-list-tag">Competing Risks</span>
-      </article>
+        <span class="p-tag">Biostatistics</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal biostat" onclick="location.href='posts/part4a-technical-2020.html'">
-        <span class="post-list-date">2026-03-02</span>
-        <div class="post-list-title">
-          Technical Companion — 2020 Mathematics
-          <span>Part 4a: every step of the identification proof, the IPW representations, and the g-formula for Stensrud et al. (2020).</span>
+      <a href="posts/module1-ipw.html" class="post-item" data-tag="causal" data-year="2026">
+        <span class="p-num">№ 20</span>
+        <div class="p-date">May 07, 2026<span class="p-time">14 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Models for Causal Inference · Part 03</span>
+          <h3 class="p-title">Inverse Probability <em>Weighting</em> — from the IPW estimator to stabilized weights.</h3>
+          <p class="p-dek">A careful walk through IPW: the estimator, its geometry, positivity and stabilization, and when trimming is (and isn't) a good idea.</p>
         </div>
-        <span class="post-list-tag">Competing Risks</span>
-      </article>
+        <span class="p-tag">Causal</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal biostat" onclick="location.href='posts/part3-generalized-separable-effects-2021.html'">
-        <span class="post-list-date">2026-01-24</span>
-        <div class="post-list-title">
-          Generalized Separable Effects
-          <span>Part 3: Stensrud et al. (2021) extend separable effects to time-varying covariates, shared intermediates, and loss to follow-up.</span>
+      <a href="posts/part4b-technical-2021.html" class="post-item" data-tag="biostat" data-year="2026">
+        <span class="p-num">№ 19</span>
+        <div class="p-date">Apr 03, 2026<span class="p-time">17 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Competing Events · Part 05</span>
+          <h3 class="p-title">Technical companion — <em>2021.</em></h3>
+          <p class="p-dek">Annotated proofs and derivations for the 2021 separable-effects paper. Read alongside the main series post, not standalone.</p>
         </div>
-        <span class="post-list-tag">Competing Risks</span>
-      </article>
+        <span class="p-tag">Biostatistics</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal biostat" onclick="location.href='posts/part2-separable-effects-2020.html'">
-        <span class="post-list-date">2025-12-15</span>
-        <div class="post-list-title">
-          Separable Effects
-          <span>Part 2: Stensrud, Young, Didelez, Robins &amp; Hernán (2020) propose a causal effect that does not require eliminating death.</span>
+      <a href="posts/part4a-technical-2020.html" class="post-item" data-tag="biostat" data-year="2026">
+        <span class="p-num">№ 18</span>
+        <div class="p-date">Mar 04, 2026<span class="p-time">15 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Competing Events · Part 04</span>
+          <h3 class="p-title">Technical companion — <em>2020.</em></h3>
+          <p class="p-dek">The formal setup behind the 2020 paper — notation, identifying assumptions, and the separable-effects estimand in detail.</p>
         </div>
-        <span class="post-list-tag">Competing Risks</span>
-      </article>
+        <span class="p-tag">Biostatistics</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="ml" onclick="location.href='posts/group-sparse-kmeans-mixed-data.html'">
-        <span class="post-list-date">2025-11-04</span>
-        <div class="post-list-title">
-          Sparse Clustering with Grouped Variables and Mixed Data
-          <span>When your variables come in groups and mix numbers with categories — why standard sparse K-means breaks and how a group lasso penalty fixes it.</span>
+      <a href="posts/module0-foundations.html" class="post-item" data-tag="causal" data-year="2026">
+        <span class="p-num">№ 17</span>
+        <div class="p-date">Feb 09, 2026<span class="p-time">9 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Models for Causal Inference · Part 02</span>
+          <h3 class="p-title">Foundations — potential outcomes, consistency, and the identifying assumptions.</h3>
+          <p class="p-dek">Setting up the language before we pick estimators. Why identifiability is the first question, and what the three usual assumptions buy us.</p>
         </div>
-        <span class="post-list-tag">Machine Learning</span>
-      </article>
+        <span class="p-tag">Causal</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="ml" onclick="location.href='posts/variable-importance-correlated-random-forests.html'">
-        <span class="post-list-date">2025-09-22</span>
-        <div class="post-list-title">
-          Variable Importance in Random Forests When Your Variables Are Correlated
-          <span>How correlation among input variables silently corrupts importance rankings — and a variable-clustering approach that fixes it.</span>
+      <a href="posts/intro-why-model.html" class="post-item" data-tag="causal" data-year="2026">
+        <span class="p-num">№ 16</span>
+        <div class="p-date">Jan 12, 2026<span class="p-time">7 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Models for Causal Inference · Part 01</span>
+          <h3 class="p-title">Why model? — the role of models in causal inference.</h3>
+          <p class="p-dek">The identification-then-estimation split, why models enter at both stages, and how "model-free" arguments usually smuggle assumptions in the back door.</p>
         </div>
-        <span class="post-list-tag">Machine Learning</span>
-      </article>
+        <span class="p-tag">Causal</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal biostat" onclick="location.href='posts/competing-events-causal-inference.html'">
-        <span class="post-list-date">2025-08-11</span>
-        <div class="post-list-title">
-          Competing Events and Causal Inference
-          <span>What your competing risks analysis is actually estimating — and why the answer depends on a question you may not have asked.</span>
-        </div>
-        <span class="post-list-tag">Competing Risks</span>
-      </article>
+      <!-- 2025 -->
+      <div class="year-marker" data-year="2025">
+        <span class="y-num">Year</span>
+        <span class="y-label">2025</span>
+      </div>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/rwe-study-designs.html'">
-        <span class="post-list-date">2025-06-28</span>
-        <div class="post-list-title">
-          From ACNU to Sequential Nested Trials
-          <span>Evolving study designs for time-varying treatments in real-world evidence.</span>
+      <a href="posts/part3-generalized-separable-effects-2021.html" class="post-item" data-tag="biostat" data-year="2025">
+        <span class="p-num">№ 15</span>
+        <div class="p-date">Dec 02, 2025<span class="p-time">10 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Competing Events · Part 03</span>
+          <h3 class="p-title">Generalized separable effects.</h3>
+          <p class="p-dek">Extending the separable-effects framework to accommodate multiple competing events and partial modifications of treatment.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Biostatistics</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/estimand-itt-vs-pp.html'">
-        <span class="post-list-date">2025-05-14</span>
-        <div class="post-list-title">
-          Intention-to-Treat vs. Per-Protocol — Estimands
-          <span>Why the estimand you target changes everything about your analysis.</span>
+      <a href="posts/part2-separable-effects-2020.html" class="post-item" data-tag="biostat" data-year="2025">
+        <span class="p-num">№ 14</span>
+        <div class="p-date">Oct 28, 2025<span class="p-time">11 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Competing Events · Part 02</span>
+          <h3 class="p-title">Separable effects — a cleaner estimand under competing risks.</h3>
+          <p class="p-dek">Why the total effect on the cause-specific hazard is often not what we actually want, and how separable effects recover an interpretable target.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Biostatistics</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/causal-roadmap.html'">
-        <span class="post-list-date">2025-04-03</span>
-        <div class="post-list-title">
-          The Causal Roadmap
-          <span>A step-by-step guide to defining the study design.</span>
+      <a href="posts/competing-events-causal-inference.html" class="post-item" data-tag="biostat" data-year="2025">
+        <span class="p-num">№ 13</span>
+        <div class="p-date">Sep 18, 2025<span class="p-time">9 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Competing Events · Part 01</span>
+          <h3 class="p-title">Competing events and causal inference.</h3>
+          <p class="p-dek">The setup: when death or another terminal event can precede the outcome, standard hazard-ratio thinking falls apart. Naming the problem.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Biostatistics</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module0-foundations.html'">
-        <span class="post-list-date">2025-02-19</span>
-        <div class="post-list-title">
-          Foundations
-          <span>Potential outcomes, identification assumptions, and the shared framework behind IPW, G-formula, AIPW, and TMLE.</span>
+      <a href="posts/rwe-study-designs.html" class="post-item" data-tag="epi" data-year="2025">
+        <span class="p-num">№ 12</span>
+        <div class="p-date">Aug 05, 2025<span class="p-time">16 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Causal Inference — Design · Part 04</span>
+          <h3 class="p-title">From ACNU to <em>sequential nested trials</em> — designs for real-world data.</h3>
+          <p class="p-dek">An overview of the prevalent new-user and sequential-nested-trial designs, and when each is the right frame for pharmacoepi questions.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Epidemiology</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module2-tte.html'">
-        <span class="post-list-date">2025-01-09</span>
-        <div class="post-list-title">
-          Target Trial Emulation
-          <span>Designing observational analyses that mimic the trial you wish you had.</span>
+      <a href="posts/module2-tte.html" class="post-item" data-tag="epi" data-year="2025">
+        <span class="p-num">№ 11</span>
+        <div class="p-date">Jun 22, 2025<span class="p-time">11 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Causal Inference — Design · Part 03</span>
+          <h3 class="p-title">Target trial emulation — the frame that clarifies almost every observational study.</h3>
+          <p class="p-dek">Treating every observational analysis as an attempt to emulate a hypothetical trial, and what that forces you to specify up front.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Epidemiology</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/module1-ipw.html'">
-        <span class="post-list-date">2024-11-27</span>
-        <div class="post-list-title">
-          Inverse Probability Weighting
-          <span>Weighting observations to create a pseudo-population where treatment is unconfounded.</span>
+      <a href="posts/estimand-itt-vs-pp.html" class="post-item" data-tag="causal" data-year="2025">
+        <span class="p-num">№ 10</span>
+        <div class="p-date">Apr 29, 2025<span class="p-time">8 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Causal Inference — Design · Part 02</span>
+          <h3 class="p-title">ITT vs. per-protocol — which estimand are you after?</h3>
+          <p class="p-dek">The language of estimands, and how ITT and per-protocol answer genuinely different questions. Neither is the "right" default.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Causal</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/intro-why-model.html'">
-        <span class="post-list-date">2024-10-15</span>
-        <div class="post-list-title">
-          Introduction: Why Model?
-          <span>Why we need statistical models to learn causal effects from observational data.</span>
+      <a href="posts/causal-roadmap.html" class="post-item" data-tag="causal" data-year="2025">
+        <span class="p-num">№ 09</span>
+        <div class="p-date">Feb 14, 2025<span class="p-time">6 min read</span></div>
+        <div class="p-body">
+          <span class="p-series"><span class="dot"></span>Causal Inference — Design · Part 01</span>
+          <h3 class="p-title">The causal roadmap — a working checklist.</h3>
+          <p class="p-dek">Petersen &amp; van der Laan's roadmap as a practical sequence: question, causal model, target parameter, identification, estimator, inference.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Causal</span>
+        <span class="p-arrow">→</span>
+      </a>
 
-      <article class="post-list-item" data-cat="causal" onclick="location.href='posts/ate-estimation.html'">
-        <span class="post-list-date">2024-08-30</span>
-        <div class="post-list-title">
-          Average Treatment Effect Estimation under Unconfoundedness
-          <span>From potential outcomes to doubly robust estimators, with interactive visualisations.</span>
+      <a href="posts/ate-estimation.html" class="post-item" data-tag="causal" data-year="2024">
+        <span class="p-num"></span>
+        <div class="p-date">Aug 30, 2024<span class="p-time">15 min read</span></div>
+        <div class="p-body">
+          <h3 class="p-title">Average treatment effect estimation under unconfoundedness.</h3>
+          <p class="p-dek">From potential outcomes to doubly robust estimators, with interactive visualisations.</p>
         </div>
-        <span class="post-list-tag">Causal Inference</span>
-      </article>
+        <span class="p-tag">Causal</span>
+        <span class="p-arrow">→</span>
+      </a>
+
+      <a href="posts/group-sparse-kmeans-mixed-data.html" class="post-item" data-tag="ml" data-year="2025">
+        <span class="p-num"></span>
+        <div class="p-date">Nov 04, 2025<span class="p-time">12 min read</span></div>
+        <div class="p-body">
+          <h3 class="p-title">Sparse clustering with grouped variables and mixed data.</h3>
+          <p class="p-dek">When variables come in groups and mix numbers with categories — why standard sparse K-means breaks and how a group lasso penalty fixes it.</p>
+        </div>
+        <span class="p-tag">Machine Learning</span>
+        <span class="p-arrow">→</span>
+      </a>
+
+      <a href="posts/variable-importance-correlated-random-forests.html" class="post-item" data-tag="ml" data-year="2025">
+        <span class="p-num"></span>
+        <div class="p-date">Sep 22, 2025<span class="p-time">11 min read</span></div>
+        <div class="p-body">
+          <h3 class="p-title">Variable importance in random forests when your variables are correlated.</h3>
+          <p class="p-dek">How correlation among input variables silently corrupts importance rankings — and a variable-clustering approach that fixes it.</p>
+        </div>
+        <span class="p-tag">Machine Learning</span>
+        <span class="p-arrow">→</span>
+      </a>
+
+      <div class="no-results" id="noResults">
+        — nothing in this subject yet —
+      </div>
 
     </div>
   </div>
+</section>
 
-  <footer>
-    <div class="footer-inner">
-      <span class="footer-left">© 2025 Alex Mourer</span>
+<!-- ══════════════════════════════ FOOTER ══════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      © 2026 Alex Mourer
     </div>
-  </footer>
+    <div class="footer-links">
+      <a href="../">Index</a>
+      <a href="../blog/">Posts</a>
+      <a href="../about/">About</a>
+    </div>
+    <div class="footer-meta"></div>
+  </div>
+</footer>
 
-  <script>
-    function filterPosts(cat, btn) {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      document.querySelectorAll('.post-list-item').forEach(item => {
-        var cats = (item.dataset.cat || '').split(/\s+/);
-        item.style.display = (cat === 'all' || cats.indexOf(cat) !== -1) ? '' : 'none';
-      });
-    }
+<script>
+// ── State ───────────────────────────────────────────────────────
+const state = { ...TWEAK_DEFAULTS };
 
-    // Auto-filter from URL parameter
-    (function() {
-      var params = new URLSearchParams(window.location.search);
-      var cat = params.get('cat');
-      if (cat) {
-        var btn = document.querySelector('.filter-btn[onclick*="' + cat + '"]');
-        if (btn) filterPosts(cat, btn);
-      }
-    })();
-  </script>
+function applyTokens() {
+  const root = document.documentElement;
+  root.setAttribute('data-accent', state.accent);
+  root.setAttribute('data-type',    state.typePair);
+  root.setAttribute('data-density', state.density);
+}
+applyTokens();
+
+// ── Filtering ───────────────────────────────────────────────────
+const chips = document.querySelectorAll('#chips .chip');
+const items = document.querySelectorAll('#postsList .post-item');
+const yearMarkers = document.querySelectorAll('#postsList .year-marker');
+const noResults = document.getElementById('noResults');
+
+function applyFilter(tag) {
+  let shown = 0;
+  items.forEach(it => {
+    const match = tag === 'all' || it.dataset.tag === tag;
+    it.hidden = !match;
+    if (match) shown++;
+  });
+  // Hide year markers that have no visible items under them
+  yearMarkers.forEach(marker => {
+    const y = marker.dataset.year;
+    const hasVisible = Array.from(items).some(it => it.dataset.year === y && !it.hidden);
+    marker.hidden = !hasVisible;
+  });
+  noResults.classList.toggle('active', shown === 0);
+}
+
+chips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    applyFilter(chip.dataset.tag);
+  });
+});
+
+// ── Edit mode host integration (shared panel from Home reused) ──
+// Posts page doesn't include the Tweaks panel itself — tokens are
+// controlled from Home and persisted via EDITMODE-BEGIN/END block.
+window.addEventListener('message', (e) => {
+  const d = e.data || {};
+  if (d.type === '__activate_edit_mode') {
+    // nothing to show on Posts page — tweaks live on Home
+  }
+});
+// Don't announce edit-mode availability — only Home offers it.
+</script>
 
 </body>
 </html>

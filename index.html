@@ -1,199 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alex Mourer — Causal Inference & Biostatistics</title>
-  <meta name="description" content="Research and writing on causal inference, biostatistics, and machine learning.">
-  <link rel="stylesheet" href="css/style.css?v=39">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-    onload="renderMathInElement(document.body, {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})">
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alex Mourer — Causal Inference & Biostatistics</title>
+<meta name="description" content="Research and writing on causal inference, biostatistics, and machine learning.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Inter+Tight:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script>
+// ── Tweak defaults ──────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "forest",
+  "typePair": "editorial",
+  "density": "balanced",
+  "hero": "bleed"
+}/*EDITMODE-END*/;
+</script>
+
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
-        <span class="bracket">[</span>AM<span class="bracket">]</span>
-        Alex Mourer
-      </a>
-      <div class="nav-links">
-        <a href="index.html" class="active">Home</a>
-        <a href="blog/index.html">Posts</a>
-        <a href="about/index.html">About</a>
-      </div>
+<!-- ══════════════════════════════ NAV ══════════════════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="./" class="nav-logo">
+      Alex Mourer
+    </a>
+    <div class="nav-center">
+      <a href="./" class="active">Index</a>
+      <a href="blog/">Posts</a>
+      <a href="about/">About</a>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="container" style="position:relative; z-index:1;">
-      <div class="hero-grid">
-        <div>
-          <h1>Thinking carefully about <em>causation,</em> not just association.</h1>
-        </div>
-        <div>
-          <div class="hero-text-box">
-            <p class="hero-bio">
-              This site explores modern methods in statistics, biostatistics, causal inference,
-              epidemiology and machine learning — with two goals: distil complex methods into
-              accessible explanations, and bridge theory and practice by implementing ideas from
-              recent research in practical settings.
-            </p>
-          </div>
-          <div class="hero-tags">
-            <span class="tag">Causal Inference</span>
-            <span class="tag">Biostatistics</span>
-            <span class="tag">Machine Learning</span>
-
-            <span class="tag">Survival Analysis</span>
-          </div>
-        </div>
-      </div>
+<!-- ══════════════════════════════ HERO A: STATEMENT ═══════════ -->
+<section class="hero hero-statement" data-variant="statement">
+  <div class="container">
+    <div class="meta-row">
+      <span class="coords">48.8°N · 2.3°E &nbsp;/&nbsp; Est. 2024</span>
+      <span class="coords">№ 001 · Index</span>
     </div>
-  </section>
-
-  <!-- HOME INTRO -->
-  <section class="home-intro">
-    <div class="container">
-      <div class="home-intro-grid">
-
-        <div class="home-intro-left">
-          <p>Posts aim to keep the target of inference scientifically meaningful and assumptions explicit. A particular focus on longitudinal data, time-to-event outcomes, and applications in clinical medicine and pharmacoepidemiology.</p>
-        </div>
-
-        <div class="home-intro-right">
-          <div class="section-header">
-            <span class="section-label">Latest Posts</span>
-            <a href="blog/index.html" class="view-all">View all →</a>
-          </div>
-          <div class="home-post-list">
-            <a class="home-post-item" href="blog/posts/part5-implementation.html">
-              <span class="home-post-date">2026-04-09</span>
-              <span class="home-post-title">Implementation — From Formula to Code</span>
-              <span class="post-tag">Competing Risks</span>
-            </a>
-            <a class="home-post-item" href="blog/posts/part4b-technical-2021.html">
-              <span class="home-post-date">2026-04-08</span>
-              <span class="home-post-title">Technical Companion — 2021 Extensions</span>
-              <span class="post-tag">Competing Risks</span>
-            </a>
-            <a class="home-post-item" href="blog/posts/part4a-technical-2020.html">
-              <span class="home-post-date">2026-03-02</span>
-              <span class="home-post-title">Technical Companion — 2020 Mathematics</span>
-              <span class="post-tag">Competing Risks</span>
-            </a>
-          </div>
-        </div>
-
+    <h1>
+      Thinking carefully about <em>causation,</em> not just association.
+    </h1>
+    <div class="below">
+      <div class="below-left">
+        <span>Research &amp; writing</span>
+        <strong>Causal inference</strong>
+        <strong>Biostatistics</strong>
+        <strong>Machine learning</strong>
       </div>
-    </div>
-  </section>
-
-  <!-- MID BANNER -->
-  <section class="home-mid-banner">
-    <div class="home-mid-banner-inner">
-      <div class="home-mid-banner-text">
-        <span class="section-label">For you</span>
-        <h2>Making causal analysis a little more casual.</h2>
-        <p>More on my background on the About page. Working on your own analysis and want a second opinion? I'm happy to help — reach out.</p>
-        <div>
-          <a href="about/index.html" style="
-            display:inline-flex; align-items:center; gap:8px;
-            font-family:var(--mono); font-size:11px; letter-spacing:0.06em;
-            text-transform:uppercase; color:var(--text);
-            padding:10px 20px; border:1px solid #a8cfc0;
-            border-radius:var(--radius); transition:all 0.15s;
-          " onmouseover="this.style.background='var(--accent)';this.style.color='white';this.style.borderColor='var(--accent)'"
-             onmouseout="this.style.background='';this.style.color='var(--text)';this.style.borderColor='#a8cfc0'">
-            About page →
-          </a>
-        </div>
-      </div>
-      <div class="home-mid-banner-image">
-        <img src="Cubes turquoise suspendus dans l'air.png" alt="">
-      </div>
-    </div>
-  </section>
-
-  <!-- TOPIC CARDS -->
-  <section class="home-topics">
-    <div class="home-topics-grid">
-      <div class="home-topic-card">
-        <span class="section-label">Causal Inference</span>
-        <h3>Identification and estimation from observational data.</h3>
-        <a href="blog/index.html?cat=causal" class="topic-link">View posts →</a>
-      </div>
-      <div class="home-topic-card">
-        <span class="section-label">Biostatistics</span>
-        <h3>Survival, competing risks, and longitudinal methods.</h3>
-        <a href="blog/index.html?cat=biostat" class="topic-link">View posts →</a>
-      </div>
-      <div class="home-topic-card">
-        <span class="section-label">Machine Learning</span>
-        <h3>Machine learning in the service of causal questions.</h3>
-        <a href="blog/index.html?cat=ml" class="topic-link">View posts →</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT BANNER -->
-  <section class="about-banner">
-    <div class="about-banner-inner">
-      <div class="about-banner-content">
-        <div class="section-label" style="margin-bottom:32px;">About me</div>
-        <p class="about-banner-bio">
-          About ten years working as a data scientist, with four of those spent in pharma focused
-          on real-world evidence. I spend most of my time at the intersection of causal inference,
-          biostatistics, and epidemiology — trying to generate reliable evidence out of
-          observational data.
+      <div class="below-right">
+        <p>
+          A working notebook on modern methods in biostatistics and epidemiology.
+          Distilling complex ideas into accessible explanations, and closing
+          the gap between recent research and practical application.
         </p>
-        <div class="about-banner-meta">
-          <div class="about-banner-meta-item">
-            <span class="meta-label">Location</span>
-            <span class="meta-value">Somewhere in France</span>
-          </div>
-          <div class="about-banner-meta-item">
-            <span class="meta-label">Contact</span>
-            <a href="https://www.linkedin.com/in/alex-mourer" target="_blank" class="meta-value meta-link">LinkedIn →</a>
-          </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ HERO B: SPLIT ═══════════════ -->
+<section class="hero hero-split" data-variant="split">
+  <div class="hero-split-grid">
+    <div class="hero-split-left">
+      <span class="eyebrow">Alex Mourer &nbsp;·&nbsp; Index</span>
+      <h1>Thinking carefully about <em>causation,</em> not just association.</h1>
+      <div class="hero-below">
+        <div class="tag-row">
+          <span class="tag">Causal Inference</span>
+          <span class="tag">Biostatistics</span>
+          <span class="tag">Machine Learning</span>
+          <span class="tag">Survival Analysis</span>
         </div>
       </div>
     </div>
-  </section>
-
-  <!-- STAT STRIP -->
-  <section class="stat-strip">
-    <div class="stat-strip-inner">
-      <div class="stat-strip-item">
-        <div class="stat-num">3</div>
-        <div class="stat-label">Research areas</div>
-      </div>
-      <div class="stat-strip-item">
-        <div class="stat-num">∂</div>
-        <div class="stat-label">Always learning</div>
-      </div>
-      <div class="stat-strip-item">
-        <div class="stat-num">0</div>
-        <div class="stat-label">Paywalls</div>
-      </div>
-      <div class="stat-strip-item">
-        <div class="stat-num">∞</div>
-        <div class="stat-label">More to write</div>
+    <div class="hero-split-right">
+      <div class="hero-split-right-content">
+        <p class="hero-split-bio">
+          A working notebook on modern methods in causal inference,
+          biostatistics and epidemiology — distilling research into
+          accessible explanations.
+        </p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <span class="footer-left">© 2025 Alex Mourer</span>
+<!-- ══════════════════════════════ HERO C: BLEED ═══════════════ -->
+<section class="hero hero-bleed" data-variant="bleed">
+  <div class="container">
+    <h1>
+      Thinking carefully about <span class="upright">causation,</span><br>
+      not just association.
+    </h1>
+    <div class="below">
+      <p>
+        Notes on causal inference, biostatistics and epidemiology.
+      </p>
     </div>
-  </footer>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ INTRO ═══════════════════════ -->
+<section class="intro">
+  <div class="container">
+    <div class="intro-grid">
+      <span class="label">About the site</span>
+      <div>
+        <p class="intro-body">
+          A place to share what I learn and work through ideas in the open — mostly explainers of methods I find useful, and notes on papers I'm reading.
+          <span class="secondary">
+            Particular focus on longitudinal data, time-to-event outcomes, and applications in clinical medicine and pharmacoepidemiology.
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ SERIES ══════════════════════ -->
+<section class="series" id="series">
+  <div class="container">
+    <div class="section-head">
+      <span class="label">Series</span>
+      <h2>Longer arcs, from the basics to implementation.</h2>
+      <a href="blog/" class="head-link">All series →</a>
+    </div>
+    <div class="series-grid">
+
+      <article class="series-card">
+        <span class="series-tag"><span class="dot"></span>Competing Risks</span>
+        <h3><a href="blog/posts/competing-events/">Competing Events and Causal Inference</a></h3>
+        <ol>
+          <li><a href="blog/posts/competing-events-causal-inference.html">Competing Events and Causal Inference</a></li>
+          <li><a href="blog/posts/part2-separable-effects-2020.html">Separable Effects</a></li>
+          <li><a href="blog/posts/part3-generalized-separable-effects-2021.html">Generalized Separable Effects</a></li>
+          <li><a href="blog/posts/part4a-technical-2020.html">Technical Companion — 2020</a></li>
+          <li><a href="blog/posts/part4b-technical-2021.html">Technical Companion — 2021</a></li>
+          <li><a href="blog/posts/part5-implementation.html">Implementation — From Formula to Code</a></li>
+        </ol>
+        <div class="series-foot">
+          <span>6 parts · ongoing</span>
+          <a href="blog/posts/competing-events-causal-inference.html">Begin →</a>
+        </div>
+      </article>
+
+      <article class="series-card">
+        <span class="series-tag"><span class="dot"></span>Causal Inference</span>
+        <h3>Models for Causal Inference</h3>
+        <ol>
+          <li><a href="blog/posts/intro-why-model.html">Introduction: Why Model?</a></li>
+          <li><a href="blog/posts/module0-foundations.html">Foundations</a></li>
+          <li><a href="blog/posts/module1-ipw.html">Inverse Probability Weighting</a></li>
+        </ol>
+        <div class="series-foot">
+          <span>3 parts · ongoing</span>
+          <a href="blog/posts/intro-why-model.html">Begin →</a>
+        </div>
+      </article>
+
+      <article class="series-card">
+        <span class="series-tag"><span class="dot"></span>Design</span>
+        <h3>Causal Inference — Design</h3>
+        <ol>
+          <li><a href="blog/posts/causal-roadmap.html">The Causal Roadmap</a></li>
+          <li><a href="blog/posts/estimand-itt-vs-pp.html">ITT vs. Per-Protocol — Estimands</a></li>
+          <li><a href="blog/posts/module2-tte.html">Target Trial Emulation</a></li>
+          <li><a href="blog/posts/rwe-study-designs.html">From ACNU to Sequential Nested Trials</a></li>
+        </ol>
+        <div class="series-foot">
+          <span>4 parts · ongoing</span>
+          <a href="blog/posts/causal-roadmap.html">Begin →</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TOPICS ═══ -->
+<section class="topics" id="topics">
+  <div class="container">
+    <div class="section-head">
+      <span class="label">Subjects</span>
+      <h2>Four topics I write about.</h2>
+      <a href="blog/" class="head-link">Browse all tags →</a>
+    </div>
+
+    <a class="topic-row" href="blog/">
+      <span class="t-num">01</span>
+      <span class="t-name">Causal Inference</span>
+      <span class="t-desc">Identification and estimation from observational data — potential outcomes, DAGs, g-methods.</span>
+      <span class="t-link">8 posts →</span>
+    </a>
+    <a class="topic-row" href="blog/">
+      <span class="t-num">02</span>
+      <span class="t-name">Biostatistics</span>
+      <span class="t-desc">Survival analysis, competing risks, and longitudinal methods — with applications in clinical trials.</span>
+      <span class="t-link">6 posts →</span>
+    </a>
+    <a class="topic-row" href="blog/">
+      <span class="t-num">03</span>
+      <span class="t-name">Machine Learning</span>
+      <span class="t-desc">Machine learning put in service of causal questions — double ML, causal forests, representation learning.</span>
+      <span class="t-link">2 posts →</span>
+    </a>
+    <a class="topic-row" href="blog/">
+      <span class="t-num">04</span>
+      <span class="t-name">Epidemiology</span>
+      <span class="t-desc">Target trial emulation, prevalent new-user designs, and pharmacoepidemiology in real-world evidence.</span>
+      <span class="t-link">5 posts →</span>
+    </a>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ ABOUT BANNER ════════════════ -->
+<section class="about-banner" id="about">
+  <div class="about-banner-inner">
+    <div class="about-banner-text">
+      <span class="eyebrow">About</span>
+      <div>
+        <h2>Making causal analysis a little more casual.</h2>
+        <p>
+          Ten or so years working as a data scientist, four of those in pharma
+          on real-world evidence. Mostly working at the intersection of causal
+          inference, biostatistics, machine learning and epidemiology.
+        </p>
+      </div>
+      <div class="foot">
+        <a class="btn" href="about/">About page</a>
+      </div>
+    </div>
+    <div class="about-banner-image">
+      <div class="caption">
+        <span>Plate 05</span>
+        <span>Fig. — Suspended cubes</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ COLOPHON ════════════════════ -->
+<section class="colophon">
+  <div class="container">
+    <div class="colophon-grid">
+      <span class="col-label">Contact</span>
+      <div class="col-item">
+        <div class="k">Location</div>
+        <div class="v">Somewhere in France</div>
+      </div>
+      <div class="col-item">
+        <div class="k">Contact</div>
+        <a class="v" href="https://www.linkedin.com/in/alex-mourer">LinkedIn →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ FOOTER ══════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      © 2026 Alex Mourer
+    </div>
+    <div class="footer-links">
+      <a href="./">Index</a>
+      <a href="blog/">Posts</a>
+      <a href="about/">About</a>
+    </div>
+    <div class="footer-meta"></div>
+  </div>
+</footer>
+
+
+<script>
+// ── Apply state → DOM ───────────────────────────────────────────
+const state = { ...TWEAK_DEFAULTS };
+
+const attrMap = {
+  accent:   "accent",
+  typePair: "type",
+  density:  "density",
+};
+
+function applyState() {
+  const root = document.documentElement;
+  for (const [k, attr] of Object.entries(attrMap)) {
+    root.setAttribute("data-" + attr, state[k]);
+  }
+  // Hero variant
+  document.querySelectorAll(".hero").forEach(el => {
+    el.classList.toggle("is-active", el.dataset.variant === state.hero);
+  });
+  // Active button highlight
+  document.querySelectorAll(".tweak-group").forEach(g => {
+    const key = g.dataset.key;
+    g.querySelectorAll(".tg-opt").forEach(b => {
+      b.classList.toggle("active", b.dataset.val === state[key]);
+    });
+  });
+}
+
+applyState();
+</script>
 
 </body>
 </html>

@@ -1,219 +1,676 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About — Alex Mourer</title>
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <style>
-    .about-page-banner {
-      border-bottom: 1px solid #cfdcb0;
-      background: #ecf2d0;
-      overflow: hidden;
-    }
-    .about-page-banner-inner {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 0 40px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: stretch;
-      min-height: 260px;
-    }
-    .about-page-banner-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 72px 48px 72px 0;
-    }
-    .about-page-banner h1 {
-      font-size: clamp(36px, 4vw, 52px);
-      font-weight: 300;
-      letter-spacing: -0.025em;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-    .about-page-banner p {
-      font-size: 17px;
-      color: var(--text-muted);
-      font-weight: 300;
-      max-width: 420px;
-      line-height: 1.7;
-    }
-    .about-page-banner-image {
-      display: flex;
-      align-items: stretch;
-      border-left: 1px solid #cfdcb0;
-      overflow: hidden;
-    }
-    .about-page-banner-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center center;
-      display: block;
-    }
-    @media (max-width: 768px) {
-      .about-page-banner-inner { grid-template-columns: 1fr; }
-      .about-page-banner-image { display: none; }
-      .about-page-banner-text { padding: 48px 0; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Alex Mourer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Inter+Tight:wght@400;500;600&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "forest",
+  "typePair": "editorial",
+  "density": "balanced"
+}/*EDITMODE-END*/;
+</script>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   ABOUT-PAGE SPECIFICS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── About hero: small portrait + bio ──────────────────────── */
+.about-hero {
+  padding: 112px 0 88px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.about-hero-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.about-hero-left {
+  display: flex; flex-direction: column; gap: 24px;
+}
+.portrait {
+  width: 198px; height: 198px;
+  border: 1px solid var(--rule-2);
+  background: var(--paper-2) url('../portrait.png?v=3') center / cover no-repeat;
+  filter: grayscale(0.15) contrast(1.02);
+  position: relative;
+}
+.portrait::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg,
+    transparent 60%,
+    color-mix(in oklab, var(--accent) 10%, transparent) 100%);
+}
+.portrait-meta {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.portrait-meta strong {
+  font-weight: 500; color: var(--ink);
+}
+.portrait-skills {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex; flex-direction: column; gap: 3px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+.about-hero-right { min-width: 0; }
+.about-hero-right .breadcrumb {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 12px;
+  margin-bottom: 32px;
+}
+.about-hero-right .breadcrumb::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent);
+}
+.about-hero-right h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(42px, 5vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 48px;
+  max-width: 18ch;
+}
+.about-hero-right h1 em {
+  font-style: italic; color: var(--accent); font-weight: 300;
+}
+.bio-block {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding-top: 40px;
+  border-top: 1px solid var(--rule);
+  max-width: 62ch;
+}
+.bio-block p {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.6;
+  font-weight: 300;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+.bio-block p + p { margin-top: 20px; }
+.bio-block p em {
+  font-style: italic; color: var(--accent);
+}
+
+/* ── Now section ─────────────────────────────────────────── */
+.now-section {
+  padding: var(--dpad-section) 0;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.now-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.now-label {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink);
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.now-label::before { content: ''; width: 28px; height: 1px; background: var(--accent); }
+.now-label .num { color: var(--faint); font-weight: 400; margin-right: 4px; }
+.now-label .stamp {
+  display: block;
+  margin-top: 18px;
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+.now-items {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.now-item {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 48px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.now-item:last-child { border-bottom: none; }
+.now-item .ni-kind {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.now-item .ni-body {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.008em;
+}
+.now-item .ni-body em { font-style: italic; color: var(--accent); font-weight: 300; }
+.now-item .ni-body .detail {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--sans);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 64ch;
+  letter-spacing: 0;
+}
+
+/* ── Selected writing ────────────────────────────────────── */
+.selected {
+  padding: var(--dpad-section) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.selected-list {
+  border-top: 1px solid var(--rule);
+}
+.selected-item {
+  display: grid;
+  grid-template-columns: 80px 140px 1fr 160px;
+  gap: 32px;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+  transition: padding 0.2s, background 0.2s;
+  cursor: pointer;
+}
+.selected-item:hover {
+  padding-left: 16px; padding-right: 16px;
+  background: color-mix(in oklab, var(--card) 60%, var(--paper));
+}
+.selected-item .s-num {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--faint); letter-spacing: 0.06em;
+}
+.selected-item .s-date {
+  font-family: var(--mono); font-size: 11.5px;
+  letter-spacing: 0.04em; color: var(--muted);
+}
+.selected-item .s-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.selected-item .s-title em { font-style: italic; color: var(--accent); font-weight: 400; }
+.selected-item .s-kind {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  justify-self: start;
+  border: 1px solid var(--rule-2);
+  padding: 4px 10px;
+}
+
+/* ── Consulting callout ──────────────────────────────────── */
+.consulting {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.consulting-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  min-height: 520px;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+}
+.consulting-text {
+  padding: 80px 64px 80px 56px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  border-right: 1px solid var(--rule);
+}
+.consulting-text .label-top {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.consulting-text .label-top .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.consulting-text h2 {
+  font-family: var(--serif);
+  font-size: clamp(32px, 3.4vw, 46px);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  margin: 32px 0 24px;
+  max-width: 20ch;
+}
+.consulting-text h2 em { font-style: italic; color: var(--accent); }
+.consulting-text .lede {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 46ch;
+}
+.consulting-text .aside {
+  margin-top: 24px;
+  padding-left: 20px;
+  border-left: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 42ch;
+}
+.consulting-text .aside::before {
+  content: '— ';
+  color: var(--accent);
+  font-style: normal;
+  margin-left: -2px;
+}
+.consulting-areas {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+  display: grid; grid-template-columns: 1fr; gap: 20px;
+}
+.consulting-areas .ca-item .k {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 8px;
+}
+.consulting-areas .ca-item .v {
+  font-family: var(--serif); font-size: 17px;
+  font-weight: 300; color: var(--ink-2);
+  line-height: 1.35;
+}
+.consulting-text .foot {
+  display: flex; justify-content: space-between; align-items: end;
+  padding-top: 36px;
+  border-top: 1px solid var(--rule);
+  margin-top: 36px;
+}
+.consulting-image {
+  position: relative;
+  background: url("../cubes-dispersion.png") center / cover no-repeat;
+  overflow: hidden;
+}
+.consulting-image::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--paper) 18%, transparent),
+    transparent 40%,
+    color-mix(in oklab, var(--paper) 10%, transparent));
+}
+.consulting-image .caption {
+  position: absolute; left: 32px; bottom: 32px; right: 32px;
+  z-index: 2;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.72;
+}
+
+/* ── CV preview card ─────────────────────────────────────── */
+.cv-preview {
+  position: relative;
+  background: var(--paper-2);
+  overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 48px 40px 32px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.cv-preview::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 30%,
+      color-mix(in oklab, var(--accent) 4%, transparent) 0%,
+      transparent 70%);
+  pointer-events: none;
+}
+.cv-sheet {
+  position: relative;
+  width: 240px;
+  min-height: 320px;
+  background: #fefdfa;
+  border: 1px solid var(--rule-2);
+  box-shadow:
+    0 1px 0 var(--rule),
+    0 8px 24px color-mix(in oklab, var(--ink) 12%, transparent),
+    0 20px 48px color-mix(in oklab, var(--ink) 8%, transparent);
+  padding: 22px 20px 20px;
+  transform: rotate(-1.8deg);
+  transition: transform 0.35s cubic-bezier(.3,.8,.3,1), box-shadow 0.35s;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.cv-preview:hover .cv-sheet {
+  transform: rotate(-0.8deg) translateY(-4px) scale(1.015);
+  box-shadow:
+    0 1px 0 var(--rule),
+    0 14px 32px color-mix(in oklab, var(--ink) 16%, transparent),
+    0 28px 60px color-mix(in oklab, var(--ink) 10%, transparent);
+}
+.cv-sheet::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent);
+}
+.cv-header { margin-bottom: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.cv-name {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin-bottom: 4px;
+}
+.cv-role {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cv-section { display: flex; flex-direction: column; gap: 6px; }
+.cv-h {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+.cv-line {
+  height: 3px;
+  background: color-mix(in oklab, var(--ink) 18%, transparent);
+  border-radius: 1px;
+}
+.cv-line.w-90 { width: 90%; }
+.cv-line.w-85 { width: 85%; }
+.cv-line.w-80 { width: 80%; }
+.cv-line.w-75 { width: 75%; }
+.cv-line.w-70 { width: 70%; }
+.cv-line.w-65 { width: 65%; }
+.cv-line.w-60 { width: 60%; }
+.cv-line.w-55 { width: 55%; }
+
+.cv-caption {
+  position: relative;
+  z-index: 2;
+  margin-top: 32px;
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 240px;
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.cv-caption .cv-dl {
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.cv-preview:hover .cv-caption .cv-dl {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Contact colophon (reuse .colophon from site.css) ─────── */
+/* .colophon styles inherited */
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .about-hero-grid,
+  .now-grid { grid-template-columns: 1fr; gap: 32px; }
+  .about-hero { padding: 72px 0 48px; }
+  .portrait { width: 160px; height: 160px; }
+  .bio-block { grid-template-columns: 1fr; gap: 24px; }
+  .now-item { grid-template-columns: 1fr; gap: 8px; }
+  .selected-item { grid-template-columns: 60px 1fr; gap: 12px; }
+  .selected-item .s-date, .selected-item .s-kind { display: none; }
+  .consulting-inner { grid-template-columns: 1fr; }
+  .consulting-text { padding: 48px 32px; border-right: none; border-bottom: 1px solid var(--rule); }
+  .consulting-image { min-height: 280px; }
+  .consulting-areas { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
 
-  <nav>
-    <div class="nav-inner">
-      <a href="../index.html" class="nav-logo">
-        <span class="bracket">[</span>AM<span class="bracket">]</span>
-        Alex Mourer
-      </a>
-      <div class="nav-links">
-        <a href="../index.html">Home</a>
-        <a href="../blog/index.html">Posts</a>
-        <a href="index.html" class="active">About</a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="about-page-banner">
-    <div class="about-page-banner-inner">
-      <div class="about-page-banner-text">
-        <h1>About</h1>
-        <p>Causal inference, biostatistics, and machine learning — with a focus on what we can credibly learn from data.</p>
-      </div>
-      <div class="about-page-banner-image">
-        <img src="../cubes-dispersion.png" alt="">
-      </div>
+<!-- ══════════════════════════════ NAV ══════════════════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../" class="nav-logo">
+      Alex Mourer
+    </a>
+    <div class="nav-center">
+      <a href="../">Index</a>
+      <a href="../blog/">Posts</a>
+      <a href="../about/" class="active">About</a>
     </div>
   </div>
+</nav>
 
+<!-- ══════════════════════════════ ABOUT HERO ═════════════════ -->
+<section class="about-hero">
   <div class="container">
-
-    <div class="about-layout">
-
-      <aside class="about-sidebar">
-        <img src="../Portrait d'un homme en extérieur.png" alt="Alex Mourer" style="
-          width: 80px; height: 80px;
-          border-radius: 50%;
-          object-fit: cover;
-          object-position: center top;
-          border: 1px solid var(--border);
-          display: block;
-          margin-bottom: 0;
-        ">
-        <div class="about-name">Alex Mourer</div>
-        <div class="about-role">Causal Inference · Biostatistics · ML</div>
-        <div class="about-contact">
-          <a href="https://github.com/moureralex" target="_blank">
-            <span style="font-size:14px;">⌥</span> github.com/moureralex
-          </a>
-          <a href="../CV_AlexMourer_v5.pdf" target="_blank">
-            <span style="font-size:14px;">↗</span> CV / Resume
-          </a>
+    <div class="about-hero-grid">
+      <div class="about-hero-left">
+        <div class="portrait" aria-label="Portrait"></div>
+        <div class="portrait-meta">
+          <strong>Alex Mourer</strong>
+          <span>Data scientist</span>
+          <span>Somewhere in France</span>
+          <ul class="portrait-skills">
+            <li>Causal inference</li>
+            <li>(Bio)statistics</li>
+            <li>Machine learning</li>
+            <li>Epidemiology</li>
+            <li>Programming</li>
+          </ul>
         </div>
-
-        <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--border);">
-          <div style="font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint); margin-bottom:10px;">Contact</div>
-          <a href="https://www.linkedin.com/in/alex-mourer" target="_blank" style="
-            display:inline-flex; align-items:center; gap:8px;
-            font-size:17px; font-weight:300; color:var(--text);
-            transition:opacity 0.15s;
-          " onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'">
-            <span style="font-size:14px;">↗</span> LinkedIn
-          </a>
+      </div>
+      <div class="about-hero-right">
+        <span class="breadcrumb">Index / About</span>
+        <h1>Making causal analysis a little more <em>casual.</em></h1>
+        <div class="bio-block">
+          <p>
+            I'm a data scientist with roughly ten years of experience, four of
+            them in pharma working on real-world evidence. I hold a PhD in
+            <em>statistics and machine learning,</em> and my day-to-day sits
+            at the intersection of causal inference, biostatistics and
+            epidemiology.
+          </p>
+          <p>
+            This site is a working notebook — mostly for statisticians,
+            epidemiologists, clinicians, and anyone nerdy about
+            <em>causal inference.</em> Posts start as notes I write to
+            myself to understand a paper or work through a derivation; the
+            ones that feel useful get cleaned up and published. The aim is
+            short, opinionated, and honest about what's assumed.
+          </p>
         </div>
-
-        <div style="margin-top:28px;">
-          <a href="../CV_AlexMourer_v5.pdf" target="_blank" style="display:block;">
-            <img src="../cv-snapshot.jpg" alt="CV preview" style="
-              width: 100%;
-              max-width: 220px;
-              border: 1px solid var(--border);
-              border-radius: 4px;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-              transition: box-shadow 0.2s;
-            " onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.14)'"
-               onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'">
-          </a>
-        </div>
-      </aside>
-
-      <main class="about-main">
-        <h2>Background</h2>
-        <p>
-          I work at the intersection of causal inference, biostatistics, and machine learning.
-          My interest is in what we can credibly learn about cause and effect from
-          observational data — the messy, real-world kind that doesn't come from randomised trials.
-        </p>
-        <p>
-          This site is a place to share my thinking, work through ideas in public, and build
-          a body of writing that I hope is useful to others learning these methods.
-        </p>
-        <p>
-          I'm also available for freelance work in data analysis, statistical consulting,
-          and scientific writing. If you're working on a project where causal thinking matters,
-          feel free to get in touch.
-        </p>
-
-        <div class="research-areas">
-          <div class="research-card">
-            <h4>Causal Inference</h4>
-            <p>Potential outcomes, DAGs, identification strategies, treatment effect estimation</p>
-          </div>
-          <div class="research-card">
-            <h4>Biostatistics</h4>
-            <p>Survival analysis, competing risks, clinical trial design, longitudinal data</p>
-          </div>
-          <div class="research-card">
-            <h4>Machine Learning</h4>
-            <p>Double ML, causal forests, representation learning for causal problems</p>
-          </div>
-          <div class="research-card">
-            <h4>Epidemiology</h4>
-            <p>Target trial emulation, prevalent new-user designs, pharmacoepidemiology</p>
-          </div>
-        </div>
-
-        <!-- CONSULTING BOX -->
-        <div class="consulting-box" onclick="toggleConsulting(this)" role="button" tabindex="0" style="margin-top:24px; border-radius:var(--radius); border:1px solid var(--border); border-top:1px solid var(--border); padding:32px 28px;">
-          <div class="consulting-front">
-            <h4 style="font-size:18px; font-weight:500; margin-bottom:10px;">Need advice on a project?</h4>
-            <p style="font-size:17px; color:var(--text-muted); font-weight:300; line-height:1.6;">Freelance consulting opportunity — click to get in touch.</p>
-            <span style="display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase; margin-top:16px; color:var(--text);">Get in touch →</span>
-          </div>
-          <div class="consulting-reveal" style="display:none;">
-            <h4 style="font-size:18px; font-weight:500; margin-bottom:16px;">Get in touch</h4>
-            <p style="font-size:17px; color:var(--text-muted); font-weight:300; line-height:1.6;">
-              Email: <span style="color:var(--text);">mylastname.myfirstname@gmail.com</span>
-            </p>
-            <p style="font-size:17px; color:var(--text-muted); font-weight:300; margin-top:10px; line-height:1.6;">
-              Or reach out via <a href="https://www.linkedin.com/in/alex-mourer" target="_blank" style="color:var(--text); text-decoration:underline; text-underline-offset:3px;" onclick="event.stopPropagation()">LinkedIn →</a>
-            </p>
-            <span style="display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase; margin-top:16px; opacity:0.4; color:var(--text);">← back</span>
-          </div>
-        </div>
-
-        <script>
-          function toggleConsulting(el) {
-            var front = el.querySelector('.consulting-front');
-            var reveal = el.querySelector('.consulting-reveal');
-            var showing = reveal.style.display !== 'none';
-            front.style.display = showing ? '' : 'none';
-            reveal.style.display = showing ? 'none' : '';
-          }
-        </script>
-
-      </main>
-
+      </div>
     </div>
   </div>
+</section>
 
-  <footer>
-    <div class="footer-inner">
-      <span class="footer-left">© 2025 Alex Mourer</span>
+<!-- ══════════════════════════════ NOW SECTION ════════════════ -->
+<section class="now-section">
+  <div class="container">
+    <div class="now-grid">
+      <div>
+        <span class="now-label"><span class="num">§&nbsp;01</span> Currently</span>
+        <span class="stamp">Updated Nov 2025</span>
+      </div>
+      <div class="now-items">
+
+        <div class="now-item">
+          <span class="ni-kind">Writing</span>
+          <div class="ni-body">
+            Finishing the <em>Models for Causal Inference</em> series
+            <span class="detail">Next up: targeted maximum likelihood estimation and why the influence-function framing gives you inference almost for free.</span>
+          </div>
+        </div>
+
+        <div class="now-item">
+          <span class="ni-kind">Building</span>
+          <div class="ni-body">
+            An R companion package for the <em>Competing Events</em> series
+            <span class="detail">Tidy helpers for the pseudo-population construction, separable-effects estimators, and bootstrap variance. Aiming for a first release in Q2.</span>
+          </div>
+        </div>
+
+      </div>
     </div>
-  </footer>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ CONSULTING ═════════════════ -->
+<section class="consulting">
+  <div class="consulting-inner">
+    <div class="consulting-text">
+      <span class="label-top"><span class="dot"></span>Open to chat</span>
+      <div>
+        <h2>Happy to <em>talk through</em> projects, questions, or methods.</h2>
+      </div>
+      <div class="consulting-areas">
+        <div class="ca-item">
+          <div class="k">How it works</div>
+          <div class="v">Send a short note describing the project and the question at hand. From there we can decide whether a longer conversation makes sense.</div>
+        </div>
+      </div>
+      <div class="foot">
+        <a class="btn" href="#" data-email data-u="mourer.alex" data-d="gmail.com">Get in touch</a>
+        <a class="btn-ghost" href="https://www.linkedin.com/in/alex-mourer">LinkedIn</a>
+      </div>
+    </div>
+    <a class="consulting-image cv-preview" href="../CV_AlexMourer_v5.pdf" download>
+      <div class="cv-sheet" aria-hidden="true">
+        <div class="cv-header">
+          <div class="cv-name">Alex Mourer</div>
+          <div class="cv-role">Curriculum Vitæ</div>
+        </div>
+        <div class="cv-section">
+          <div class="cv-h">Experience</div>
+          <div class="cv-line w-90"></div>
+          <div class="cv-line w-70"></div>
+          <div class="cv-line w-85"></div>
+          <div class="cv-line w-60"></div>
+        </div>
+        <div class="cv-section">
+          <div class="cv-h">Education</div>
+          <div class="cv-line w-80"></div>
+          <div class="cv-line w-65"></div>
+        </div>
+        <div class="cv-section">
+          <div class="cv-h">Publications</div>
+          <div class="cv-line w-90"></div>
+          <div class="cv-line w-75"></div>
+          <div class="cv-line w-55"></div>
+        </div>
+      </div>
+      <div class="cv-caption">
+        <span>Curriculum Vitæ</span>
+        <span class="cv-dl">Download PDF ↓</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ CONTACT ═══════════════════ -->
+<section class="colophon">
+  <div class="container">
+    <div class="colophon-grid">
+      <span class="col-label">Contact</span>
+      <div class="col-item">
+        <div class="k">LinkedIn</div>
+        <a class="v" href="https://www.linkedin.com/in/alex-mourer">/in/alex-mourer</a>
+      </div>
+      <div class="col-item">
+        <div class="k">GitHub</div>
+        <a class="v" href="https://github.com/alexmourer">@alexmourer</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ FOOTER ══════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      © 2026 Alex Mourer
+    </div>
+    <div class="footer-links">
+      <a href="../">Index</a>
+      <a href="../blog/">Posts</a>
+      <a href="../about/">About</a>
+    </div>
+    <div class="footer-meta"></div>
+  </div>
+</footer>
+
+<script>
+const state = /*EDITMODE-BEGIN-IGNORED*/{
+  accent:  'forest',
+  typePair:'editorial',
+  density: 'balanced',
+};
+// Pull from TWEAK_DEFAULTS declared in head
+Object.assign(state, TWEAK_DEFAULTS);
+const root = document.documentElement;
+root.setAttribute('data-accent',  state.accent);
+root.setAttribute('data-type',    state.typePair);
+root.setAttribute('data-density', state.density);
+
+// Obfuscated email — assembled at runtime only
+document.querySelectorAll('[data-email]').forEach(el => {
+  const u = el.dataset.u;
+  const d = el.dataset.d;
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = 'mailto:' + u + '\u0040' + d;
+  });
+});
+</script>
 
 </body>
 </html>
