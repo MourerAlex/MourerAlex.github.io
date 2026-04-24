@@ -665,25 +665,6 @@ function applyTokens() {
 }
 applyTokens();
 
-// ── Tweak panel ─────────────────────────────────────────────────
-const panel = document.getElementById('tweaks');
-window.addEventListener('message', (e) => {
-  const d = e.data || {};
-  if (d.type === '__activate_edit_mode')   panel.classList.add('open');
-  if (d.type === '__deactivate_edit_mode') panel.classList.remove('open');
-});
-window.parent.postMessage({type: '__edit_mode_available'}, '*');
-document.getElementById('tweaksClose').addEventListener('click', () => panel.classList.remove('open'));
-document.querySelectorAll('.tweak-group').forEach(g => {
-  const key = g.dataset.key;
-  g.querySelectorAll('.tg-opt').forEach(o => {
-    o.addEventListener('click', () => {
-      state[key] = o.dataset.val;
-      applyTokens();
-      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: o.dataset.val } }, '*');
-    });
-  });
-});
 
 // ── Posts data ──────────────────────────────────────────────────
 const POSTS = {

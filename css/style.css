@@ -246,7 +246,7 @@ img { max-width: 100%; display: block; }
 }
 .hero-split-right {
   position: relative;
-  background: url('cubes-hero.png') center / cover no-repeat;
+  background: url('../cubes-hero.png') center / cover no-repeat;
   overflow: hidden;
 }
 .hero-split-right::after {
@@ -295,7 +295,7 @@ img { max-width: 100%; display: block; }
   position: relative;
   min-height: 640px;
   border-bottom: 1px solid var(--rule);
-  background: url('cubes-hero.png') center / cover no-repeat;
+  background: url('../cubes-hero.png') center / cover no-repeat;
   overflow: hidden;
 }
 .hero-bleed::before {
@@ -650,7 +650,7 @@ img { max-width: 100%; display: block; }
 }
 .about-banner-image {
   position: relative;
-  background: url("cubes-suspended.png") center / cover no-repeat;
+  background: url("../cubes-suspended.png") center / cover no-repeat;
   overflow: hidden;
 }
 .about-banner-image::after {
