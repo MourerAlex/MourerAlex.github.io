@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Alex Mourer">
+<meta name="dcterms.date" content="2026-01-15">
+
+<title>From a randomized trial to a survival curve</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="post1-survival-foundations_files/libs/clipboard/clipboard.min.js"></script>
+<script src="post1-survival-foundations_files/libs/quarto-html/quarto.js"></script>
+<script src="post1-survival-foundations_files/libs/quarto-html/popper.min.js"></script>
+<script src="post1-survival-foundations_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="post1-survival-foundations_files/libs/quarto-html/anchor.min.js"></script>
+<link href="post1-survival-foundations_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="post1-survival-foundations_files/libs/quarto-html/quarto-syntax-highlighting-aa64766c4aea7ff58f6cb0da89b4f1fb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="post1-survival-foundations_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="post1-survival-foundations_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="post1-survival-foundations_files/libs/bootstrap/bootstrap-f6aedf10a53e5bd729d1606e9bc29cc6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<style>html{ scroll-behavior: smooth; }</style>
+<!--
+  KaTeX macros — single source of truth aligned with NOTATION.md.
+
+  Quarto's KaTeX integration calls katex.render(tex, el, opts) per element
+  with no `macros` option. To inject our macros without forking Quarto's
+  template, we intercept the `window.katex` assignment via a property
+  setter and wrap render() to merge our macros into every call.
+
+  Order of execution in a Quarto-rendered page:
+    1. <head> parses → this script runs (synchronous, no defer)
+       → installs the window.katex setter, defines window.katex_macros.
+    2. <script defer src=".../katex.min.js"> finishes loading
+       → assigns window.katex; our setter fires and patches katex.render.
+    3. Quarto's deferred inline render script calls katex.render(...)
+       → our wrapper injects macros automatically. Macros now expand.
+-->
+<script>
+  (function () {
+    // ── Macros aligned with /NOTATION.md ──────────────────────────
+    window.katex_macros = {
+      // Population-level operators
+      "\\E":  "\\mathbb{E}",
+      "\\P":  "\\mathbb{P}",
+      "\\R":  "\\mathbb{R}",
+
+      // Sample-level (hatted) operators
+      "\\Eh": "\\widehat{\\mathbb{E}}",
+      "\\Ph": "\\widehat{\\Pr}",
+
+      // Logical / set helpers
+      "\\1":   "\\mathbf{1}",
+      "\\ind": "\\perp\\!\\!\\!\\perp",
+
+      // Vectors and histories from NOTATION.md
+      "\\LL":  "\\mathbf{L}",
+      "\\LLi": "\\mathbf{L}_i",
+      "\\LLb": "\\bar{\\mathbf{L}}",
+      "\\Ab":  "\\bar{A}",
+      "\\Cb":  "\\bar{C}",
+
+      // Convenient outcome shorthands
+      "\\Yk":   "Y_{k}",
+      "\\Ya":   "Y^{a}",
+      "\\Yak":  "Y^{a}_{k}",
+      "\\Sak":  "S^{a}(k)",
+      "\\lamY": "\\lambda^{Y}",
+      "\\lamC": "\\lambda^{C}"
+    };
+
+    // ── Patch katex.render the moment KaTeX assigns to window ─────
+    function applyPatch(k) {
+      if (!k || k.__macroPatched) return;
+      var orig = k.render;
+      k.render = function (tex, el, opts) {
+        opts = opts || {};
+        opts.macros = Object.assign({}, opts.macros || {}, window.katex_macros);
+        if (opts.throwOnError === undefined) opts.throwOnError = false;
+        return orig.call(k, tex, el, opts);
+      };
+      k.__macroPatched = true;
+    }
+
+    var _katex;
+    Object.defineProperty(window, "katex", {
+      configurable: true,
+      get: function () { return _katex; },
+      set: function (v) { _katex = v; applyPatch(_katex); }
+    });
+  })();
+</script>
+
+<!-- KaTeX auto-render for math inside raw HTML blocks (e.g. the poster).
+     Quarto's KaTeX integration only renders <span class="math"> elements
+     produced from markdown $..$. Math written inside raw HTML — like
+     the poster's tile templates — is just text and never reached by
+     Quarto's renderer. Auto-render scans the DOM for delimiters and
+     calls katex.render (already patched above with our macros), which
+     is a no-op on already-rendered math.
+
+     We also load katex.min.js + katex.min.css here because Quarto
+     skips them on pages with no markdown math (e.g. the poster, where
+     all $..$ live inside raw HTML). Loading is idempotent on pages
+     where Quarto already includes them.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer="" src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer="" src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {
+                  delimiters: [
+                    { left: '$$', right: '$$', display: true  },
+                    { left: '$',  right: '$',  display: false }
+                  ],
+                  throwOnError: false
+                });"></script>
+
+  <script defer="" src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../site/css/posts.css">
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Contents</h2>
+   
+  <ul class="collapse">
+  <li><a href="#the-setup-a-randomized-trial" id="toc-the-setup-a-randomized-trial" class="nav-link active" data-scroll-target="#the-setup-a-randomized-trial">1. The setup: a randomized trial</a></li>
+  <li><a href="#why-crude-rates-fail" id="toc-why-crude-rates-fail" class="nav-link" data-scroll-target="#why-crude-rates-fail">2. Why crude rates fail</a></li>
+  <li><a href="#the-kaplan-meier-estimator" id="toc-the-kaplan-meier-estimator" class="nav-link" data-scroll-target="#the-kaplan-meier-estimator">3. The Kaplan-Meier estimator</a></li>
+  <li><a href="#hazards-the-most-important-tool-in-survival-analysis" id="toc-hazards-the-most-important-tool-in-survival-analysis" class="nav-link" data-scroll-target="#hazards-the-most-important-tool-in-survival-analysis">4. Hazards: the most important tool in survival analysis</a></li>
+  <li><a href="#person-time-data-layout" id="toc-person-time-data-layout" class="nav-link" data-scroll-target="#person-time-data-layout">5. Person-time data layout</a></li>
+  <li><a href="#closing" id="toc-closing" class="nav-link" data-scroll-target="#closing">6. Closing</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+<!--
+  Site navigation — kept in sync with the existing static HTML pages
+  (site/index.html, site/about/index.html, site/blog/index.html).
+  Quarto injects this verbatim at the top of every rendered post via
+  `include-before-body` in _quarto.yml.
+
+  Note on relative paths: rendered posts live at
+  site/blog/posts/<slug>.html, so all hrefs use ../../<page>.
+-->
+<nav>
+  <div class="nav-inner">
+    <a href="../../index.html" class="nav-logo">
+      <span class="bracket">[</span>AM<span class="bracket">]</span>
+      Alex Mourer
+    </a>
+    <div class="nav-links">
+      <a href="../../index.html">Home</a>
+      <a href="../index.html" class="active">Posts</a>
+      <a href="../../about/index.html">About</a>
+    </div>
+  </div>
+</nav>
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">From a randomized trial to a survival curve</h1>
+<p class="subtitle lead">Causal Survival Models — Post 1 of 4</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Causal Inference</div>
+    <div class="quarto-category">Survival</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Alex Mourer </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 15, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="the-setup-a-randomized-trial" class="level2">
+<h2 class="anchored" data-anchor-id="the-setup-a-randomized-trial">1. The setup: a randomized trial</h2>
+<p>A 4-year randomized trial enrols 1000 patients at elevated heart-failure risk. Each is assigned, by coin flip, to weekly Drug A or weekly Drug B. The question is which drug delays the onset of heart failure longest.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>Each subject <span class="math inline">i</span> has a treatment indicator <span class="math inline">A_i</span> assigned by randomization: <span class="math inline">A_i = 1</span> for Drug A, <span class="math inline">A_i = 0</span> for Drug B.</p>
+<p>By month 48, some patients have had a heart-failure event. Of those without one, some are still event-free when the trial closes — administrative censoring. Others are lost from observation before then — dropout. Either way, the trial cannot say what would eventually have happened to them. Their observations are <em>censored</em>, where censoring is restricted to <em>avoidable</em> causes of incomplete observation.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>The natural-sounding question — “what proportion of patients on Drug A had a heart failure?” — is ill-posed. The denominator is not the same for everyone. A patient followed for 6 months cannot contribute the same information as one followed for 48. Crude proportions throw away the time at risk.</p>
+</section>
+<section id="why-crude-rates-fail" class="level2">
+<h2 class="anchored" data-anchor-id="why-crude-rates-fail">2. Why crude rates fail</h2>
+<p>In the 1000-patient trial, follow-up ends at month 48. By that point, 312 patients have had a heart-failure event at known times; the remaining 688 have not — 540 are still under observation when the trial closes (administrative censoring), 148 are lost from observation earlier (dropout, also called loss to follow-up). Both censoring types are taken to be independent of the event time.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>The natural first instinct is to summarise this cohort with an average time to event. Two attempts fail.</p>
+<p>The average of all 1000 observed times treats each censoring time as if it were an event time. But the 688 censored patients had not yet had an event when their observation ended — their true event times are later than what was recorded. The average pulls downward.</p>
+<p>The average of only the 312 uncensored times drops the censored patients. But those patients had survived past their censoring time event-free, and so represent longer-than-average survival that the average no longer sees. The average pulls downward again.</p>
+<p>Both summaries underestimate the true mean for the same reason: a censoring time carries partial information — the patient was event-free <em>up to</em> that time — that a naive average cannot exploit (Ravn &amp; Andersen, Exercise 1.1). The same logic extends to other simple summaries — the proportion of events by a fixed month, for example — that ignore the partial information in censored observations.</p>
+</section>
+<section id="the-kaplan-meier-estimator" class="level2">
+<h2 class="anchored" data-anchor-id="the-kaplan-meier-estimator">3. The Kaplan-Meier estimator</h2>
+<p>Time is divided into discrete intervals — months — and observation proceeds interval by interval. Within each interval, at most one thing happens to a subject: either they have the event (<span class="math inline">Y = 1</span>), or they are censored (<span class="math inline">C = 1</span>), or neither. Events and censorings do not coincide in the same interval, so there is no ambiguity about who is at risk during it.</p>
+<p>The Kaplan-Meier estimator uses the censored observations correctly. At each interval, it computes the empirical hazard — the fraction of patients at risk who had an event during the interval. The Kaplan-Meier survival estimate at interval <span class="math inline">k</span> is the product of one-minus-hazard across all earlier intervals:</p>
+<p><span class="math display">
+\hat S_{\text{KM}}(k) \;=\; \prod_{j=1}^{k}
+\left(1 - \hat\lambda^Y_j\right),
+</span></p>
+<p>where the empirical hazard at interval <span class="math inline">j</span> is</p>
+<p><span class="math display">
+\hat\lambda^Y_j \;=\;
+\frac{\text{events in interval } j}{\text{patients at risk in interval } j}
+\;=\;
+\frac{\sum_i \mathbb{1}\{Y_{i,j}=1,\ Y_{i,j-1}=0\}}{\sum_i \mathbb{1}\{Y_{i,j-1}=0,\ \bar C_{i,j-1}=0\}}.
+</span></p>
+<p>The product updates only when events occur. The curve is a step function that drops at every observed event and stays flat between. Under independent censoring, <span class="math inline">\hat S_{\text{KM}}(k)</span> consistently estimates the survival function <span class="math inline">S(k)</span>.</p>
+<p>Section 2’s 688 censored patients enter this estimate without being dropped or mislabeled. Each contributes to the denominator of <span class="math inline">\hat\lambda^Y_j</span> for every interval they were under observation, and exits without entering any numerator. The partial information — that they were event-free up to a certain interval — is fully used; the naive averages of Section 2 could not exploit it.</p>
+</section>
+<section id="hazards-the-most-important-tool-in-survival-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="hazards-the-most-important-tool-in-survival-analysis">4. Hazards: the most important tool in survival analysis</h2>
+<p>Section 3 computed the empirical hazard <span class="math inline">\hat\lambda^Y_j</span> from a ratio of events to patients at risk. Its population counterpart is the <em>hazard</em> at interval <span class="math inline">k</span>:</p>
+<p><span class="math display">
+\lambda^Y_k \;=\; \mathbb{P}\!\left[Y_k = 1 \,\middle|\, Y_{k-1} = 0,\
+\bar C_{k-1} = 0\right],
+</span></p>
+<p>the probability of an event during interval <span class="math inline">k</span> given the patient was at risk at its start (event-free and uncensored through the end of interval <span class="math inline">k-1</span>). The empirical hazard <span class="math inline">\hat\lambda^Y_j</span> of Section 3 is one nonparametric estimator of <span class="math inline">\lambda^Y_j</span>.</p>
+<p>A patient is event-free at interval <span class="math inline">k</span> only by being event-free at every preceding interval. The survival function factorises into one-step survivals:</p>
+<p><span class="math display">
+S(k) \;=\; \mathbb{P}[Y_k = 0] \;=\;
+\prod_{j=1}^{k}\left(1 - \lambda^Y_j\right).
+</span></p>
+<p>Each factor <span class="math inline">(1 - \lambda^Y_j)</span> is the per-interval survival probability; their product is the survival probability through interval <span class="math inline">k</span>.</p>
+<p>The product is the structural backbone of the estimators in this series. Kaplan-Meier plugs in the nonparametric empirical hazard. The estimators in the next posts — IPW and the g-formula — plug in modelled <span class="math inline">\hat\lambda^Y_j</span> that depend on treatment and covariates. The combining machinery stays the same.</p>
+</section>
+<section id="person-time-data-layout" class="level2">
+<h2 class="anchored" data-anchor-id="person-time-data-layout">5. Person-time data layout</h2>
+<p>Up to this section, the data have been thought of in <em>wide</em> format: one row per subject, with their observed time, event indicator, and treatment. To compute the empirical hazard <span class="math inline">\hat\lambda^Y_j</span> at each interval — and, in later posts, to model it as a function of covariates — the data are reshaped into <em>long</em> format, also called person-time format. Each row corresponds to one subject in one at-risk interval.</p>
+<p>A subject contributes one row for each interval they are at risk, until they either have the event or are censored. Each row carries the subject’s id <span class="math inline">i</span>, the interval <span class="math inline">k</span>, the treatment <span class="math inline">A_i</span>, the event status at the end of <span class="math inline">k</span> (<span class="math inline">Y_{i,k}</span>), and the censoring status during <span class="math inline">k</span> (<span class="math inline">C_{i,k}</span>).</p>
+<p><strong>Table 5.1 — Wide vs long format for 3 subjects.</strong></p>
+<p><em>Wide:</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">i</span></th>
+<th><span class="math inline">A_i</span></th>
+<th>obs time (months)</th>
+<th>event?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>A</td>
+<td>12</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>B</td>
+<td>48</td>
+<td>no (admin)</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>A</td>
+<td>24</td>
+<td>no (LTFU)</td>
+</tr>
+</tbody>
+</table>
+<p><em>Long (selected rows):</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">i</span></th>
+<th><span class="math inline">k</span></th>
+<th><span class="math inline">A_i</span></th>
+<th><span class="math inline">Y_{i,k}</span></th>
+<th><span class="math inline">C_{i,k}</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>1</td>
+<td>A</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+</tr>
+<tr class="odd">
+<td>1</td>
+<td>12</td>
+<td>A</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>1</td>
+<td>B</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>48</td>
+<td>B</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>1</td>
+<td>A</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+<td>⋯</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>24</td>
+<td>A</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>In long format, the empirical hazard at interval <span class="math inline">j</span> is the fraction of rows at interval <span class="math inline">j</span> with <span class="math inline">Y_{i,j}=1</span>. The reshape has done the bookkeeping the empirical hazard requires.</p>
+<p>Long format is also the substrate for the modelled hazards in the next posts: pooled-logistic regression treats each at-risk row as an observation, with <span class="math inline">Y_{i,k}</span> as the binary outcome and treatment, covariates, and interval as predictors. The layout introduced here is the input to IPW and the g-formula in posts 3 and 4.</p>
+</section>
+<section id="closing" class="level2">
+<h2 class="anchored" data-anchor-id="closing">6. Closing</h2>
+<p>So — does the KM give us everything we need to compute survival contrasts in studies? Under randomization in a perfectly conducted RCT: yes, the arm-specific <span class="math inline">S(k \mid A=a)</span> and the contrast <span class="math inline">\Delta(k)</span> are unbiased estimates of the corresponding <em>causal quantities</em>.</p>
+<p>These posts focus on observational data, which is harder for multiple reasons — one of the most important being confounding. In observational settings, KM is no longer an unbiased estimate of the causal quantity; the treated and untreated groups differ in ways that affect the outcome independently of the drug. The estimand must be defined more carefully — separating what we <em>would</em> see (the causal survival curve <span class="math inline">S^a(k)</span>) from what we <em>do</em> see (the observational <span class="math inline">S(k \mid A=a)</span>) — and the estimator must do additional work to bridge the gap.</p>
+<p>The next post introduces the causal estimand <span class="math inline">S^a(k)</span>, the identifiability conditions that link it to the observational data, and the curse of dimensionality that motivates modelling. After that: IPW and the g-formula as two estimation routes.</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<ul>
+<li>Hernán MA, Robins JM. <em>Causal Inference: What If.</em> 2025.</li>
+<li>Ravn H, Andersen PK. <em>Models for Multi-State Survival Data.</em> CRC Press, 2024. Especially §1.2.1, §1.3, §3, Exercise 1.1.</li>
+</ul>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>A well-defined research question is the precondition for everything that follows. The estimand the trial targets, and the estimator we use to extract it from the data, both depend on the question being precise: <em>who</em> (adults at elevated heart-failure risk), <em>what intervention</em> (weekly Drug A vs Drug B for 48 months), <em>which outcome</em> (time to heart-failure event), and <em>when</em> (every month over the 4 years). Vague research questions yield vague estimands and biased estimates.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Non-avoidable events such as death from any cause are competing risks and are addressed in a separate post (Ravn &amp; Andersen, §1.3).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Time since randomization (month 0) is the only entry variable. Left-truncation — observation conditional on having survived to a later entry time — does not apply here because all patients enrol at month 0. Alternative time axes such as age or calendar time would introduce left-truncation and are out of scope for this post (Ravn &amp; Andersen, §1.2.1).<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+          // target, if specified
+          link.setAttribute("target", "_blank");
+          if (link.getAttribute("rel") === null) {
+            link.setAttribute("rel", "noopener");
+          }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<!--
+  Site footer — mirrors site/index.html and other static pages.
+  Injected at the bottom of every rendered post via `include-after-body`
+  in _quarto.yml. Year is hardcoded; bump in one place when needed.
+-->
+<footer>
+  <div class="footer-inner">
+    <span class="footer-left">© 2025 Alex Mourer</span>
+  </div>
+</footer>
+
+
+
+
+<script src="post1-survival-foundations_files/libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
