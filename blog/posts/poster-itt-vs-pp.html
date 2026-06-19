@@ -50,20 +50,25 @@
     }
 
     .h-title {
-      font-size: clamp(17px, 1.8vw, 26px);
+      font-size: clamp(20px, 2.4vw, 36px);
       font-weight: 700;
       color: var(--text);
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
     }
 
-    .h-title span { color: var(--teal); }
-
-    .h-sub {
-      font-size: clamp(10px, 0.9vw, 12.5px);
-      color: var(--muted);
-      margin-top: 0.2em;
+    .h-title .vs {
+      display: block;
+      font-size: 0.55em;
       font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.6;
     }
+
+    .h-title .itt { color: var(--teal); }
+    .h-title .pp  { color: var(--text); }
 
     .h-meta {
       text-align: right;
@@ -295,11 +300,14 @@
   <!-- HEADER -->
   <div class="poster-header">
     <div>
-      <div class="h-title">Intention-to-Treat <span>vs.</span> Per-Protocol</div>
-      <div class="h-sub">Two estimands, one dataset &mdash; when the choice matters and what to do about it</div>
+      <div class="h-title">
+        <span class="itt">Intention-to-Treat</span>
+        <span class="vs">vs.</span>
+        <span class="pp">Per-Protocol</span>
+      </div>
     </div>
     <div class="h-meta">
-      Alex Mourer &mdash; Causal Inference Methods<br>
+      Alex Mourer<br>
       Hernán &amp; Hernández-Díaz 2012 &middot; Hernán &amp; Robins 2017 &middot; Murray et al. 2019
     </div>
   </div>
