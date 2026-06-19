@@ -256,7 +256,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">The parametric g-formula for causal survival</h1>
-<p class="subtitle lead">Causal Survival Models — Post 3 of 4</p>
+<p class="subtitle lead">Causal Survival Models, Post 3 of 4</p>
   <div class="quarto-categories">
     <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Survival</div>
@@ -299,7 +299,7 @@ S^a(k) \;=\; \mathbb{E}_{\mathbf L}\!\left[\prod_{j=1}^{k}
 <p>This identity is structural: under the three conditions of post 2 §3, the unobservable counterfactual survival equals a function of the conditional hazard <span class="math inline">\lambda^Y_j(\mathbf L, a)</span> and the covariate distribution <span class="math inline">F_{\mathbf L}</span>. Both are population quantities. Neither is given to us in the data.</p>
 <p>The plug-in idea is to replace each unknown ingredient with a sample estimate:</p>
 <ul>
-<li>Replace <span class="math inline">\lambda^Y_j(\mathbf L, a)</span> with a fitted conditional hazard <span class="math inline">\hat\lambda^Y_j(\mathbf L, a)</span> — modelled via pooled logistic regression on person-time data.</li>
+<li>Replace <span class="math inline">\lambda^Y_j(\mathbf L, a)</span> with a fitted conditional hazard <span class="math inline">\hat\lambda^Y_j(\mathbf L, a)</span>, modelled via pooled logistic regression on person-time data.</li>
 <li>Replace <span class="math inline">\mathbb{E}_{\mathbf L}</span> with the empirical average over the observed sample, <span class="math inline">(1/n)\sum_i</span>.</li>
 </ul>
 <p>Combining the two substitutions:</p>
@@ -311,7 +311,7 @@ S^a(k) \;=\; \mathbb{E}_{\mathbf L}\!\left[\prod_{j=1}^{k}
 <p><span class="math display">
 \hat\Delta(k) \;=\; \hat S^1_g(k) - \hat S^0_g(k).
 </span></p>
-<p>The rest of this post is operational. Section 2 specifies the conditional hazard model. Section 3 walks the three-step algorithm — fit the model, predict counterfactual hazards at every subject-interval, marginalize over the sample. Sections 4 and 5 handle the worked example and censoring. Section 6 closes.</p>
+<p>The rest of this post is operational. Section 2 specifies the conditional hazard model. Section 3 walks the three-step algorithm, fit the model, predict counterfactual hazards at every subject-interval, marginalize over the sample. Sections 4 and 5 handle the worked example and censoring. Section 6 closes.</p>
 </section>
 <section id="the-conditional-hazard-model-pooled-logistic-on-person-time" class="level2">
 <h2 class="anchored" data-anchor-id="the-conditional-hazard-model-pooled-logistic-on-person-time">2. The conditional hazard model: pooled logistic on person-time</h2>
@@ -322,7 +322,7 @@ S^a(k) \;=\; \mathbb{E}_{\mathbf L}\!\left[\prod_{j=1}^{k}
 \lambda^Y_j(\mathbf L, A) \;=\;
 \mathbb{P}[Y_j = 1 \mid Y_{j-1} = 0,\ \bar C_{j-1} = 0,\ \mathbf L,\ A].
 </span></p>
-<p>It is the chance of an event during interval <span class="math inline">j</span> given covariates, treatment, and being at risk at the start of the interval — a conditional probability of an event.</p>
+<p>It is the chance of an event during interval <span class="math inline">j</span> given covariates, treatment, and being at risk at the start of the interval, a conditional probability of an event.</p>
 <p><strong>Logistic regression models conditional probabilities.</strong> Given predictors <span class="math inline">X</span>, logistic regression estimates</p>
 <p><span class="math display">
 \mathbb{P}[Z = 1 \mid X] \;=\; \frac{1}{1 + \exp(-\beta^\top X)},
@@ -333,9 +333,9 @@ S^a(k) \;=\; \mathbb{E}_{\mathbf L}\!\left[\prod_{j=1}^{k}
 \text{logit}\,\lambda^Y_j(\mathbf L, A) \;=\;
 \beta_0(j) + \beta_A\, A + \boldsymbol\beta_L^{\!\top} \mathbf L.
 </span></p>
-<p>Each long-format row corresponds to a subject who was at risk during interval <span class="math inline">j</span>; the outcome is the event indicator at the end of that interval; so the conditional probability the model is estimating is precisely the hazard. The model is fit by maximum likelihood, treating each at-risk row as an independent Bernoulli draw. The function <span class="math inline">\beta_0(j)</span> — splines, polynomials, or interval indicators — gives the hazard flexibility over time.</p>
+<p>Each long-format row corresponds to a subject who was at risk during interval <span class="math inline">j</span>; the outcome is the event indicator at the end of that interval; so the conditional probability the model is estimating is precisely the hazard. The model is fit by maximum likelihood, treating each at-risk row as an independent Bernoulli draw. The function <span class="math inline">\beta_0(j)</span>, splines, polynomials, or interval indicators, gives the hazard flexibility over time.</p>
 <p><strong>Why “pooled”.</strong> <em>Pooled-logistic regression</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> refers to estimating all interval-specific hazards from a single model: the time index <span class="math inline">j</span> enters as a predictor, not as a stratifier. Under short intervals, pooled-logistic and Cox proportional-hazards estimates align (D’Agostino et al.&nbsp;1990).</p>
-<p>Once fitted, the model produces <span class="math inline">\hat\lambda^Y_j(\mathbf L_i, a)</span> for any <span class="math inline">(j, \mathbf L_i, a)</span> — including counterfactual values of <span class="math inline">a</span> a subject did not actually receive. That capability is what makes the next step — the g-formula algorithm — possible.</p>
+<p>Once fitted, the model produces <span class="math inline">\hat\lambda^Y_j(\mathbf L_i, a)</span> for any <span class="math inline">(j, \mathbf L_i, a)</span>, including counterfactual values of <span class="math inline">a</span> a subject did not actually receive. That capability is what makes the next step, the g-formula algorithm, possible.</p>
 </section>
 <section id="the-g-formula-algorithm-clone-predict-marginalize" class="level2">
 <h2 class="anchored" data-anchor-id="the-g-formula-algorithm-clone-predict-marginalize">3. The g-formula algorithm: clone, predict, marginalize</h2>
@@ -345,7 +345,7 @@ S^a(k) \;=\; \mathbb{E}_{\mathbf L}\!\left[\prod_{j=1}^{k}
 \prod_{j=1}^{k}\left(1 - \hat\lambda^Y_j(\mathbf L_i, a)\right).
 </span></p>
 <p>§2 fitted the hazard model <span class="math inline">\hat\lambda^Y_j(\mathbf L, A)</span>. Plugging it in takes three steps.</p>
-<p><strong>1. Clone.</strong> For each subject <span class="math inline">i</span>, take the baseline row at <span class="math inline">k = 0</span> — carrying <span class="math inline">\mathbf L_i</span> — and replicate it across all intervals <span class="math inline">k = 1, \ldots, K_{\max}</span>, setting <span class="math inline">A_i = a</span> on every replicated row. Do this twice: once for <span class="math inline">a = 1</span>, once for <span class="math inline">a = 0</span>. The result is two cloned datasets, each of size <span class="math inline">n \cdot K_{\max}</span>.</p>
+<p><strong>1. Clone.</strong> For each subject <span class="math inline">i</span>, take the baseline row at <span class="math inline">k = 0</span>, carrying <span class="math inline">\mathbf L_i</span>, and replicate it across all intervals <span class="math inline">k = 1, \ldots, K_{\max}</span>, setting <span class="math inline">A_i = a</span> on every replicated row. Do this twice: once for <span class="math inline">a = 1</span>, once for <span class="math inline">a = 0</span>. The result is two cloned datasets, each of size <span class="math inline">n \cdot K_{\max}</span>.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -358,18 +358,18 @@ Why clone baseline rows, not the subject’s full set of observed at-risk rows?
 </div>
 <div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>In v1, <span class="math inline">\mathbf L</span> is baseline-only — measured once, constant within subject. So the <em>content</em> of the baseline row and any at-risk row is identical for the model’s predictors. The only thing that changes between rows of the same subject is the interval index <span class="math inline">k</span>. The key difference is which <span class="math inline">k</span> values are produced.</p>
+<p>In v1, <span class="math inline">\mathbf L</span> is baseline-only, measured once, constant within subject. So the <em>content</em> of the baseline row and any at-risk row is identical for the model’s predictors. The only thing that changes between rows of the same subject is the interval index <span class="math inline">k</span>. The key difference is which <span class="math inline">k</span> values are produced.</p>
 <ul>
 <li><strong>Clone baseline:</strong> every subject gets <span class="math inline">K_{\max}</span> prediction rows, <span class="math inline">k = 1, \ldots, K_{\max}</span>. A subject censored at month 5 still gets predictions for <span class="math inline">j = 6, \ldots, 48</span>.</li>
 <li><strong>Use observed at-risk rows:</strong> every subject gets only the rows they were actually observed at risk. A subject censored at month 5 gets predictions for <span class="math inline">j = 1, \ldots, 5</span> only.</li>
 </ul>
 <p><strong>Why this matters for the marginalization.</strong> The estimator has the same <span class="math inline">n</span> subjects at every <span class="math inline">k</span>. The marginalization is over the full sample’s <span class="math inline">\mathbf L</span> distribution, fixed across <span class="math inline">k</span>. That matches the identification target <span class="math inline">\mathbb{E}_{\mathbf L}[\ldots]</span>.</p>
-<p>Under the at-risk-rows alternative, the sum at <span class="math inline">k=48</span> only includes subjects observed past month 48. At <span class="math inline">k=5</span>, it includes everyone past month 5. The denominator (and the <span class="math inline">\mathbf L</span> distribution being averaged over) changes with <span class="math inline">k</span> — <em>informative dropout bias baked into the estimator</em>. The earlier observed events and censoring would silently filter who contributes to the marginal at each <span class="math inline">k</span>, and that filter is not random.</p>
+<p>Under the at-risk-rows alternative, the sum at <span class="math inline">k=48</span> only includes subjects observed past month 48. At <span class="math inline">k=5</span>, it includes everyone past month 5. The denominator (and the <span class="math inline">\mathbf L</span> distribution being averaged over) changes with <span class="math inline">k</span>, <em>informative dropout bias baked into the estimator</em>. The earlier observed events and censoring would silently filter who contributes to the marginal at each <span class="math inline">k</span>, and that filter is not random.</p>
 <p>Cloning baseline keeps the marginal target stable across <span class="math inline">k</span>. It is an identification consistency requirement, not a coding convenience.</p>
 </div>
 </div>
 </div>
-<p><strong>2. Predict.</strong> Use the fitted model from §2 to compute <span class="math inline">\hat\lambda^Y_j(\mathbf L_i, a)</span> on every cloned row. The prediction is made for every interval <span class="math inline">j</span> — including intervals past the subject’s observed exit time. Counterfactually, we are asking: “if subject <span class="math inline">i</span> were assigned treatment <span class="math inline">a</span> and had not been censored, what would their per-interval hazard be?” The cloned dataset gives <span class="math inline">\hat\lambda^Y_j(\mathbf L_i, a)</span> for every <span class="math inline">(i, j, a)</span>.</p>
+<p><strong>2. Predict.</strong> Use the fitted model from §2 to compute <span class="math inline">\hat\lambda^Y_j(\mathbf L_i, a)</span> on every cloned row. The prediction is made for every interval <span class="math inline">j</span>, including intervals past the subject’s observed exit time. Counterfactually, we are asking: “if subject <span class="math inline">i</span> were assigned treatment <span class="math inline">a</span> and had not been censored, what would their per-interval hazard be?” The cloned dataset gives <span class="math inline">\hat\lambda^Y_j(\mathbf L_i, a)</span> for every <span class="math inline">(i, j, a)</span>.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -386,17 +386,17 @@ Why does “set <span class="math inline">A_i = a</span> and predict” give a c
 <p><span class="math display">
 \hat\lambda^Y_j(\mathbf L, A) \;\approx\; \mathbb{P}[Y_j = 1 \mid Y_{j-1}=0,\ \bar C_{j-1}=0,\ \mathbf L,\ A].
 </span></p>
-<p>This is an <em>observational</em> conditional probability — fit from observed <span class="math inline">(j, \mathbf L_i, A_i, Y_{i,j})</span> rows. Nothing counterfactual yet.</p>
-<p>When we clone-and-predict, we evaluate this observational conditional at <span class="math inline">A = a</span> — including for subjects who actually received <span class="math inline">1-a</span>. The question is why this observational quantity is interpretable as the <em>counterfactual</em> hazard.</p>
+<p>This is an <em>observational</em> conditional probability, fit from observed <span class="math inline">(j, \mathbf L_i, A_i, Y_{i,j})</span> rows. Nothing counterfactual yet.</p>
+<p>When we clone-and-predict, we evaluate this observational conditional at <span class="math inline">A = a</span>, including for subjects who actually received <span class="math inline">1-a</span>. The question is why this observational quantity is interpretable as the <em>counterfactual</em> hazard.</p>
 <p>It isn’t, in general. It is interpretable that way only under exchangeability given <span class="math inline">\mathbf L</span>:</p>
 <p><span class="math display">
 \underbrace{\mathbb{P}[Y_j = 1 \mid Y_{j-1}=0,\ \bar C_{j-1}=0,\ \mathbf L,\ A=a]}_{\text{observational; what the model fits}}
 \;=\;
 \underbrace{\mathbb{P}[Y^a_j = 1 \mid Y^a_{j-1}=0,\ \mathbf L]}_{\text{counterfactual; what we want}}.
 </span></p>
-<p>The two sides are equal <em>because</em> <span class="math inline">\mathbf L</span> contains all confounders. Without that, the LHS averages over unmeasured <span class="math inline">U</span> with the wrong weights — the observational distribution <span class="math inline">U \mid \mathbf L, A=a</span>, not the counterfactual marginal <span class="math inline">U \mid \mathbf L</span>. These differ when <span class="math inline">U</span> is associated with both <span class="math inline">A</span> and <span class="math inline">Y</span>.</p>
+<p>The two sides are equal <em>because</em> <span class="math inline">\mathbf L</span> contains all confounders. Without that, the LHS averages over unmeasured <span class="math inline">U</span> with the wrong weights, the observational distribution <span class="math inline">U \mid \mathbf L, A=a</span>, not the counterfactual marginal <span class="math inline">U \mid \mathbf L</span>. These differ when <span class="math inline">U</span> is associated with both <span class="math inline">A</span> and <span class="math inline">Y</span>.</p>
 <p><strong>“Set <span class="math inline">A=a</span> and predict” is not a counterfactual trick.</strong> It’s a literal evaluation of the fitted model at <span class="math inline">A=a</span>. The counterfactual interpretation is bought by the assumption made before fitting. The clone-and-predict step is mechanical; the causal warrant lives in the assumption.</p>
-<p><strong>Corollary.</strong> The model must include all confounders in <span class="math inline">\mathbf L</span>. Omitting one is not a “small error” the algorithm can absorb — it breaks the equality above, and the predicted hazard is no longer counterfactual at all.</p>
+<p><strong>Corollary.</strong> The model must include all confounders in <span class="math inline">\mathbf L</span>. Omitting one is not a “small error” the algorithm can absorb, it breaks the equality above, and the predicted hazard is no longer counterfactual at all.</p>
 </div>
 </div>
 </div>
@@ -461,10 +461,10 @@ R code from the <code>CausalSurvival</code> package
 <ul>
 <li><strong>Naive arm-specific Kaplan-Meier.</strong> No covariate adjustment. Subjects stratified by observed <span class="math inline">A_i</span>; the standard-KM curve from post 1 §3 computed separately within each arm.</li>
 <li><strong>G-formula.</strong> Pooled-logistic Y-hazard fit on the observational person-time data, then clone-predict-marginalize as in §3.</li>
-<li><strong>DGP truth.</strong> Arm-specific counterfactual survival computed analytically from the DGP — what <span class="math inline">\hat S^a_g</span> should recover under correct specification and the identifiability conditions of post 2 §3.</li>
+<li><strong>DGP truth.</strong> Arm-specific counterfactual survival computed analytically from the DGP, what <span class="math inline">\hat S^a_g</span> should recover under correct specification and the identifiability conditions of post 2 §3.</li>
 </ul>
-<p>The naive arm-specific KM is biased because the treated and untreated groups differ in age and sex. The crude curves estimate the observational <span class="math inline">\mathbb{P}[Y_k = 0 \mid A = a]</span> — which post 2 §6 already showed is <em>not</em> the counterfactual <span class="math inline">S^a(k)</span>.</p>
-<p>The g-formula curves recover the truth (up to sampling variation) because the pooled-logistic model adjusts for <span class="math inline">\mathbf L = (\text{age}, \text{sex})</span> — the only confounders in our DGP. The two identifying assumptions are correct here by construction: no unmeasured confounders (exchangeability given <span class="math inline">\mathbf L</span>) and overlap in age and sex across arms (positivity).</p>
+<p>The naive arm-specific KM is biased because the treated and untreated groups differ in age and sex. The crude curves estimate the observational <span class="math inline">\mathbb{P}[Y_k = 0 \mid A = a]</span>, which post 2 §6 already showed is <em>not</em> the counterfactual <span class="math inline">S^a(k)</span>.</p>
+<p>The g-formula curves recover the truth (up to sampling variation) because the pooled-logistic model adjusts for <span class="math inline">\mathbf L = (\text{age}, \text{sex})</span>, the only confounders in our DGP. The two identifying assumptions are correct here by construction: no unmeasured confounders (exchangeability given <span class="math inline">\mathbf L</span>) and overlap in age and sex across arms (positivity).</p>
 <p>At month 24, the estimates are:</p>
 <table class="caption-top table">
 <thead>
@@ -550,26 +550,26 @@ R code for the worked example
 \hat\lambda^Y_j(\mathbf L, A) \;\approx\; \mathbb{P}[Y_j = 1 \mid
 Y_{j-1} = 0,\ \bar C_{j-1} = 0,\ \mathbf L,\ A].
 </span></p>
-<p>When this is plugged into the product representation, the resulting <span class="math inline">\hat S^a_g(k)</span> accumulates per-interval survivals without subtracting anything for censoring. The estimator therefore targets the <em>no-censoring counterfactual</em> — survival under treatment <span class="math inline">a</span> if no patient had been censored.</p>
+<p>When this is plugged into the product representation, the resulting <span class="math inline">\hat S^a_g(k)</span> accumulates per-interval survivals without subtracting anything for censoring. The estimator therefore targets the <em>no-censoring counterfactual</em>, survival under treatment <span class="math inline">a</span> if no patient had been censored.</p>
 <p>Under what condition is this also the target <span class="math inline">S^a(k)</span>? Conditional exchangeability of censoring given <span class="math inline">(\mathbf L, A)</span>:</p>
 <p><span class="math display">
 C_j \perp\!\!\!\perp Y^a_j \mid \mathbf L,\ A,\ \bar C_{j-1} = 0,\
 Y_{j-1} = 0.
 </span></p>
 <p>If censoring at <span class="math inline">j</span> is independent of the counterfactual outcome given baseline covariates, treatment, and the past, then the uncensored hazard equals the no-censoring counterfactual hazard. The product representation gives <span class="math inline">S^a(k)</span>.</p>
-<p>If the assumption fails — for instance, sicker patients dropping out at higher rates even after conditioning on <span class="math inline">\mathbf L</span> and <span class="math inline">A</span> — the fitted hazard is biased for the no-censoring counterfactual, and so is <span class="math inline">\hat S^a_g(k)</span>.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
-<p>For the simulated DGP of §4, censoring is independent of the counterfactual outcome by construction. The assumption is satisfied; the g-formula recovers the truth. In real data, the assumption must be argued from the structure of the study and the measured covariates — the same substantive work the treatment identifiability conditions require (post 2 §3).</p>
+<p>If the assumption fails, for instance, sicker patients dropping out at higher rates even after conditioning on <span class="math inline">\mathbf L</span> and <span class="math inline">A</span>, the fitted hazard is biased for the no-censoring counterfactual, and so is <span class="math inline">\hat S^a_g(k)</span>.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>For the simulated DGP of §4, censoring is independent of the counterfactual outcome by construction. The assumption is satisfied; the g-formula recovers the truth. In real data, the assumption must be argued from the structure of the study and the measured covariates, the same substantive work the treatment identifiability conditions require (post 2 §3).</p>
 </section>
 <section id="closing" class="level2">
 <h2 class="anchored" data-anchor-id="closing">6. Closing</h2>
-<p>The parametric g-formula is the plug-in estimator of the identification formula of post 2 §4. It models the <em>outcome</em> process — specifically, the conditional hazard <span class="math inline">\lambda^Y_j(\mathbf L, A)</span> — and combines the fitted model with the empirical covariate distribution to estimate the counterfactual survival <span class="math inline">S^a(k)</span> and the risk-difference contrast <span class="math inline">\Delta(k)</span>.</p>
+<p>The parametric g-formula is the plug-in estimator of the identification formula of post 2 §4. It models the <em>outcome</em> process, specifically, the conditional hazard <span class="math inline">\lambda^Y_j(\mathbf L, A)</span>, and combines the fitted model with the empirical covariate distribution to estimate the counterfactual survival <span class="math inline">S^a(k)</span> and the risk-difference contrast <span class="math inline">\Delta(k)</span>.</p>
 <p>For the estimator to be unbiased, two things must hold:</p>
 <ol type="1">
-<li>The identifiability conditions of post 2 §3 — exchangeability, positivity, consistency — for the treatment process, plus conditional exchangeability of censoring (§5).</li>
+<li>The identifiability conditions of post 2 §3, exchangeability, positivity, consistency, for the treatment process, plus conditional exchangeability of censoring (§5).</li>
 <li>Correct specification of the conditional hazard model.</li>
 </ol>
 <p>Both are assumptions about the world (1) and about the analyst (2), respectively. The identifiability conditions are unverifiable from the data alone; the model specification can be partially checked.</p>
-<p><strong>Bridge to post 4.</strong> The g-formula models the outcome. The companion method — IPW — models the treatment assignment instead. The two estimators target the same identification formula but rely on the correctness of different models. Post 4 develops IPW, and includes (as a collapsible) the comparison of why g-formula needs one model and IPW needs two.</p>
+<p><strong>Bridge to post 4.</strong> The g-formula models the outcome. The companion method, IPW, models the treatment assignment instead. The two estimators target the same identification formula but rely on the correctness of different models. Post 4 develops IPW, and includes (as a collapsible) the comparison of why g-formula needs one model and IPW needs two.</p>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
@@ -578,7 +578,7 @@ Y_{j-1} = 0.
 <li>Keil AP, Naimi AI, Edwards JK. The parametric G-formula for time-to-event data: towards intuition with a worked example. <em>Epidemiology</em>. 2014.</li>
 <li>Naimi AI, Cole SR, Kennedy EH. An introduction to g methods. <em>Int J Epidemiol</em>. 2017.</li>
 <li>D’Agostino RB, Lee ML, Belanger AJ, Cupples LA, Anderson K, Kannel WB. Relation of pooled logistic regression to time dependent Cox regression analysis: the Framingham Heart Study. <em>Stat Med</em>. 1990.</li>
-<li>Robins JM. A new approach to causal inference in mortality studies with a sustained exposure period — application to control of the healthy worker survivor effect. <em>Math Modelling</em>. 1986.</li>
+<li>Robins JM. A new approach to causal inference in mortality studies with a sustained exposure period, application to control of the healthy worker survivor effect. <em>Math Modelling</em>. 1986.</li>
 </ul>
 </section>
 
@@ -587,7 +587,7 @@ Y_{j-1} = 0.
 
 <ol>
 <li id="fn1"><p>Why not Cox? For our v1 setting (baseline-only treatment and confounders), Cox with covariate adjustment and the pooled-logistic g-formula give numerically similar estimates under correct specification. We use the g-formula framework because it <em>scales</em>: in time-varying settings, standard regression adjusts away part of the effect (overcontrol of mediators) and fails under treatment-confounder feedback (Hernán &amp; Robins, Ch 20–21). The hazard-ratio interpretation is addressed in a dedicated post.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>Confidence intervals are obtained by non-parametric percentile bootstrap on the subject-level sample. Draw <span class="math inline">B</span> bootstrap samples by resampling <span class="math inline">n</span> subjects with replacement (carrying all their person-time rows), re-fit the entire pipeline — hazard model, clone, predict, marginalize — on each, and form the <span class="math inline">(1-\alpha)</span> percentile interval at each <span class="math inline">k</span> from the <span class="math inline">B</span> resulting estimates of <span class="math inline">\hat S^a_g(k)</span> and <span class="math inline">\hat\Delta(k)</span>. The package’s point estimate <code>gf_delta &lt;- gf_S_a1 - gf_S_a0</code> is fast; the bootstrap that puts a CI around it is the expensive step.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Confidence intervals are obtained by non-parametric percentile bootstrap on the subject-level sample. Draw <span class="math inline">B</span> bootstrap samples by resampling <span class="math inline">n</span> subjects with replacement (carrying all their person-time rows), re-fit the entire pipeline, hazard model, clone, predict, marginalize, on each, and form the <span class="math inline">(1-\alpha)</span> percentile interval at each <span class="math inline">k</span> from the <span class="math inline">B</span> resulting estimates of <span class="math inline">\hat S^a_g(k)</span> and <span class="math inline">\hat\Delta(k)</span>. The package’s point estimate <code>gf_delta &lt;- gf_S_a1 - gf_S_a0</code> is fast; the bootstrap that puts a CI around it is the expensive step.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3"><p>When censoring depends on covariates not adequately captured by the Y-hazard model, an inverse-probability-of-censoring-weighted (IPCW) Y-hazard fit gives a parallel route. Post 4 (IPW) treats censoring more directly through a separate censoring-hazard model.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main>

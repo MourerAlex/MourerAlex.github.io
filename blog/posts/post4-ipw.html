@@ -258,7 +258,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Inverse-probability weighting for causal survival</h1>
-<p class="subtitle lead">Causal Survival Models — Post 4 of 4</p>
+<p class="subtitle lead">Causal Survival Models, Post 4 of 4</p>
   <div class="quarto-categories">
     <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Survival</div>
@@ -391,7 +391,7 @@ What is a pseudo-population?
 </div>
 <p>The plug-in idea is to replace each unknown ingredient:</p>
 <ul>
-<li>Replace <span class="math inline">g(A_i \mid \mathbf L_i)</span> with a fitted propensity <span class="math inline">\hat g(A_i \mid \mathbf L_i)</span> — modelled via logistic regression on baseline data.</li>
+<li>Replace <span class="math inline">g(A_i \mid \mathbf L_i)</span> with a fitted propensity <span class="math inline">\hat g(A_i \mid \mathbf L_i)</span>, modelled via logistic regression on baseline data.</li>
 <li>Replace <span class="math inline">\mathbb{E}</span> with the weighted empirical estimator over the observed sample.</li>
 </ul>
 <p>The resulting IPW estimator is the weighted Kaplan-Meier applied within each arm (§4):</p>
@@ -410,7 +410,7 @@ What is a pseudo-population?
 \alpha_0 + \boldsymbol\alpha_L^{\!\top} \mathbf L.
 </span></p>
 <p>The model is fit by maximum likelihood using each subject’s baseline row only (one row per subject). The fitted output is a probability in <span class="math inline">[0, 1]</span> for every subject: <span class="math inline">\hat g(A_i = 1 \mid \mathbf L_i)</span> for treated, <span class="math inline">1 - \hat g(A_i = 1 \mid \mathbf L_i)</span> for untreated. Section 3 inverts these to build the weights.</p>
-<p><strong>Variable inclusion.</strong> The model should include all measured confounders — the variables that motivate the analysis (post 2 §3).<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p><strong>Variable inclusion.</strong> The model should include all measured confounders, the variables that motivate the analysis (post 2 §3).<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 </section>
 <section id="building-the-weights" class="level2">
 <h2 class="anchored" data-anchor-id="building-the-weights">3. Building the weights</h2>
@@ -496,7 +496,7 @@ R code from the <code>CausalSurvival</code> package: top-level
 \hat S^a_{\text{IPW-MSM}}(k) \;=\; \prod_{j=1}^{k}
 \big(1 - \hat\lambda^{Y, \text{MSM}}_j(a)\big).
 </span></p>
-<p>The same target as the weighted KM of §4; the only difference is that <span class="math inline">\beta_0(j)</span> smooths the hazard across intervals. With a flexible spline on <span class="math inline">j</span>, the MSM curve closely resembles the weighted KM step function — smoother but tracking the same shape. With a restrictive form (no time effect, say), the MSM imposes additional structure that may not be satisfied.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>The same target as the weighted KM of §4; the only difference is that <span class="math inline">\beta_0(j)</span> smooths the hazard across intervals. With a flexible spline on <span class="math inline">j</span>, the MSM curve closely resembles the weighted KM step function, smoother but tracking the same shape. With a restrictive form (no time effect, say), the MSM imposes additional structure that may not be satisfied.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -625,10 +625,10 @@ R code from the <code>CausalSurvival</code> package: internals
 <ul>
 <li><strong>Naive arm-specific Kaplan-Meier.</strong> No weighting, no adjustment. Computed by calling the package’s KM helper <code>weighted_hazard_by_k()</code> with weights of 1.</li>
 <li><strong>IPW weighted Kaplan-Meier.</strong> Propensity logistic fit on baseline, stabilized weights constructed, weighted KM applied per arm (the §4 algorithm) via <code>causal_survival(method = "ipw_km")</code>.</li>
-<li><strong>DGP truth.</strong> Arm-specific counterfactual survival computed analytically from the simulation script — what <span class="math inline">\hat S^a_{\text{IPW}}</span> should recover under correct specification and the identifiability conditions of post 2 §3 (plus the weight model correctness from §3).</li>
+<li><strong>DGP truth.</strong> Arm-specific counterfactual survival computed analytically from the simulation script, what <span class="math inline">\hat S^a_{\text{IPW}}</span> should recover under correct specification and the identifiability conditions of post 2 §3 (plus the weight model correctness from §3).</li>
 </ul>
-<p>The naive arm-specific KM is biased because the treated and untreated groups differ in age and sex. The crude curves estimate the observational <span class="math inline">\mathbb{P}[Y_k = 0 \mid A = a]</span> — not the counterfactual <span class="math inline">S^a(k)</span>.</p>
-<p>The IPW weighted KM curves recover the truth (up to sampling variation) because the propensity model adjusts for <span class="math inline">\mathbf L = (\text{age}, \text{sex})</span> — the only confounders in our DGP. The four assumptions are satisfied here by construction: exchangeability given <span class="math inline">\mathbf L</span>, positivity, consistency, and correct specification of the propensity model.</p>
+<p>The naive arm-specific KM is biased because the treated and untreated groups differ in age and sex. The crude curves estimate the observational <span class="math inline">\mathbb{P}[Y_k = 0 \mid A = a]</span>, not the counterfactual <span class="math inline">S^a(k)</span>.</p>
+<p>The IPW weighted KM curves recover the truth (up to sampling variation) because the propensity model adjusts for <span class="math inline">\mathbf L = (\text{age}, \text{sex})</span>, the only confounders in our DGP. The four assumptions are satisfied here by construction: exchangeability given <span class="math inline">\mathbf L</span>, positivity, consistency, and correct specification of the propensity model.</p>
 <p>At month 48 (end of follow-up), the estimates are:</p>
 <table class="caption-top table">
 <thead>
@@ -711,7 +711,7 @@ R code for the worked example
 <p>The IPCW estimator requires three conditions in addition to those of §3:</p>
 <ol type="1">
 <li>Conditional exchangeability of censoring given <span class="math inline">(\mathbf L, A)</span>.</li>
-<li>Positivity of censoring — every covariate-treatment profile has some chance of remaining uncensored at each interval.</li>
+<li>Positivity of censoring, every covariate-treatment profile has some chance of remaining uncensored at each interval.</li>
 <li>Correct specification of the censoring-hazard model.</li>
 </ol>
 <p>Failure of any of them biases the estimator, parallel to the treatment-side conditions. The rest of this section describes the procedure.</p>
@@ -726,7 +726,7 @@ R code for the worked example
 <p><span class="math display">
 w^C_i(j) \;=\; \prod_{m=1}^{j} \frac{1}{1 - \hat\lambda^C_m(\mathbf L_i, A_i)}.
 </span></p>
-<p>By interval <span class="math inline">j</span>, subject <span class="math inline">i</span> has avoided censoring <span class="math inline">j</span> times. Each step contributes its own inverse-of-uncensored probability to the cumulative weight. An uncensored subject whose covariate profile makes early censoring likely gets a large weight at later intervals — they “stand in for” patients who <em>were</em> censored but had similar covariates.</p>
+<p>By interval <span class="math inline">j</span>, subject <span class="math inline">i</span> has avoided censoring <span class="math inline">j</span> times. Each step contributes its own inverse-of-uncensored probability to the cumulative weight. An uncensored subject whose covariate profile makes early censoring likely gets a large weight at later intervals, they “stand in for” patients who <em>were</em> censored but had similar covariates.</p>
 <p><strong>The combined weight.</strong> Treatment and censoring weights multiply:</p>
 <p><span class="math display">
 W_i(j) \;=\; SW^A_i \times w^C_i(j).
@@ -764,7 +764,7 @@ W_i(j) \;=\; \frac{1}{g(A_i \mid \mathbf L_i)} \times
 </section>
 <section id="closing" class="level2">
 <h2 class="anchored" data-anchor-id="closing">8. Closing</h2>
-<p>Inverse-probability weighting is the plug-in estimator of the Horvitz-Thompson identification formula of §1. It models the <em>treatment assignment</em> process — the propensity <span class="math inline">g(A \mid \mathbf L)</span> — and uses the inverse propensity as a weight to construct a pseudo-population in which <span class="math inline">A</span> is independent of <span class="math inline">\mathbf L</span>. The Kaplan-Meier estimator on the pseudo-population (§4), or a weighted marginal structural model (§5), recovers the counterfactual survival <span class="math inline">S^a(k)</span> and the contrast <span class="math inline">\Delta(k)</span>.</p>
+<p>Inverse-probability weighting is the plug-in estimator of the Horvitz-Thompson identification formula of §1. It models the <em>treatment assignment</em> process, the propensity <span class="math inline">g(A \mid \mathbf L)</span>, and uses the inverse propensity as a weight to construct a pseudo-population in which <span class="math inline">A</span> is independent of <span class="math inline">\mathbf L</span>. The Kaplan-Meier estimator on the pseudo-population (§4), or a weighted marginal structural model (§5), recovers the counterfactual survival <span class="math inline">S^a(k)</span> and the contrast <span class="math inline">\Delta(k)</span>.</p>
 <p>IPW and the g-formula are two routes to the same target. They differ in which model must be correct: the g-formula relies on the outcome model, IPW on the treatment model. The doubly robust family of estimators combines both and requires only one of the two to be correctly specified.</p>
 </section>
 <section id="references" class="level2">
@@ -788,15 +788,15 @@ W_i(j) \;=\; \frac{1}{g(A_i \mid \mathbf L_i)} \times
 <ol>
 <li id="fn1"><p>Pure predictors of the outcome that are not strict confounders can also be included: Brookhart et al.&nbsp;(2006) showed this reduces the variance of the IPW estimator without introducing bias, and Williamson, Forbes &amp; White (2013) extended the result to RCTs. Pure predictors of <em>treatment</em> with no relationship to the outcome should generally be excluded: they inflate weight variance without removing any bias.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>Truncating extreme weights at a percentile cap (e.g., the 99th percentile) reduces estimator variance but introduces bias toward the unadjusted KM, because the pseudo-population cancellation that breaks confounding requires the weight to equal <span class="math inline">1/g</span> exactly. Cole &amp; Hernán (2008) recommend truncation as a sensitivity check, not a default fix.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>A thorough treatment of weight diagnostics — the effective sample size <span class="math inline">n_{\text{eff}} = (\sum w_i)^2 / \sum w_i^2</span>, response options when positivity is borderline (restrict the target population, change the estimand, or match instead of weight), and the distinction between <em>theoretical</em> positivity violations and near-violations in finite samples — is given in Petersen et al.&nbsp;(2012). The present post treats weight diagnostics as a sanity check; full sensitivity analysis is a separate topic.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>A thorough treatment of weight diagnostics, the effective sample size <span class="math inline">n_{\text{eff}} = (\sum w_i)^2 / \sum w_i^2</span>, response options when positivity is borderline (restrict the target population, change the estimand, or match instead of weight), and the distinction between <em>theoretical</em> positivity violations and near-violations in finite samples, is given in Petersen et al.&nbsp;(2012). The present post treats weight diagnostics as a sanity check; full sensitivity analysis is a separate topic.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>A note on the hazard ratio <span class="math inline">\exp(\hat\beta_A)</span>. Three distinct problems make it a poor causal contrast for survival outcomes:</p>
 <ol type="1">
-<li><p><strong>Interpretation.</strong> A hazard ratio is a rate ratio, not a duration. A HR of 1.2 does not translate cleanly to “X more months of survival” — the absolute survival difference depends on the baseline hazard, which varies. Two studies reporting the same HR can have wildly different clinical meaning.</p></li>
+<li><p><strong>Interpretation.</strong> A hazard ratio is a rate ratio, not a duration. A HR of 1.2 does not translate cleanly to “X more months of survival”, the absolute survival difference depends on the baseline hazard, which varies. Two studies reporting the same HR can have wildly different clinical meaning.</p></li>
 <li><p><strong>Selection on survival.</strong> Even under randomization (no confounding at all), the marginal HR varies with <span class="math inline">t</span> because the at-risk population at <span class="math inline">t</span> is composed of survivors. High-risk subjects fail earlier, so the at-risk pool at later times is a selected (lower-risk) subset of the originally randomized population. The HR at <span class="math inline">t = 2</span> averages over a different population than the HR at <span class="math inline">t = 1</span> (Hernán, Ch 17). The IPW-MSM removes confounding bias but not this selection-on-survival mechanism.</p></li>
 <li><p><strong>Non-collapsibility.</strong> The HR is non-collapsible: adding a covariate to the model changes the HR estimate, even when the covariate is unrelated to treatment and not a confounder (Greenland, Robins &amp; Pearl, 1999). The marginal HR is not a weighted average of stratum-specific HRs.</p></li>
 </ol>
 <p>The counterfactual risk difference <span class="math inline">\hat\Delta(k) = \hat S^1(k) - \hat S^0(k)</span> avoids all three. The HR interpretation is addressed in a dedicated post.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5"><p>Confidence intervals are obtained by non-parametric percentile bootstrap on the subject-level sample. Each bootstrap iteration resamples <span class="math inline">n</span> subjects with replacement (carrying all their person-time rows) and re-runs the entire pipeline — propensity fit, weights, weighted KM. Per Austin (2016) and Williamson (2013), the robust sandwich variance from weighted regression underestimates the true variance because it treats the estimated weights as fixed; bootstrap captures the full uncertainty.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Confidence intervals are obtained by non-parametric percentile bootstrap on the subject-level sample. Each bootstrap iteration resamples <span class="math inline">n</span> subjects with replacement (carrying all their person-time rows) and re-runs the entire pipeline, propensity fit, weights, weighted KM. Per Austin (2016) and Williamson (2013), the robust sandwich variance from weighted regression underestimates the true variance because it treats the estimated weights as fixed; bootstrap captures the full uncertainty.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main>
 <!-- /main column -->

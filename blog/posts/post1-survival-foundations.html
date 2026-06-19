@@ -222,7 +222,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">From a randomized trial to a survival curve</h1>
-<p class="subtitle lead">Causal Survival Models — Post 1 of 4</p>
+<p class="subtitle lead">Causal Survival Models, Post 1 of 4</p>
   <div class="quarto-categories">
     <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Survival</div>
@@ -259,21 +259,21 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="the-setup-a-randomized-trial">1. The setup: a randomized trial</h2>
 <p>A 4-year randomized trial enrols 1000 patients at elevated heart-failure risk. Each is assigned, by coin flip, to weekly Drug A or weekly Drug B. The question is which drug delays the onset of heart failure longest.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 <p>Each subject <span class="math inline">i</span> has a treatment indicator <span class="math inline">A_i</span> assigned by randomization: <span class="math inline">A_i = 1</span> for Drug A, <span class="math inline">A_i = 0</span> for Drug B.</p>
-<p>By month 48, some patients have had a heart-failure event. Of those without one, some are still event-free when the trial closes — administrative censoring. Others are lost from observation before then — dropout. Either way, the trial cannot say what would eventually have happened to them. Their observations are <em>censored</em>, where censoring is restricted to <em>avoidable</em> causes of incomplete observation.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
-<p>The natural-sounding question — “what proportion of patients on Drug A had a heart failure?” — is ill-posed. The denominator is not the same for everyone. A patient followed for 6 months cannot contribute the same information as one followed for 48. Crude proportions throw away the time at risk.</p>
+<p>By month 48, some patients have had a heart-failure event. Of those without one, some are still event-free when the trial closes, administrative censoring. Others are lost from observation before then, dropout. Either way, the trial cannot say what would eventually have happened to them. Their observations are <em>censored</em>, where censoring is restricted to <em>avoidable</em> causes of incomplete observation.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>The natural-sounding question, “what proportion of patients on Drug A had a heart failure?”, is ill-posed. The denominator is not the same for everyone. A patient followed for 6 months cannot contribute the same information as one followed for 48. Crude proportions throw away the time at risk.</p>
 </section>
 <section id="why-crude-rates-fail" class="level2">
 <h2 class="anchored" data-anchor-id="why-crude-rates-fail">2. Why crude rates fail</h2>
-<p>In the 1000-patient trial, follow-up ends at month 48. By that point, 312 patients have had a heart-failure event at known times; the remaining 688 have not — 540 are still under observation when the trial closes (administrative censoring), 148 are lost from observation earlier (dropout, also called loss to follow-up). Both censoring types are taken to be independent of the event time.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>In the 1000-patient trial, follow-up ends at month 48. By that point, 312 patients have had a heart-failure event at known times; the remaining 688 have not, 540 are still under observation when the trial closes (administrative censoring), 148 are lost from observation earlier (dropout, also called loss to follow-up). Both censoring types are taken to be independent of the event time.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
 <p>The natural first instinct is to summarise this cohort with an average time to event. Two attempts fail.</p>
-<p>The average of all 1000 observed times treats each censoring time as if it were an event time. But the 688 censored patients had not yet had an event when their observation ended — their true event times are later than what was recorded. The average pulls downward.</p>
+<p>The average of all 1000 observed times treats each censoring time as if it were an event time. But the 688 censored patients had not yet had an event when their observation ended, their true event times are later than what was recorded. The average pulls downward.</p>
 <p>The average of only the 312 uncensored times drops the censored patients. But those patients had survived past their censoring time event-free, and so represent longer-than-average survival that the average no longer sees. The average pulls downward again.</p>
-<p>Both summaries underestimate the true mean for the same reason: a censoring time carries partial information — the patient was event-free <em>up to</em> that time — that a naive average cannot exploit (Ravn &amp; Andersen, Exercise 1.1). The same logic extends to other simple summaries — the proportion of events by a fixed month, for example — that ignore the partial information in censored observations.</p>
+<p>Both summaries underestimate the true mean for the same reason: a censoring time carries partial information, the patient was event-free <em>up to</em> that time, that a naive average cannot exploit (Ravn &amp; Andersen, Exercise 1.1). The same logic extends to other simple summaries, the proportion of events by a fixed month, for example, that ignore the partial information in censored observations.</p>
 </section>
 <section id="the-kaplan-meier-estimator" class="level2">
 <h2 class="anchored" data-anchor-id="the-kaplan-meier-estimator">3. The Kaplan-Meier estimator</h2>
-<p>Time is divided into discrete intervals — months — and observation proceeds interval by interval. Within each interval, at most one thing happens to a subject: either they have the event (<span class="math inline">Y = 1</span>), or they are censored (<span class="math inline">C = 1</span>), or neither. Events and censorings do not coincide in the same interval, so there is no ambiguity about who is at risk during it.</p>
-<p>The Kaplan-Meier estimator uses the censored observations correctly. At each interval, it computes the empirical hazard — the fraction of patients at risk who had an event during the interval. The Kaplan-Meier survival estimate at interval <span class="math inline">k</span> is the product of one-minus-hazard across all earlier intervals:</p>
+<p>Time is divided into discrete intervals, months, and observation proceeds interval by interval. Within each interval, at most one thing happens to a subject: either they have the event (<span class="math inline">Y = 1</span>), or they are censored (<span class="math inline">C = 1</span>), or neither. Events and censorings do not coincide in the same interval, so there is no ambiguity about who is at risk during it.</p>
+<p>The Kaplan-Meier estimator uses the censored observations correctly. At each interval, it computes the empirical hazard, the fraction of patients at risk who had an event during the interval. The Kaplan-Meier survival estimate at interval <span class="math inline">k</span> is the product of one-minus-hazard across all earlier intervals:</p>
 <p><span class="math display">
 \hat S_{\text{KM}}(k) \;=\; \prod_{j=1}^{k}
 \left(1 - \hat\lambda^Y_j\right),
@@ -286,7 +286,7 @@ window.Quarto = {
 \frac{\sum_i \mathbb{1}\{Y_{i,j}=1,\ Y_{i,j-1}=0\}}{\sum_i \mathbb{1}\{Y_{i,j-1}=0,\ \bar C_{i,j-1}=0\}}.
 </span></p>
 <p>The product updates only when events occur. The curve is a step function that drops at every observed event and stays flat between. Under independent censoring, <span class="math inline">\hat S_{\text{KM}}(k)</span> consistently estimates the survival function <span class="math inline">S(k)</span>.</p>
-<p>Section 2’s 688 censored patients enter this estimate without being dropped or mislabeled. Each contributes to the denominator of <span class="math inline">\hat\lambda^Y_j</span> for every interval they were under observation, and exits without entering any numerator. The partial information — that they were event-free up to a certain interval — is fully used; the naive averages of Section 2 could not exploit it.</p>
+<p>Section 2’s 688 censored patients enter this estimate without being dropped or mislabeled. Each contributes to the denominator of <span class="math inline">\hat\lambda^Y_j</span> for every interval they were under observation, and exits without entering any numerator. The partial information, that they were event-free up to a certain interval, is fully used; the naive averages of Section 2 could not exploit it.</p>
 </section>
 <section id="hazards-the-most-important-tool-in-survival-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="hazards-the-most-important-tool-in-survival-analysis">4. Hazards: the most important tool in survival analysis</h2>
@@ -302,13 +302,13 @@ S(k) \;=\; \mathbb{P}[Y_k = 0] \;=\;
 \prod_{j=1}^{k}\left(1 - \lambda^Y_j\right).
 </span></p>
 <p>Each factor <span class="math inline">(1 - \lambda^Y_j)</span> is the per-interval survival probability; their product is the survival probability through interval <span class="math inline">k</span>.</p>
-<p>The product is the structural backbone of the estimators in this series. Kaplan-Meier plugs in the nonparametric empirical hazard. The estimators in the next posts — IPW and the g-formula — plug in modelled <span class="math inline">\hat\lambda^Y_j</span> that depend on treatment and covariates. The combining machinery stays the same.</p>
+<p>The product is the structural backbone of the estimators in this series. Kaplan-Meier plugs in the nonparametric empirical hazard. The estimators in the next posts, IPW and the g-formula, plug in modelled <span class="math inline">\hat\lambda^Y_j</span> that depend on treatment and covariates. The combining machinery stays the same.</p>
 </section>
 <section id="person-time-data-layout" class="level2">
 <h2 class="anchored" data-anchor-id="person-time-data-layout">5. Person-time data layout</h2>
-<p>Up to this section, the data have been thought of in <em>wide</em> format: one row per subject, with their observed time, event indicator, and treatment. To compute the empirical hazard <span class="math inline">\hat\lambda^Y_j</span> at each interval — and, in later posts, to model it as a function of covariates — the data are reshaped into <em>long</em> format, also called person-time format. Each row corresponds to one subject in one at-risk interval.</p>
+<p>Up to this section, the data have been thought of in <em>wide</em> format: one row per subject, with their observed time, event indicator, and treatment. To compute the empirical hazard <span class="math inline">\hat\lambda^Y_j</span> at each interval, and, in later posts, to model it as a function of covariates, the data are reshaped into <em>long</em> format, also called person-time format. Each row corresponds to one subject in one at-risk interval.</p>
 <p>A subject contributes one row for each interval they are at risk, until they either have the event or are censored. Each row carries the subject’s id <span class="math inline">i</span>, the interval <span class="math inline">k</span>, the treatment <span class="math inline">A_i</span>, the event status at the end of <span class="math inline">k</span> (<span class="math inline">Y_{i,k}</span>), and the censoring status during <span class="math inline">k</span> (<span class="math inline">C_{i,k}</span>).</p>
-<p><strong>Table 5.1 — Wide vs long format for 3 subjects.</strong></p>
+<p><strong>Table 5.1, Wide vs long format for 3 subjects.</strong></p>
 <p><em>Wide:</em></p>
 <table class="caption-top table">
 <thead>
@@ -422,8 +422,8 @@ S(k) \;=\; \mathbb{P}[Y_k = 0] \;=\;
 </section>
 <section id="closing" class="level2">
 <h2 class="anchored" data-anchor-id="closing">6. Closing</h2>
-<p>So — does the KM give us everything we need to compute survival contrasts in studies? Under randomization in a perfectly conducted RCT: yes, the arm-specific <span class="math inline">S(k \mid A=a)</span> and the contrast <span class="math inline">\Delta(k)</span> are unbiased estimates of the corresponding <em>causal quantities</em>.</p>
-<p>These posts focus on observational data, which is harder for multiple reasons — one of the most important being confounding. In observational settings, KM is no longer an unbiased estimate of the causal quantity; the treated and untreated groups differ in ways that affect the outcome independently of the drug. The estimand must be defined more carefully — separating what we <em>would</em> see (the causal survival curve <span class="math inline">S^a(k)</span>) from what we <em>do</em> see (the observational <span class="math inline">S(k \mid A=a)</span>) — and the estimator must do additional work to bridge the gap.</p>
+<p>So, does the KM give us everything we need to compute survival contrasts in studies? Under randomization in a perfectly conducted RCT: yes, the arm-specific <span class="math inline">S(k \mid A=a)</span> and the contrast <span class="math inline">\Delta(k)</span> are unbiased estimates of the corresponding <em>causal quantities</em>.</p>
+<p>These posts focus on observational data, which is harder for multiple reasons, one of the most important being confounding. In observational settings, KM is no longer an unbiased estimate of the causal quantity; the treated and untreated groups differ in ways that affect the outcome independently of the drug. The estimand must be defined more carefully, separating what we <em>would</em> see (the causal survival curve <span class="math inline">S^a(k)</span>) from what we <em>do</em> see (the observational <span class="math inline">S(k \mid A=a)</span>), and the estimator must do additional work to bridge the gap.</p>
 <p>The next post introduces the causal estimand <span class="math inline">S^a(k)</span>, the identifiability conditions that link it to the observational data, and the curse of dimensionality that motivates modelling. After that: IPW and the g-formula as two estimation routes.</p>
 </section>
 <section id="references" class="level2">
@@ -440,7 +440,7 @@ S(k) \;=\; \mathbb{P}[Y_k = 0] \;=\;
 <ol>
 <li id="fn1"><p>A well-defined research question is the precondition for everything that follows. The estimand the trial targets, and the estimator we use to extract it from the data, both depend on the question being precise: <em>who</em> (adults at elevated heart-failure risk), <em>what intervention</em> (weekly Drug A vs Drug B for 48 months), <em>which outcome</em> (time to heart-failure event), and <em>when</em> (every month over the 4 years). Vague research questions yield vague estimands and biased estimates.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>Non-avoidable events such as death from any cause are competing risks and are addressed in a separate post (Ravn &amp; Andersen, §1.3).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>Time since randomization (month 0) is the only entry variable. Left-truncation — observation conditional on having survived to a later entry time — does not apply here because all patients enrol at month 0. Alternative time axes such as age or calendar time would introduce left-truncation and are out of scope for this post (Ravn &amp; Andersen, §1.2.1).<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Time since randomization (month 0) is the only entry variable. Left-truncation, observation conditional on having survived to a later entry time, does not apply here because all patients enrol at month 0. Alternative time axes such as age or calendar time would introduce left-truncation and are out of scope for this post (Ravn &amp; Andersen, §1.2.1).<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main>
 <!-- /main column -->

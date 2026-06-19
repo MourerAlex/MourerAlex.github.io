@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ATE Estimation under Unconfoundedness — Alex Mourer</title>
+  <title>ATE Estimation under Unconfoundedness, Alex Mourer</title>
   <link rel="stylesheet" href="../../css/posts.css?v=39">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -52,7 +52,7 @@
       For each unit $i$, we define two <strong>potential outcomes</strong>:
       $Y_i(1)$ under treatment, and $Y_i(0)$ under control.
       The individual treatment effect is $\tau_i = Y_i(1) - Y_i(0)$,
-      but we only ever observe one of these — the fundamental problem of causal inference.
+      but we only ever observe one of these, the fundamental problem of causal inference.
     </p>
 
     <p>The quantity we usually target is the <strong>Average Treatment Effect</strong>:</p>
@@ -74,7 +74,7 @@
     </div>
 
     <div class="callout">
-      <p><strong>Key intuition:</strong> once we control for everything in $X_i$ that jointly affects treatment and outcome, there's no remaining confounding. This is a strong assumption — and untestable from data alone.</p>
+      <p><strong>Key intuition:</strong> once we control for everything in $X_i$ that jointly affects treatment and outcome, there's no remaining confounding. This is a strong assumption, and untestable from data alone.</p>
     </div>
 
     <p>We also require <strong>overlap</strong> (or positivity): every unit has some positive probability of receiving either treatment:</p>
