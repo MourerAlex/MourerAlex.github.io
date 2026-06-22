@@ -487,7 +487,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
     <span class="crumb"><a href="../../../blog/">Posts</a> / Series / Causal Survival</span>
     <h1>Causal survival <em>models.</em></h1>
     <div class="series-header-meta">
-      <div class="item"><span class="k">Parts</span><span class="v">Five</span></div>
+      <div class="item"><span class="k">Parts</span><span class="v">Four</span></div>
       <div class="item"><span class="k">Subject</span><span class="v">Causal inference &amp; survival analysis</span></div>
       <div class="item"><span class="k">Span</span><span class="v">2025–2026</span></div>
       <div class="item"><span class="k">Status</span><span class="v">Complete</span></div>
@@ -501,9 +501,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
     <div class="abstract-grid">
       <span class="label"><span class="num">§&nbsp;01</span> Abstract</span>
       <p>
-        A five-part series building from survival foundations to fully causal
-        estimation under confounding. The introduction motivates why a model is
-        necessary; Posts 1–4 develop the <em>g-formula</em> and
+        A four-part series building from survival foundations to fully causal
+        estimation under confounding. Posts 1–4 develop the <em>g-formula</em> and
         <em>inverse-probability weighting</em> estimators step by step.
       </p>
     </div>
@@ -527,17 +526,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
         <span class="hub-sub">implementation</span>
       </div>
 
-      <!-- Pentagon layout: intro top, then clockwise -->
-      <button class="graph-node" data-id="0" style="left: 50%; top: 4%;">
-        <span class="n-num">00</span>
-        <span class="n-label">Why model?</span>
-        <span class="n-expand">
-          <span class="n-body"></span>
-          <span class="n-meta"></span>
-          <a class="n-cta" href="../intro-why-model.html">Read &rarr;</a>
-        </span>
-      </button>
-      <button class="graph-node" data-id="1" style="left: 91%; top: 33%;">
+      <!-- Diamond layout: 4 nodes -->
+      <button class="graph-node" data-id="1" style="left: 50%; top: 4%;">
         <span class="n-num">01</span>
         <span class="n-label">Survival foundations</span>
         <span class="n-expand">
@@ -546,7 +536,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
           <a class="n-cta" href="../post1-survival-foundations.html">Read &rarr;</a>
         </span>
       </button>
-      <button class="graph-node" data-id="2" style="left: 72%; top: 90%;">
+      <button class="graph-node" data-id="2" style="left: 92%; top: 50%;">
         <span class="n-num">02</span>
         <span class="n-label">Causal survival</span>
         <span class="n-expand">
@@ -555,7 +545,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
           <a class="n-cta" href="../post2-causal-survival.html">Read &rarr;</a>
         </span>
       </button>
-      <button class="graph-node" data-id="3" style="left: 28%; top: 90%;">
+      <button class="graph-node" data-id="3" style="left: 50%; top: 96%;">
         <span class="n-num">03</span>
         <span class="n-label">G-formula</span>
         <span class="n-expand">
@@ -564,7 +554,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
           <a class="n-cta" href="../post3-g-formula.html">Read &rarr;</a>
         </span>
       </button>
-      <button class="graph-node" data-id="4" style="left: 9%; top: 33%;">
+      <button class="graph-node" data-id="4" style="left: 8%; top: 50%;">
         <span class="n-num">04</span>
         <span class="n-label">IPW</span>
         <span class="n-expand">
@@ -661,11 +651,6 @@ applyTokens();
 
 // ── Posts data ──────────────────────────────────────────────────
 const POSTS = {
-  0: {
-    title: 'Why Model?',
-    body:  'Motivates why a model becomes necessary once the confounder space outgrows nonparametric estimation. Introduces potential outcomes, identification, and the path from data to estimation strategy.',
-    date: 'Mar 15, 2025', read: '12 min read',
-  },
   1: {
     title: 'From a randomized trial to a survival curve.',
     body:  'Survival foundations: the hazard function, the Kaplan-Meier estimator, and what breaks when we move from a randomized trial to observational data with confounding.',
