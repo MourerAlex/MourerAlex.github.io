@@ -325,9 +325,18 @@ Derivation: from <span class="math inline">S^a(k)</span> to the Horvitz-Thompson
 \mathbb{E}_{\mathbf L}\!\left[\frac{1}{g(a \mid \mathbf L)}\, \mathbb{E}[\mathbb{1}\{A=a\}\,\mathbb{1}\{Y_k = 0\} \mid \mathbf L]\right].
 </span></p>
 <p>Step 2 (consistency): when <span class="math inline">A = a</span>, <span class="math inline">Y_k = Y^a_k</span>. So <span class="math inline">\mathbb{1}\{A=a\}\,\mathbb{1}\{Y_k=0\} = \mathbb{1}\{A=a\}\,\mathbb{1}\{Y^a_k=0\}</span>.</p>
-<p>Step 3 (exchangeability <span class="math inline">Y^a_k \perp\!\!\!\perp A \mid \mathbf L</span>): the joint expectation factors: <span class="math display">
+<p>Step 3 (exchangeability <span class="math inline">Y^a_k \perp\!\!\!\perp A \mid \mathbf L</span>): the joint expectation factors. First, the conditional expectation of a product of indicators is a joint probability: <span class="math display">
+\mathbb{E}[\mathbb{1}\{A=a\}\,\mathbb{1}\{Y^a_k=0\} \mid \mathbf L]
+= \mathbb{P}[A=a,\ Y^a_k=0 \mid \mathbf L].
+</span></p>
+<p>Exchangeability says that, given <span class="math inline">\mathbf L</span>, the counterfactual outcome <span class="math inline">Y^a_k</span> carries no information about which treatment was actually received. So the joint probability factors into a product of marginals: <span class="math display">
+\mathbb{P}[A=a,\ Y^a_k=0 \mid \mathbf L]
+= \mathbb{P}[A=a \mid \mathbf L]\;\mathbb{P}[Y^a_k=0 \mid \mathbf L].
+</span></p>
+<p>The first factor is the propensity by definition, <span class="math inline">\mathbb{P}[A=a \mid \mathbf L] = g(a \mid \mathbf L)</span>. Substituting: <span class="math display">
 \mathbb{E}[\mathbb{1}\{A=a\}\,\mathbb{1}\{Y^a_k=0\} \mid \mathbf L] = g(a \mid \mathbf L)\, \mathbb{P}[Y^a_k = 0 \mid \mathbf L].
 </span></p>
+<p>This is the only step that uses the no-unmeasured-confounding assumption: without it, the joint does not factor, and the propensity in the denominator would not cancel the <span class="math inline">g(a \mid \mathbf L)</span> produced here.</p>
 <p>Step 4 (positivity <span class="math inline">g(a \mid \mathbf L) &gt; 0</span>): cancel: <span class="math display">
 \mathbb{E}_{\mathbf L}\!\left[\mathbb{P}[Y^a_k = 0 \mid \mathbf L]\right] = \mathbb{P}[Y^a_k = 0] = S^a(k). \qquad \blacksquare
 </span></p>
