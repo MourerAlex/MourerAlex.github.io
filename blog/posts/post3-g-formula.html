@@ -325,9 +325,9 @@ S^a(k) \;=\; \mathbb{E}_{\mathbf L}\!\left[\prod_{j=1}^{k}
 <p>It is the chance of an event during interval <span class="math inline">j</span> given covariates, treatment, and being at risk at the start of the interval, a conditional probability of an event.</p>
 <p><strong>Logistic regression models conditional probabilities.</strong> Given predictors <span class="math inline">X</span>, logistic regression estimates</p>
 <p><span class="math display">
-\mathbb{P}[Z = 1 \mid X] \;=\; \frac{1}{1 + \exp(-\beta^\top X)},
+\mathbb{P}[Y = 1 \mid X] \;=\; \frac{1}{1 + \exp(-\beta^\top X)},
 </span></p>
-<p>via the logit link <span class="math inline">\text{logit}\,\mathbb{P}[Z = 1 \mid X] = \beta^\top X</span>. The fitted output is a probability in <span class="math inline">[0, 1]</span>.</p>
+<p>via the logit link <span class="math inline">\text{logit}\,\mathbb{P}[Y = 1 \mid X] = \beta^\top X</span>. The fitted output is a probability in <span class="math inline">[0, 1]</span>.</p>
 <p><strong>Logistic regression on person-time is therefore a hazard model.</strong> Fit a logistic regression on the long-format dataset, with <span class="math inline">Y_{i,j}</span> as the binary outcome and <span class="math inline">(j, A_i, \mathbf L_i)</span> as predictors:</p>
 <p><span class="math display">
 \text{logit}\,\lambda^Y_j(\mathbf L, A) \;=\;
