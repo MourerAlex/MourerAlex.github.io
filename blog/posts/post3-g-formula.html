@@ -358,7 +358,7 @@ Why clone baseline rows, not the subject’s full set of observed at-risk rows?
 </div>
 <div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>In v1, <span class="math inline">\mathbf L</span> is baseline-only, measured once, constant within subject. So the <em>content</em> of the baseline row and any at-risk row is identical for the model’s predictors. The only thing that changes between rows of the same subject is the interval index <span class="math inline">k</span>. The key difference is which <span class="math inline">k</span> values are produced.</p>
+<p><span class="math inline">\mathbf L</span> is baseline-only, measured once, constant within subject. So the <em>content</em> of the baseline row and any at-risk row is identical for the model’s predictors. The only thing that changes between rows of the same subject is the interval index <span class="math inline">k</span>. The key difference is which <span class="math inline">k</span> values are produced.</p>
 <ul>
 <li><strong>Clone baseline:</strong> every subject gets <span class="math inline">K_{\max}</span> prediction rows, <span class="math inline">k = 1, \ldots, K_{\max}</span>. A subject censored at month 5 still gets predictions for <span class="math inline">j = 6, \ldots, 48</span>.</li>
 <li><strong>Use observed at-risk rows:</strong> every subject gets only the rows they were actually observed at risk. A subject censored at month 5 gets predictions for <span class="math inline">j = 1, \ldots, 5</span> only.</li>
