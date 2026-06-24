@@ -339,7 +339,13 @@ Derivation: from <span class="math inline">S^a(k)</span> to the Horvitz-Thompson
 \mathbb{E}[\mathbb{1}\{A=a\}\,\mathbb{1}\{Y^a_k=0\} \mid \mathbf L] = g(a \mid \mathbf L)\, \mathbb{P}[Y^a_k = 0 \mid \mathbf L].
 </span></p>
 <p>This is the only step that uses the no-unmeasured-confounding assumption: without it, the joint does not factor, and the propensity in the denominator would not cancel the <span class="math inline">g(a \mid \mathbf L)</span> produced here.</p>
-<p>Step 4 (positivity <span class="math inline">g(a \mid \mathbf L) &gt; 0</span>): cancel: <span class="math display">
+<p>Step 4 (positivity <span class="math inline">g(a \mid \mathbf L) &gt; 0</span>): cancel and average. Substitute the result of Step 3 back into the Step 1 expression. The inverse propensity out front meets the propensity just produced: <span class="math display">
+\mathbb{E}_{\mathbf L}\!\left[\frac{1}{g(a \mid \mathbf L)}\, g(a \mid \mathbf L)\, \mathbb{P}[Y^a_k = 0 \mid \mathbf L]\right].
+</span></p>
+<p>The cancellation <span class="math inline">\tfrac{1}{g(a \mid \mathbf L)}\,g(a \mid \mathbf L) = 1</span> is only legal when <span class="math inline">g(a \mid \mathbf L) &gt; 0</span>, i.e.&nbsp;every covariate stratum has some chance of receiving treatment <span class="math inline">a</span>. This is exactly positivity. What remains is <span class="math display">
+\mathbb{E}_{\mathbf L}\!\left[\mathbb{P}[Y^a_k = 0 \mid \mathbf L]\right].
+</span></p>
+<p>Finally, averaging a conditional probability over the distribution of <span class="math inline">\mathbf L</span> returns the marginal probability (law of total expectation), and the marginal is the counterfactual survival by definition: <span class="math display">
 \mathbb{E}_{\mathbf L}\!\left[\mathbb{P}[Y^a_k = 0 \mid \mathbf L]\right] = \mathbb{P}[Y^a_k = 0] = S^a(k). \qquad \blacksquare
 </span></p>
 <table class="caption-top table">
