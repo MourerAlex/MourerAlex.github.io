@@ -329,10 +329,12 @@ Derivation: from <span class="math inline">S^a(k)</span> to the Horvitz-Thompson
 \mathbb{E}[\mathbb{1}\{A=a\}\,\mathbb{1}\{Y^a_k=0\} \mid \mathbf L]
 = \mathbb{P}[A=a,\ Y^a_k=0 \mid \mathbf L].
 </span></p>
-<p>Exchangeability says that, given <span class="math inline">\mathbf L</span>, the counterfactual outcome <span class="math inline">Y^a_k</span> carries no information about which treatment was actually received. So the joint probability factors into a product of marginals: <span class="math display">
+<p>An indicator equals 1 when its event occurs and 0 otherwise, so its expectation is the probability of that event. A product of two indicators equals 1 only when <em>both</em> events occur, so its expectation is the joint probability of both. No assumption is used here, only the definition of an indicator.</p>
+<p>Exchangeability says that, given <span class="math inline">\mathbf L</span>, the counterfactual outcome <span class="math inline">Y^a_k</span> carries no information about which treatment was actually received. Independence means the joint probability splits into the product of the two marginals: <span class="math display">
 \mathbb{P}[A=a,\ Y^a_k=0 \mid \mathbf L]
 = \mathbb{P}[A=a \mid \mathbf L]\;\mathbb{P}[Y^a_k=0 \mid \mathbf L].
 </span></p>
+<p>This is the step that would fail without no-unmeasured-confounding: if some confounder <span class="math inline">U</span> were left out of <span class="math inline">\mathbf L</span>, then <span class="math inline">A</span> and <span class="math inline">Y^a_k</span> would still be linked through <span class="math inline">U</span> given <span class="math inline">\mathbf L</span>, and the joint would not split.</p>
 <p>The first factor is the propensity by definition, <span class="math inline">\mathbb{P}[A=a \mid \mathbf L] = g(a \mid \mathbf L)</span>. Substituting: <span class="math display">
 \mathbb{E}[\mathbb{1}\{A=a\}\,\mathbb{1}\{Y^a_k=0\} \mid \mathbf L] = g(a \mid \mathbf L)\, \mathbb{P}[Y^a_k = 0 \mid \mathbf L].
 </span></p>
